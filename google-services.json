@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "860762669004",
+    "project_id": "qine-delivery-tracking",
+    "storage_bucket": "qine-delivery-tracking.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860762669004:android:c818f537f76745830d6769",
+        "android_client_info": {
+          "package_name": "com.active.deliveryapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBSCXeVu3DVRHS5CDyCwB5xpsqvdiyDAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860762669004:android:38dfad2fe19bd78b0d6769",
+        "android_client_info": {
+          "package_name": "com.active.superapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBSCXeVu3DVRHS5CDyCwB5xpsqvdiyDAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
