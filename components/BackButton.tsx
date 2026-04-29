@@ -3,10 +3,17 @@ import React from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 
-const BackButton = ({ title }: { title: string }) => {
+const BackButton = ({ title, color }: { title: string, color: string }) => {
     const router = useRouter()
     return (
-        <View style={styles.header}>
+        <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            backgroundColor: color === 'gray' ? "#F8FAFC" : "white",
+        }}>
             <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => router.back()}
@@ -21,14 +28,6 @@ const BackButton = ({ title }: { title: string }) => {
 }
 
 const styles = StyleSheet.create({
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: "white",
-    },
     backButton: {
         borderWidth: 1,
         borderColor: "#6750A4",

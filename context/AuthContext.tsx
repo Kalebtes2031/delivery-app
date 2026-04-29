@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { login as loginApi, getMe } from '@/services/api';
+import { login as loginApi, getMe, toggleDeliveryStatus } from '@/services/api';
 import type { User } from '@/types';
 
 interface AuthContextType {
@@ -9,14 +9,18 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  toggleOnlineStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { },
+  logout: async () => { },
+  refreshUser: async () => { },
+  toggleOnlineStatus: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -57,6 +61,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await getMe();
+      setUser(data);
+    } catch (error) {
+      console.log('Failed to refresh user');
+    }
+  }, []);
+
+  const toggleOnlineStatus = useCallback(async () => {
+    console.log("Toggle Status Triggered");
+    if (!user) {
+      console.log("Toggle Failed: No User");
+      return;
+    }
+    try {
+      console.log("Calling toggleDeliveryStatus API...");
+      await toggleDeliveryStatus();
+      console.log("API Success, refreshing user data...");
+      await refreshUser();
+      console.log("User data refreshed.");
+    } catch (error) {
+      console.error('Failed to toggle online status:', error);
+      throw error;
+    }
+  }, [user, refreshUser]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -65,6 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         logout,
+        refreshUser,
+        toggleOnlineStatus,
       }}
     >
       {children}

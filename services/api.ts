@@ -83,12 +83,40 @@ export const getDeliveries = async (status?: DeliveryStatus) => {
   return api.get<DeliveryAssignment[]>('/deliveries/', { params });
 };
 
+export const getDriverStats = async () => {
+  return api.get<{ earnings: string; assigned_orders: number; total_orders: number }>('/deliveries/stats/');
+};
+
 export const getDeliveryDetail = async (id: number) => {
   return api.get<DeliveryAssignment>(`/deliveries/${id}/`);
 };
 
 export const updateDeliveryStatus = async (id: number, status: DeliveryStatus) => {
   return api.patch<DeliveryAssignment>(`/deliveries/${id}/status/`, { status });
+};
+
+export const toggleDeliveryStatus = async () => {
+  return api.post<{ is_online: boolean; message: string }>('/deliveries/toggle-status/');
+};
+
+// ── User Profile & Security ──
+
+export const updateProfile = async (data: any) => {
+  // If data contains an image, we should ideally use FormData
+  // but if it's just text fields, JSON is fine.
+  // Djoser /auth/users/me/ handles both.
+  const headers = data instanceof FormData 
+    ? { 'Content-Type': 'multipart/form-data' } 
+    : {};
+    
+  return api.patch<User>('/auth/users/me/', data, { headers });
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  return api.post('/auth/users/set_password/', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
 };
 
 export default api;
