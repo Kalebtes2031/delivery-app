@@ -8,6 +8,15 @@ export interface User {
   last_name: string;
   phone_number?: string;
   profile_image?: string;
+  memberships: UserMembership[];
+}
+
+export interface UserMembership {
+  company_id: number;
+  company_name: string;
+  company_slug: string;
+  role: string;
+  is_active: boolean;
 }
 
 export interface DeliveryAssignment {
