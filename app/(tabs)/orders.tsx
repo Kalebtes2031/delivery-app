@@ -19,17 +19,18 @@ import ToggleSwitch from '@/components/ToggleButton';
 
 const STATUS_TABS: { label: string; value: DeliveryStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Active', value: 'out_for_delivery' },
-  { label: 'Delivered', value: 'delivered' },
+  { label: 'Assigned', value: 'pending' },
+  { label: 'Picked Up', value: 'picked_up' },
+  { label: 'In Transit', value: 'out_for_delivery' },
+  { label: 'Fulfilled', value: 'delivered' },
 ];
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; icon: any }> = {
-  pending: { bg: '#FFF7ED', text: '#EA580C', label: 'Pending', icon: 'clock-outline' },
+  pending: { bg: '#FFF7ED', text: '#EA580C', label: 'Assigned', icon: 'clock-outline' },
   accepted: { bg: '#EFF6FF', text: '#2563EB', label: 'Accepted', icon: 'check-circle-outline' },
   picked_up: { bg: '#FAF5FF', text: '#9333EA', label: 'Picked Up', icon: 'package-variant' },
-  out_for_delivery: { bg: '#F0FDF4', text: '#16A34A', label: 'On Way', icon: 'truck-fast-outline' },
-  delivered: { bg: '#F8FAFC', text: '#64748B', label: 'Completed', icon: 'check-all' },
+  out_for_delivery: { bg: '#F0FDF4', text: '#16A34A', label: 'In Transit', icon: 'truck-fast-outline' },
+  delivered: { bg: '#F8FAFC', text: '#64748B', label: 'Fulfilled', icon: 'check-all' },
   failed: { bg: '#FEF2F2', text: '#DC2626', label: 'Failed', icon: 'alert-circle-outline' },
 };
 
@@ -45,7 +46,7 @@ export default function OrdersScreen() {
     try {
       const status = activeTab === 'all' ? undefined : activeTab;
       const { data } = await getDeliveries(status);
-      setDeliveries(Array.isArray(data) ? data : (data as any).results || []);
+      setDeliveries(Array.isArray(data) ? data.sort((a: DeliveryAssignment, b: DeliveryAssignment) => b.vendor_order - a.vendor_order) : (data as any).results.sort((a: DeliveryAssignment, b: DeliveryAssignment) => b.vendor_order - a.vendor_order) || []);
     } catch (error) {
       console.error('Failed to fetch deliveries:', error);
     } finally {
@@ -68,6 +69,7 @@ export default function OrdersScreen() {
 
   const renderDeliveryCard = ({ item }: { item: DeliveryAssignment }) => {
     const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
+    console.log(item.status)
     const timeAssigned = new Date(item.assigned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     return (
@@ -79,7 +81,7 @@ export default function OrdersScreen() {
         {/* Card Header */}
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.orderIdText}>Order #{item.tracking_id.slice(-6).toUpperCase()}</Text>
+            <Text style={styles.orderIdText}>Order #{item.vendor_order}</Text>
             <Text style={styles.timeText}>Assigned at {timeAssigned}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
@@ -102,7 +104,7 @@ export default function OrdersScreen() {
               <Text style={styles.companyName} numberOfLines={1}>{item.company_name || 'Vendor'}</Text>
               <Text style={styles.addressText} numberOfLines={1}>{item.company_address}</Text>
             </View>
-            
+
             <View style={styles.addressBlock}>
               <Text style={styles.addressLabel}>DELIVER TO</Text>
               <Text style={styles.customerName} numberOfLines={1}>{item.customer_name || 'Customer'}</Text>
@@ -113,11 +115,11 @@ export default function OrdersScreen() {
 
         {/* Card Footer */}
         <View style={styles.cardFooter}>
-            <View style={styles.footerAction}>
-                 <Ionicons name="navigate-circle-outline" size={20} color="#6750A4" />
-                 <Text style={styles.footerActionText}>View Map</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
+          <View style={styles.footerAction}>
+            <Ionicons name="navigate-circle-outline" size={20} color="#6750A4" />
+            <Text style={styles.footerActionText}>View Map</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
         </View>
       </TouchableOpacity>
     );
@@ -135,7 +137,7 @@ export default function OrdersScreen() {
       </View>
 
       {/* Status Filter Tabs */}
-      <View style={{ marginBottom: 15, backgroundColor:"white" }}>
+      <View style={{ marginBottom: 15, backgroundColor: "white" }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
           {STATUS_TABS.map((tab) => (
             <TouchableOpacity
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingVertical: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: { color: '#94A3B8', fontSize: 14, fontWeight: '500' },
   titleText: { color: '#1E293B', fontSize: 24, fontWeight: '800' },
-  tabsContainer: { paddingHorizontal: 24, paddingVertical: 10 },
+  tabsContainer: { paddingHorizontal: 24, paddingTop: 5 },
   tab: {
     paddingHorizontal: 20,
     paddingVertical: 8,
@@ -206,7 +208,7 @@ const styles = StyleSheet.create({
   activeTab: { backgroundColor: '#6750A4', borderColor: '#6750A4' },
   tabText: { color: '#64748B', fontWeight: '600' },
   activeTabText: { color: '#fff' },
-  listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 40, paddingTop: 10 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,

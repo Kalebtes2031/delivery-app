@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,48 +15,87 @@ import { useAuth } from '@/context/AuthContext';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
 import ToggleSwitch from '@/components/ToggleButton';
 import { DeliveryAssignment } from '@/types';
-import { getDeliveries } from '@/services/api';
+import { getDeliveries, getDriverStats } from '@/services/api';
 
 const { width } = Dimensions.get('window');
 
-// Mock data for the "Stats" section - in a real app, this comes from an API
-const DRIVER_STATS = [
-  { label: 'Earnings', value: '$124.50', icon: 'cash-outline', color: '#10B981' },
-  { label: 'Orders', value: '12', icon: 'package-variant-closed', color: '#6366F1' },
-  // { label: 'Rating', value: '4.9', icon: 'star', color: '#F59E0B' },
+// Using dynamic stats from the API now, this is just a type reference
+type DriverStat = {
+  label: string;
+  value: string;
+  icon: string;
+  color: string;
+  type: 'ion' | 'material';
+};
+
+const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; icon: any }> = {
+  pending: { bg: '#FFF7ED', text: '#EA580C', label: 'Assigned', icon: 'clock-outline' },
+  accepted: { bg: '#EFF6FF', text: '#2563EB', label: 'Accepted', icon: 'check-circle-outline' },
+  picked_up: { bg: '#FAF5FF', text: '#9333EA', label: 'Picked Up', icon: 'package-variant' },
+  out_for_delivery: { bg: '#F0FDF4', text: '#16A34A', label: 'In Transit', icon: 'truck-fast-outline' },
+  delivered: { bg: '#F8FAFC', text: '#64748B', label: 'Fulfilled', icon: 'check-all' },
+  failed: { bg: '#FEF2F2', text: '#DC2626', label: 'Failed', icon: 'alert-circle-outline' },
+};
+
+
+const STATUS_ORDER = [
+  "pending",
+  "accepted",
+  "picked_up",
+  "out_for_delivery",
+  "delivered",
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
-    const { user } = useAuth();
-    const [deliveries, setDeliveries] = useState<DeliveryAssignment[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-  
-    const fetchDeliveries = useCallback(async () => {
-      try {
-        const { data } = await getDeliveries();
-        setDeliveries(Array.isArray(data) ? data : (data as any).results || []);
-      } catch (error) {
-        console.error('Failed to fetch deliveries:', error);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    }, []);
-  
-  
-    const onRefresh = () => {
-      setRefreshing(true);
-      fetchDeliveries();
-    };
-  
-    useEffect(() => {
-      setLoading(true);
-      fetchDeliveries();
-    }, [fetchDeliveries]);
-  
-  
+  const { user, toggleOnlineStatus } = useAuth();
+  const [deliveries, setDeliveries] = useState<DeliveryAssignment[]>([]);
+  const [driverStats, setDriverStats] = useState({ earnings: '0.00', assigned_orders: 0, total_orders: 0 });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
+  const handleToggleOnline = async () => {
+    setIsToggling(true);
+    try {
+      await toggleOnlineStatus();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  const isOnline = user?.memberships?.some(m => m.role === 'delivery' && m.is_active);
+ 
+  const fetchDeliveries = useCallback(async () => {
+    try {
+      const [deliveriesRes, statsRes] = await Promise.all([
+        getDeliveries(),
+        getDriverStats()
+      ]);
+      setDeliveries(Array.isArray(deliveriesRes.data) ? deliveriesRes.data : (deliveriesRes.data as any).results || []);
+      setDriverStats(statsRes.data);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchDeliveries();
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchDeliveries();
+  }, [fetchDeliveries]);
+
+
   // Find the latest delivery that is currently "Out for Delivery"
   const activeDelivery = deliveries
     .filter(d => d.status === 'out_for_delivery')
@@ -73,10 +113,19 @@ export default function HomeScreen() {
     }
   };
 
+  const currentIndex = STATUS_ORDER.indexOf(activeDelivery?.status.toLowerCase());
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
+      <ScrollView
+
+        showsVerticalScrollIndicator={false}
+
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={styles.scrollContent}>
+
         {/* --- SECTION 1: THE SKYLINE (Header) --- */}
         <View style={styles.header}>
           <View>
@@ -84,25 +133,35 @@ export default function HomeScreen() {
             <Text style={styles.userName}>Good Afternoon</Text>
           </View>
           <View style={styles.headerActions}>
-             <ToggleSwitch />
-             <TouchableOpacity  >
-                <Ionicons name="notifications-outline" size={24} color="#1E293B" />
-                <View style={styles.notificationDot} />
-             </TouchableOpacity>
+            <ToggleSwitch 
+              isOn={!!isOnline} 
+              onToggle={handleToggleOnline} 
+              isLoading={isToggling}
+            />
+            <TouchableOpacity  >
+              <Ionicons name="notifications-outline" size={24} color="#1E293B" />
+              <View style={styles.notificationDot} />
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
         <View style={styles.statsGrid}>
-          {DRIVER_STATS.map((stat, index) => (
+          {[
+            { label: 'Earnings', value: `${driverStats.earnings} ETB`, icon: 'cash-outline', color: '#10B981', type: 'ion' },
+            { label: 'Active Orders', value: driverStats.assigned_orders.toString(), icon: 'package-variant-closed', color: '#6366F1', type: 'material' },
+            { label: 'Total Orders', value: driverStats.total_orders.toString(), icon: 'package-variant-closed', color: '#6366F1', type: 'material' },
+          ].map((stat, index) => (
             <View key={index} style={styles.statCard}>
               <View style={[styles.statIconCircle, { backgroundColor: stat.color + '15' }]}>
-                {stat.icon === 'package-variant-closed' ? <MaterialCommunityIcons name={stat.icon} size={20} color={stat.color} /> : 
-                stat.icon === 'star' ? <MaterialCommunityIcons name={stat.icon} size={20} color={stat.color} /> : 
-                <Ionicons name={stat.icon} size={20} color={stat.color} />}
+                {stat.type === 'ion' ? (
+                  <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+                ) : (
+                  <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
+                )}
               </View>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+              <Text style={[styles.statValue, { textAlign: "center", fontSize: 14 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
+              <Text style={[styles.statLabel, { textAlign: "center" }]}>{stat.label}</Text>
             </View>
           ))}
         </View>
@@ -116,24 +175,100 @@ export default function HomeScreen() {
         </View>
 
         {activeDelivery ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.heroCard}
             onPress={() => router.push(`/delivery/${activeDelivery.id}`)}
           >
-            <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>LIVE TRACKING</Text>
+            <View style={styles.heroRow}>
+              <View style={styles.heroInfo}>
+                <Text style={styles.heroCustomerName}>Order #{activeDelivery.vendor_order || 'Customer'}</Text>
+                {/* <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.company_address}</Text> */}
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
+                <MaterialCommunityIcons name={STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text} />
+                <Text style={[styles.statusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>{STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.label}</Text>
+              </View>
             </View>
             <View style={styles.heroRow}>
-                <View style={styles.heroInfo}>
-                    <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || 'Customer'}</Text>
-                    <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.company_address}</Text>
+              <View style={styles.herocusotmerContainer}>
+                <View style={styles.heroCustomerAvator}>
+                  {activeDelivery?.customer_image ? (
+                    <Image source={{ uri: activeDelivery?.customer_image }} style={styles.customerAvatar} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarPlaceholderText}>
+                        {activeDelivery.customer_name?.charAt(0) || 'C'}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                <View style={styles.heroActionBtn}>
-                    <FontAwesome6 name="location-arrow" size={20} color="#fff" />
+                <View>
+
+                  <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || 'Customer'}</Text>
+                  <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.customer_phone}</Text>
                 </View>
+              </View>
+              {/* <View style={styles.heroActionBtn}>
+                <FontAwesome6 name="location-arrow" size={20} color="#fff" />
+              </View> */}
             </View>
-            <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: '85%' }]} />
+            {/* progress tracker */}
+            <View style={styles.progressContainer}>
+              {STATUS_ORDER.map((status, index) => {
+                const isCompleted = index < currentIndex;
+                const isCurrent = index === currentIndex;
+                const isFuture = index > currentIndex;
+                const config = STATUS_CONFIG[status];
+
+                return (
+                  <View key={status} style={styles.stepWrapper}>
+
+                    {/* --- THE NODE ZONE (Handles vertical centering) --- */}
+                    <View style={styles.nodeZone}>
+
+                      {/* Connecting Line - Now centered perfectly via top: '50%' */}
+                      {index !== 0 && (
+                        <View
+                          style={[
+                            styles.progressLine,
+                            {
+                              backgroundColor: isCompleted || isCurrent ? '#16A34A' : 'rgba(255,255,255,0.2)',
+                              // Adjusting width to bridge the gap perfectly between centers
+                              left: '-50%',
+                              right: '50%'
+                            }
+                          ]}
+                        />
+                      )}
+
+                      {/* Step Indicator */}
+                      <View style={[
+                        styles.stepIndicator,
+                        isCompleted && styles.indicatorCompleted,
+                        isCurrent && styles.indicatorCurrent,
+                        isFuture && styles.indicatorFuture
+                      ]}>
+                        <MaterialCommunityIcons
+                          name={isCompleted ? 'check-bold' : STATUS_CONFIG[status].icon}
+                          size={isCurrent ? 18 : 14}
+                          color={isFuture ? 'rgba(255,255,255,0.5)' : '#fff'}
+                        />
+                        {isCurrent && <View style={styles.pulseRing} />}
+                      </View>
+                    </View>
+
+                    {/* --- THE LABEL ZONE --- */}
+                    <Text style={[
+                      styles.stepLabel,
+                      isCompleted && { color: '#fff', fontWeight: '600' },
+                      isCurrent && { color: '#F59E0B', fontWeight: '900' },
+                      isFuture && { color: 'rgba(255,255,255,0.4)' }
+                    ]}>
+                      {config.label}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </TouchableOpacity>
         ) : (
@@ -153,9 +288,9 @@ export default function HomeScreen() {
 
         <View style={styles.summaryList}>
           {deliveries.length > 0 ? (
-            deliveries.slice(0, 5).map((delivery) => (
-              <TouchableOpacity 
-                key={delivery.id} 
+            deliveries.sort((a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()).slice(0, 5).map((delivery) => (
+              <TouchableOpacity
+                key={delivery.id}
                 style={styles.summaryItem}
                 onPress={() => router.push(`/delivery/${delivery.id}`)}
               >
@@ -174,16 +309,15 @@ export default function HomeScreen() {
                     <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || 'No email provided'}</Text>
                   </View>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(delivery.status) + '15' }]}>
-                  <Text style={[styles.statusBadgeText, { color: getStatusColor(delivery.status) }]}>
-                    {delivery.status.replace(/_/g, ' ').toUpperCase()}
-                  </Text>
+                <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
+                  <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
+                  <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>{STATUS_CONFIG[delivery.status.toLowerCase()]?.label}</Text>
                 </View>
               </TouchableOpacity>
             ))
           ) : (
             <View style={styles.emptySummary}>
-                <Text style={styles.emptySummaryText}>No recent activities</Text>
+              <Text style={styles.emptySummaryText}>No recent activities</Text>
             </View>
           )}
         </View>
@@ -194,18 +328,18 @@ export default function HomeScreen() {
 
 // Sub-component for Quick Actions
 const ActionButton = ({ icon, label, color }: { icon: any, label: string, color: string }) => (
-    <TouchableOpacity style={styles.actionCard}>
-        <View style={[styles.actionIconBox, { backgroundColor: color }]}>
-            <Ionicons name={icon} size={24} color="#fff" />
-        </View>
-        <Text style={styles.actionLabel}>{label}</Text>
-    </TouchableOpacity>
+  <TouchableOpacity style={styles.actionCard}>
+    <View style={[styles.actionIconBox, { backgroundColor: color }]}>
+      <Ionicons name={icon} size={24} color="#fff" />
+    </View>
+    <Text style={styles.actionLabel}>{label}</Text>
+  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
-  
+
   // Header
   header: {
     flexDirection: 'row',
@@ -275,18 +409,26 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   heroBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#ffffff',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     marginBottom: 15,
   },
-  heroBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+
+  heroBadgeText: { color: '#36a13bff', fontSize: 10, fontWeight: '800' },
+  heroCustomerAvator: {
+    width: 48,
+    height: 48,
+    borderRadius: 124,
+    backgroundColor: '#fff',
+  },
+  herocusotmerContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 5 },
   heroRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   heroInfo: { flex: 1 },
   heroCustomerName: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  heroAddress: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 4 },
+  heroAddress: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   heroActionBtn: {
     backgroundColor: 'rgba(255,255,255,0.3)',
     width: 48,
@@ -340,6 +482,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 16,
+    gap: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -387,11 +530,20 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     marginTop: 2,
   },
+  // statusBadge: {
+  //   paddingHorizontal: 10,
+  //   paddingVertical: 6,
+  //   borderRadius: 10,
+  // },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
   },
+  statusText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   statusBadgeText: {
     fontSize: 10,
     fontWeight: '800',
@@ -412,5 +564,75 @@ const styles = StyleSheet.create({
 
   // Footer
   footerNote: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 30, gap: 6 },
-  footerNoteText: { fontSize: 12, color: '#94A3B8', fontWeight: '500' }
+  footerNoteText: { fontSize: 12, color: '#94A3B8', fontWeight: '500' },
+
+  progressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  stepWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  // This container creates a safe "structural bay" for the node and line
+  nodeZone: {
+    height: 44, // Matches the pulseRing height
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center', // This is the secret to perfect vertical centering
+    position: 'relative',
+    marginBottom: 4,
+  },
+  progressLine: {
+    position: 'absolute',
+    height: 4,
+    // Using top: '50%' and a negative margin of half the height (2)
+    // ensures it stays in the mathematical center of the nodeZone
+    top: '50%',
+    marginTop: -2,
+    width: '100%',
+    zIndex: -1,
+  },
+  stepIndicator: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    zIndex: 2, // Ensure node is above the line
+  },
+  indicatorCompleted: {
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
+  },
+  indicatorCurrent: {
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
+    transform: [{ scale: 1.2 }],
+    shadowColor: "#F59E0B",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  indicatorFuture: {
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+    opacity: 0.4,
+  },
+  stepLabel: {
+    fontSize: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StatusBar, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StatusBar, Linking, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
@@ -63,16 +63,16 @@ export default function DriverTrackingScreen() {
       console.log('[Tracking] Location permissions granted');
 
       const destCoords: [number, number] = data.customer_lat && data.customer_lon
-          ? [Number(data.customer_lon), Number(data.customer_lat)]
-          : [38.74, 9.03];
+        ? [Number(data.customer_lon), Number(data.customer_lat)]
+        : [38.74, 9.03];
 
       locationSubscription.current = await startLocationWatcher((location) => {
         setCurrentLocation(location);
         const driverCoords: [number, number] = [location.coords.longitude, location.coords.latitude];
-        
+
         if (!hasFetchedRoute.current) {
-           fetchRoute(driverCoords, destCoords);
-           hasFetchedRoute.current = true;
+          fetchRoute(driverCoords, destCoords);
+          hasFetchedRoute.current = true;
         }
 
         if (data.tracking_id) {
@@ -104,7 +104,7 @@ export default function DriverTrackingScreen() {
           try {
             await updateDeliveryStatus(delivery.id, 'delivered');
             await firebaseTracking.stopTracking(delivery.tracking_id);
-            Alert.alert('Success', 'Order marked as delivered!', [
+            Alert.alert('Success', 'Order has been successfully fulfilled.', [
               { text: 'OK', onPress: () => router.replace('/(tabs)') },
             ]);
           } catch (error) {
@@ -125,9 +125,9 @@ export default function DriverTrackingScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <ActivityIndicator size="large" color="#6750A4" />
-        <Text style={{ color: '#94A3B8', marginTop: 16 }}>Initializing GPS Tracking...</Text>
+        <Text style={{ color: '#6750A4', marginTop: 16 }}>Initializing GPS Tracking...</Text>
       </View>
     );
   }
@@ -153,7 +153,7 @@ export default function DriverTrackingScreen() {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <StatusBar barStyle="light-content" />
       <View>
-        <View style={{ width: "100%", height: 430, overflow: "hidden" }}>
+        <View style={{ width: "100%", height: 500, overflow: "hidden" }}>
           {/* v10 API — identical to Customer App's DeliveryLocation.tsx */}
           <MapView
             style={{ flex: 1 }}
@@ -259,39 +259,38 @@ export default function DriverTrackingScreen() {
             <Text style={{ marginTop: 8, color: '#94A3B8', fontSize: 12 }}>Loading Map...</Text>
           </View>
         )}
-          {/* Floating Back Button */}
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{
-              position: 'absolute',
-              top: 50,
-              left: 20,
-              backgroundColor: '#FFFFFF',
-              width: 34,
-              height: 34,
-              borderRadius: 22,
-              borderWidth: 1,
-              borderColor: "#6750A4",
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 4,
-              elevation: 5,
-            }}
-          >
-            <Ionicons name="arrow-back" size={24} color="#6750A4" />
-          </TouchableOpacity>
+        {/* Floating Back Button */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{
+            position: 'absolute',
+            top: 50,
+            left: 20,
+            backgroundColor: '#FFFFFF',
+            width: 34,
+            height: 34,
+            borderRadius: 22,
+            borderWidth: 1,
+            borderColor: "#6750A4",
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        >
+          <Ionicons name="arrow-back" size={24} color="#6750A4" />
+        </TouchableOpacity>
         <View>
-
           {/* Overlay Info */}
-          <View style={{ flexDirection: "column", marginTop: 30, padding: 16, gap: 32 }}>
-            <View style={{ backgroundColor: '#6750A4', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#334155' }}>
+          <View style={{ flexDirection: "column",  padding: 16, gap: 32, borderTopRightRadius: 44, borderTopLeftRadius: 44 }}>
+            <View style={{ backgroundColor: '#ffffff', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#6750A4' }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <View>
-                  <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>Live Delivery</Text>
-                  <Text style={{ color: '#F1F5F9', fontSize: 18, fontWeight: '900' }}>#{delivery.vendor_order}</Text>
+                  <Text style={{ color: '#6750A4', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>Live Delivery</Text>
+                  <Text style={{ color: '#6750A4', fontSize: 18, fontWeight: '900' }}>Order #{delivery.vendor_order}</Text>
                 </View>
                 <View style={{ backgroundColor: '#059669', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 }}>
                   <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>{delivery.status.replace(/_/g, ' ').toUpperCase()}</Text>
@@ -299,8 +298,17 @@ export default function DriverTrackingScreen() {
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="person" size={16} color="#daff08ff" />
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{delivery.customer_name || 'Customer'}</Text>
+                <View style={{ backgroundColor: '#ffffff', padding: 8, borderRadius: 118, borderWidth:1, borderColor: '#6750A4' }}>
+                  {delivery.customer_image ? (
+                    <Image
+                      source={{ uri: delivery.customer_image }}
+                      style={{ width: 24, height: 24, borderRadius: 12 }}
+                    />
+                  ) : (
+                    <Ionicons name="person" size={16} color="#6750A4" />
+                  )}
+                </View>
+                <Text style={{ color: '#6750A4', fontSize: 14, fontWeight: '600' }}>{delivery.customer_name || 'Customer'}</Text>
               </View>
 
               {delivery.customer_phone && (
@@ -309,7 +317,7 @@ export default function DriverTrackingScreen() {
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}
                 >
                   <Ionicons name="call" size={20} color="#29ac1dff" />
-                  <Text style={{ color: '#ffffff', fontSize: 13 }}>
+                  <Text style={{ color: '#6750A4', fontSize: 13 }}>
                     {delivery.customer_phone}
                   </Text>
                 </TouchableOpacity>

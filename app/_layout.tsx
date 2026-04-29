@@ -38,6 +38,11 @@ function RootLayoutNav() {
         <Stack.Screen name="delivery/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="delivery/tracking" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="help" options={{ headerShown: false }} />
+        <Stack.Screen name="language" options={{ headerShown: false }} />
+        <Stack.Screen name="myprofile" options={{ headerShown: false }} />
+        <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+        <Stack.Screen name="terms" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </>
