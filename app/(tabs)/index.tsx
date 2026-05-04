@@ -50,7 +50,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, toggleOnlineStatus } = useAuth();
   const [deliveries, setDeliveries] = useState<DeliveryAssignment[]>([]);
-  const [driverStats, setDriverStats] = useState({ earnings: '0.00', assigned_orders: 0, total_orders: 0 });
+  const [driverStats, setDriverStats] = useState({ earnings: '0.00', assigned_orders: 0, pending_orders: 0, total_orders: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
@@ -149,10 +149,27 @@ export default function HomeScreen() {
         <View style={styles.statsGrid}>
           {[
             { label: 'Earnings', value: `${driverStats.earnings} ETB`, icon: 'cash-outline', color: '#10B981', type: 'ion' },
-            { label: 'Active Orders', value: driverStats.assigned_orders.toString(), icon: 'package-variant-closed', color: '#6366F1', type: 'material' },
-            { label: 'Total Orders', value: driverStats.total_orders.toString(), icon: 'package-variant-closed', color: '#6366F1', type: 'material' },
+            { 
+              label: 'Assigned Orders', 
+              value: driverStats.pending_orders.toString(), 
+              icon: 'package-variant-closed', 
+              color: '#6366F1', 
+              type: 'material',
+              onPress: () => router.push({ pathname: '/orders', params: { filter: 'pending' } })
+            },
+            { label: 'Total Orders', 
+              value: driverStats.total_orders.toString(), 
+              icon: 'package-variant-closed', color: '#6366F1', 
+              type: 'material',
+              onPress: () => router.push({ pathname: '/orders', params: { filter: 'all' } }) 
+            },
           ].map((stat, index) => (
-            <View key={index} style={styles.statCard}>
+            <TouchableOpacity 
+              key={index} 
+              style={styles.statCard}
+              onPress={stat.onPress}
+              disabled={!stat.onPress}
+            >
               <View style={[styles.statIconCircle, { backgroundColor: stat.color + '15' }]}>
                 {stat.type === 'ion' ? (
                   <Ionicons name={stat.icon as any} size={20} color={stat.color} />
@@ -162,7 +179,7 @@ export default function HomeScreen() {
               </View>
               <Text style={[styles.statValue, { textAlign: "center", fontSize: 14 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
               <Text style={[styles.statLabel, { textAlign: "center" }]}>{stat.label}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 

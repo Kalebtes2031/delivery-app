@@ -8,6 +8,7 @@ import { getDeliveryDetail, updateDeliveryStatus } from '@/services/api';
 import { firebaseTracking } from '@/services/firebaseTracking';
 import { requestLocationPermissions, startLocationWatcher } from '@/services/locationService';
 import type { DeliveryAssignment } from '@/types';
+import ConfirmActionModal from '@/components/ConfirmActionModal';
 
 const { MapView, Camera, MarkerView, RasterSource, RasterLayer, ShapeSource, LineLayer } = MapLibreGL;
 
@@ -22,6 +23,8 @@ export default function DriverTrackingScreen() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const locationSubscription = useRef<any>(null);
   const hasFetchedRoute = useRef(false);
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   useEffect(() => {
     initTracking();
@@ -93,28 +96,40 @@ export default function DriverTrackingScreen() {
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (!delivery) return;
-    Alert.alert('Complete Delivery', 'Are you sure you have delivered the order?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Confirm',
-        onPress: async () => {
-          setUpdating(true);
-          try {
-            await updateDeliveryStatus(delivery.id, 'delivered');
-            await firebaseTracking.stopTracking(delivery.tracking_id);
-            Alert.alert('Success', 'Order has been successfully fulfilled.', [
-              { text: 'OK', onPress: () => router.replace('/(tabs)') },
-            ]);
-          } catch (error) {
-            Alert.alert('Error', 'Failed to update delivery status.');
-          } finally {
-            setUpdating(false);
-          }
-        },
-      },
-    ]);
+    setIsConfirmModalVisible(true);
+  };
+
+  const onConfirmComplete = async () => {
+    if (!delivery) return;
+    setUpdating(true);
+    try {
+      const { data } = await updateDeliveryStatus(delivery.id, 'delivered');
+      
+      // Update local state first to show updated status
+      setDelivery(data);
+      
+      // Stop tracking and cleanup listeners
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+      if (delivery.tracking_id) {
+        firebaseTracking.stopTracking(delivery.tracking_id);
+      }
+
+      setIsConfirmModalVisible(false);
+      setUpdating(false);
+      
+      // Show success modal instead of immediate redirect
+      setTimeout(() => setIsSuccessModalVisible(true), 500);
+    } catch (error: any) {
+      setIsConfirmModalVisible(false);
+      Alert.alert('Error', error.response?.data?.error || 'Update failed');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const callCustomer = () => {
@@ -298,14 +313,16 @@ export default function DriverTrackingScreen() {
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ backgroundColor: '#ffffff', padding: 8, borderRadius: 118, borderWidth:1, borderColor: '#6750A4' }}>
+                <View style={{ backgroundColor: '#ffffff', padding: 1, borderRadius: 118, borderWidth:1, borderColor: '#6750A4' }}>
                   {delivery.customer_image ? (
                     <Image
                       source={{ uri: delivery.customer_image }}
-                      style={{ width: 24, height: 24, borderRadius: 12 }}
+                      style={{ width: 40, height: 40, borderRadius: 112 }}
                     />
                   ) : (
-                    <Ionicons name="person" size={16} color="#6750A4" />
+                    <View style={{ width: 40, height: 40, borderRadius: 112, justifyContent: 'center', alignItems: 'center' }}>
+                      <Ionicons name="person" size={20} color="#6750A4" />
+                    </View>
                   )}
                 </View>
                 <Text style={{ color: '#6750A4', fontSize: 14, fontWeight: '600' }}>{delivery.customer_name || 'Customer'}</Text>
@@ -324,19 +341,22 @@ export default function DriverTrackingScreen() {
               )}
             </View>
 
+            {delivery.status === 'out_for_delivery' && (
             <TouchableOpacity
               onPress={handleComplete}
               disabled={updating}
               style={{
-                backgroundColor: '#6750A4',
+                backgroundColor: '#059669',
                 borderRadius: 120,
                 padding: 20,
                 alignItems: 'center',
-                shadowColor: '#6750A4',
+                shadowColor: '#059669',
                 shadowOffset: { width: 0, height: 10 },
                 shadowOpacity: 0.3,
                 shadowRadius: 20,
                 elevation: 10,
+                justifyContent: "center",
+                marginTop: 10
               }}
             >
               {updating ? (
@@ -345,9 +365,37 @@ export default function DriverTrackingScreen() {
                 <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900' }}>COMPLETE DELIVERY</Text>
               )}
             </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
+
+      <ConfirmActionModal 
+        visible={isConfirmModalVisible}
+        title="Complete Delivery"
+        description="Are you sure you have successfully delivered this order to the customer?"
+        confirmText="Yes, Completed"
+        cancelText="Not Yet"
+        variant="success"
+        isLoading={updating}
+        onConfirm={onConfirmComplete}
+        onClose={() => setIsConfirmModalVisible(false)}
+      />
+
+      <ConfirmActionModal 
+        visible={isSuccessModalVisible}
+        title="Success!"
+        description="Order has been successfully fulfilled. You can now go back to see your summary."
+        confirmText="Done"
+        cancelText="Close"
+        variant="success"
+        info={true}
+        onConfirm={() => {
+            setIsSuccessModalVisible(false);
+            router.back();
+        }}
+        onClose={() => setIsSuccessModalVisible(false)}
+      />
     </View>
   );
 }

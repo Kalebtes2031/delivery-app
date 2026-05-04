@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { View, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -51,8 +52,10 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

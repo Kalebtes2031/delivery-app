@@ -84,7 +84,7 @@ export const getDeliveries = async (status?: DeliveryStatus) => {
 };
 
 export const getDriverStats = async () => {
-  return api.get<{ earnings: string; assigned_orders: number; total_orders: number }>('/deliveries/stats/');
+  return api.get<{ earnings: string; assigned_orders: number; pending_orders: number; total_orders: number }>('/deliveries/stats/');
 };
 
 export const getDeliveryDetail = async (id: number) => {

@@ -13,8 +13,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { getDeliveryDetail, updateDeliveryStatus } from '@/services/api';
+import SlideToConfirm from '@/components/SlideToConfirm';
 import type { DeliveryAssignment, DeliveryStatus } from '@/types';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6, Feather, MaterialIcons } from '@expo/vector-icons';
 
@@ -23,8 +24,8 @@ const { width } = Dimensions.get('window');
 const STATUS_ORDER = ["pending", "accepted", "picked_up", "out_for_delivery", "delivered"];
 
 const NEXT_ACTION: Record<string, { label: string; next: DeliveryStatus; color: string; icon: string }> = {
-  pending: { label: 'Accept Order', next: 'accepted', color: '#6366F1', icon: 'check-circle' },
-  accepted: { label: 'Confirm Pickup', next: 'picked_up', color: '#8B5CF6', icon: 'package-variant' },
+  pending: { label: 'Accept Order', next: 'accepted', color: '#2D5BD0', icon: 'check-circle' },
+  accepted: { label: 'Confirm Pickup', next: 'picked_up', color: '#6750A4', icon: 'package-variant' },
   picked_up: { label: 'Start Navigation', next: 'out_for_delivery', color: '#10B981', icon: 'navigation' },
   out_for_delivery: { label: 'Complete Delivery', next: 'delivered', color: '#059669', icon: 'check-all' },
 };
@@ -44,7 +45,11 @@ export default function DeliveryDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => { fetchDelivery(); }, [id]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchDelivery();
+    }, [id])
+  );
 
   const fetchDelivery = async () => {
     try {
@@ -63,22 +68,16 @@ export default function DeliveryDetailScreen() {
     const action = NEXT_ACTION[delivery.status];
     if (!action) return;
 
-    Alert.alert('Confirm Status Change', `Move order to ${action.next.replace('_', ' ')}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Confirm',
-        onPress: async () => {
-          setUpdating(true);
-          try {
-            const { data } = await updateDeliveryStatus(delivery.id, action.next);
-            setDelivery(data);
-            if (action.next === 'delivered') router.back();
-          } catch (error: any) {
-            Alert.alert('Error', error.response?.data?.error || 'Update failed');
-          } finally { setUpdating(false); }
-        },
-      },
-    ]);
+    setUpdating(true);
+    try {
+      const { data } = await updateDeliveryStatus(delivery.id, action.next);
+      setDelivery(data);
+      if (action.next === 'delivered') router.back();
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Update failed');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   if (loading) return (
@@ -160,22 +159,22 @@ export default function DeliveryDetailScreen() {
               <Text style={styles.miniActionText}>{delivery.vendor_order_detail.company.business_type}</Text>
             </TouchableOpacity>
           </View>
-          <View style={[styles.miniCard, { borderLeftColor: '#10B981', borderLeftWidth: 4, position:"relative"}]}>
+          <View style={[styles.miniCard, { borderLeftColor: '#10B981', borderLeftWidth: 4, position: "relative" }]}>
             <Text style={styles.miniLabel}>DELIVER TO</Text>
-            <View style={{flexDirection:"row",justifyContent:"flex-start", alignItems:"center", gap:12}}>
-            {delivery.customer_image ? 
-            (<Image source={{uri: delivery.customer_image}} style={styles.customerImage} />)  
-          : 
-            (<View style={styles.customerImage}><MaterialIcons name="person" size={24} color="#10B981" /></View>)
-          }
-            <Text style={styles.miniTitle} numberOfLines={1}>{delivery.customer_name}</Text>
+            <View style={{ flexDirection: "row", justifyContent: "flex-start", alignItems: "center", gap: 12 }}>
+              {delivery.customer_image ?
+                (<Image source={{ uri: delivery.customer_image }} style={styles.customerImage} />)
+                :
+                (<View style={styles.customerImage}><MaterialIcons name="person" size={24} color="#10B981" /></View>)
+              }
+              <Text style={styles.miniTitle} numberOfLines={1}>{delivery.customer_name}</Text>
             </View>
-            <View style={{position:"absolute",bottom:8,right:8}}>
+            <View style={{ position: "absolute", bottom: 8, right: 8 }}>
 
-            <TouchableOpacity style={[styles.miniAction, { backgroundColor: '#10B98115', paddingVertical: 8,paddingHorizontal:8, borderRadius: 144 }]} onPress={() => Linking.openURL(`tel:${delivery.customer_phone}`)}>
-              <Feather name="phone" size={14} color="#10B981" />
-              {/* <Text style={[styles.miniActionText, { color: '#10B981'}]}></Text> */}
-            </TouchableOpacity>
+              <TouchableOpacity style={[styles.miniAction, { backgroundColor: '#10B98115', paddingVertical: 8, paddingHorizontal: 8, borderRadius: 144 }]} onPress={() => Linking.openURL(`tel:${delivery.customer_phone}`)}>
+                <Feather name="phone" size={14} color="#10B981" />
+                {/* <Text style={[styles.miniActionText, { color: '#10B981'}]}></Text> */}
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -222,7 +221,7 @@ export default function DeliveryDetailScreen() {
       </ScrollView>
 
       {/* --- FLOATING TRACKING BUTTON --- */}
-      {['accepted', 'picked_up', 'out_for_delivery'].includes(delivery.status) && (
+      {['out_for_delivery'].includes(delivery.status) && (
         <TouchableOpacity
           onPress={() => router.push(`/delivery/tracking?id=${delivery.id}`)}
           style={styles.trackingFloatingBtn}
@@ -235,17 +234,35 @@ export default function DeliveryDetailScreen() {
       {/* --- BOTTOM ACTION HUB --- */}
       <View style={styles.bottomHub}>
         {action && (
+          <SlideToConfirm
+            label={action.label}
+            color={action.color}
+            icon={action.icon}
+            onConfirm={handleStatusUpdate}
+            isLoading={updating}
+          />
+        )}
+
+        {delivery.status === 'delivered' && (
           <TouchableOpacity
-            style={[styles.primaryBtn, { backgroundColor: action.color }]}
-            onPress={handleStatusUpdate}
-            disabled={updating}
+            onPress={() => router.push(`/delivery/tracking?id=${delivery.id}`)}
+            style={{
+              flexDirection: 'row',
+              gap: 12,
+              backgroundColor: '#6750A4',
+              borderRadius: 120,
+              padding: 20,
+              alignItems: 'center',
+              shadowColor: '#6750A4',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.3,
+              shadowRadius: 20,
+              elevation: 10,
+              justifyContent: "center"
+            }}
           >
-            {updating ? <ActivityIndicator color="#fff" /> : (
-              <>
-                <MaterialCommunityIcons name={action.icon as any} size={24} color="#fff" />
-                <Text style={styles.primaryBtnText}>{action.label}</Text>
-              </>
-            )}
+            <FontAwesome6 name="route" size={18} color="#fff" />
+            <Text style={styles.trackingFloatingText}>Track Order</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -321,7 +338,7 @@ const styles = StyleSheet.create({
 
   // Bottom Hub
   bottomHub: { position: 'absolute', bottom: 0, width: width, backgroundColor: '#fff', padding: 20, borderTopLeftRadius: 30, borderTopRightRadius: 30, shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 10 },
-  primaryBtn: { height: 56, borderRadius: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  primaryBtn: { height: 56, borderRadius: 118, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
   customerImage: {
     width: 40,

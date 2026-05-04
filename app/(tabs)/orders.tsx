@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { getDeliveries } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import type { DeliveryAssignment, DeliveryStatus } from '@/types';
@@ -40,7 +40,8 @@ export default function OrdersScreen() {
   const [deliveries, setDeliveries] = useState<DeliveryAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<DeliveryStatus | 'all'>('all');
+  const { filter } = useLocalSearchParams();
+  const [activeTab, setActiveTab] = useState<DeliveryStatus | 'all'>((filter as any) || 'all');
 
   const fetchDeliveries = useCallback(async () => {
     try {
@@ -55,11 +56,21 @@ export default function OrdersScreen() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    setLoading(true);
+    fetchDeliveries();
+  }, [activeTab]);
+
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchDeliveries();
-    }, [fetchDeliveries])
+      if (filter) {
+        setActiveTab(filter as any);
+        // Clear the param so it doesn't re-apply when clicking other tabs
+        router.setParams({ filter: undefined });
+      } else {
+        fetchDeliveries();
+      }
+    }, [fetchDeliveries, filter])
   );
 
   const onRefresh = () => {
@@ -71,7 +82,8 @@ export default function OrdersScreen() {
     const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
     console.log(item.status)
     const timeAssigned = new Date(item.assigned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+    const dateAssigned = new Date(item.assigned_at).toLocaleDateString()
+    const dateTimeAssigned = `${dateAssigned} at ${timeAssigned}`
     return (
       <TouchableOpacity
         onPress={() => router.push(`/delivery/${item.id}`)}

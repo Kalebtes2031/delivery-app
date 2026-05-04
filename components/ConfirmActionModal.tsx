@@ -9,7 +9,7 @@ interface ConfirmActionModalProps {
   confirmText?: string;
   cancelText?: string;
   isLoading?: boolean;
-  variant?: 'danger' | 'warning' | 'info' | 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'danger' | 'warning' | 'info' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'success';
   onConfirm: () => void;
   onClose: () => void;
   info?: boolean;
@@ -29,8 +29,26 @@ export default function ConfirmActionModal({
 }: ConfirmActionModalProps) {
   
   const isDanger = variant === 'danger';
-  const iconColor = info ? '#6750A4' : (isDanger ? '#dc2626' : '#6750A4');
-  const iconBg = info ? '#F5F3FF' : (isDanger ? '#FEF2F2' : '#F5F3FF');
+  const isSuccess = variant === 'success';
+
+  let iconColor = '#6750A4';
+  let iconBg = '#F5F3FF';
+  let confirmBtnBg = '#6750A4';
+  let iconName: any = 'check-circle';
+
+  if (info) {
+    iconName = 'info';
+  } else if (isDanger) {
+    iconColor = '#dc2626';
+    iconBg = '#FEF2F2';
+    confirmBtnBg = '#dc2626';
+    iconName = 'alert-triangle';
+  } else if (isSuccess) {
+    iconColor = '#059669';
+    iconBg = '#F0FDF4';
+    confirmBtnBg = '#059669';
+    iconName = 'check-circle';
+  }
 
   return (
     <Modal
@@ -45,7 +63,7 @@ export default function ConfirmActionModal({
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
-                <Feather name={info ? "info" : (isDanger ? "alert-triangle" : "check-circle")} size={20} color={iconColor} />
+                <Feather name={iconName} size={20} color={iconColor} />
               </View>
               <Text style={styles.titleText}>{title}</Text>
             </View>
@@ -72,7 +90,7 @@ export default function ConfirmActionModal({
             <TouchableOpacity
               onPress={onConfirm}
               disabled={isLoading}
-              style={[styles.confirmBtn, { backgroundColor: isDanger ? '#dc2626' : '#6750A4' }]}
+              style={[styles.confirmBtn, { backgroundColor: confirmBtnBg }]}
             >
               {isLoading && (
                 <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
