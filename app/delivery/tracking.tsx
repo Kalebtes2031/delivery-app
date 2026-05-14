@@ -1,30 +1,27 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StatusBar, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, StatusBar, Linking, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import MapLibreGL from '@maplibre/maplibre-react-native';
-import * as Location from 'expo-location';
-import { Entypo, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getDeliveryDetail, updateDeliveryStatus } from '@/services/api';
 import { firebaseTracking } from '@/services/firebaseTracking';
-import { requestLocationPermissions, startLocationWatcher } from '@/services/locationService';
-import type { DeliveryAssignment } from '@/types';
-import ConfirmActionModal from '@/components/ConfirmActionModal';
-
-const { MapView, Camera, MarkerView, RasterSource, RasterLayer, ShapeSource, LineLayer } = MapLibreGL;
+import * as Location from 'expo-location';
+import { STATUS_TABS, STATUS_CONFIG } from '@/constants/deliveryConstants';
 
 export default function DriverTrackingScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { MapView, Camera, MarkerView, ShapeSource, LineLayer, RasterSource, RasterLayer } = MapLibreGL as any;
+  const { id, order_id } = useLocalSearchParams();
   const router = useRouter();
-  const [delivery, setDelivery] = useState<DeliveryAssignment | null>(null);
+
+  const [delivery, setDelivery] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
   const [routeGeoJSON, setRouteGeoJSON] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const locationSubscription = useRef<any>(null);
-  const hasFetchedRoute = useRef(false);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+
+  const locationSubscription = useRef<Location.LocationObjectSubscription | null>(null);
+  const hasFetchedRoute = useRef(false);
 
   useEffect(() => {
     initTracking();
@@ -54,41 +51,44 @@ export default function DriverTrackingScreen() {
 
   const initTracking = async () => {
     try {
-      const { data } = await getDeliveryDetail(Number(id));
+      const response = await getDeliveryDetail(Number(id));
+      const data = response.data;
       setDelivery(data);
-      console.log('[Tracking] Delivery loaded:', data.tracking_id);
 
-      const permissions = await requestLocationPermissions();
-      if (!permissions) {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location access is required for tracking.');
         router.back();
         return;
       }
-      console.log('[Tracking] Location permissions granted');
 
       const destCoords: [number, number] = data.customer_lat && data.customer_lon
         ? [Number(data.customer_lon), Number(data.customer_lat)]
         : [38.74, 9.03];
 
-      locationSubscription.current = await startLocationWatcher((location) => {
-        setCurrentLocation(location);
-        const driverCoords: [number, number] = [location.coords.longitude, location.coords.latitude];
+      locationSubscription.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.Balanced, distanceInterval: 10 },
+        (location) => {
+          setCurrentLocation(location);
+          const driverCoords: [number, number] = [location.coords.longitude, location.coords.latitude];
 
-        if (!hasFetchedRoute.current) {
-          fetchRoute(driverCoords, destCoords);
-          hasFetchedRoute.current = true;
-        }
+          if (!hasFetchedRoute.current) {
+            fetchRoute(driverCoords, destCoords);
+            hasFetchedRoute.current = true;
+          }
 
-        if (data.tracking_id) {
-          firebaseTracking.updateLocation(
-            data.tracking_id,
-            location.coords.latitude,
-            location.coords.longitude,
-            location.coords.heading
-          );
+          if (data.tracking_id) {
+            firebaseTracking.updateLocation(
+              data.tracking_id,
+              location.coords.latitude,
+              location.coords.longitude,
+              location.coords.heading
+            );
+          }
         }
-      });
+      );
     } catch (error) {
-      console.error('[Tracking] Init failed:', error);
+      console.error('Tracking Error:', error);
       Alert.alert('Error', 'Could not initialize tracking.');
       router.back();
     } finally {
@@ -96,306 +96,234 @@ export default function DriverTrackingScreen() {
     }
   };
 
-  const handleComplete = () => {
-    if (!delivery) return;
-    setIsConfirmModalVisible(true);
-  };
-
   const onConfirmComplete = async () => {
     if (!delivery) return;
     setUpdating(true);
     try {
-      const { data } = await updateDeliveryStatus(delivery.id, 'delivered');
-      
-      // Update local state first to show updated status
-      setDelivery(data);
-      
-      // Stop tracking and cleanup listeners
+      await updateDeliveryStatus(delivery.id, 'delivered' as any);
       if (locationSubscription.current) {
         locationSubscription.current.remove();
-        locationSubscription.current = null;
       }
       if (delivery.tracking_id) {
         firebaseTracking.stopTracking(delivery.tracking_id);
       }
-
-      setIsConfirmModalVisible(false);
-      setUpdating(false);
-      
-      // Show success modal instead of immediate redirect
-      setTimeout(() => setIsSuccessModalVisible(true), 500);
+      router.back();
     } catch (error: any) {
-      setIsConfirmModalVisible(false);
-      Alert.alert('Error', error.response?.data?.error || 'Update failed');
+      Alert.alert('Error', 'Update failed');
     } finally {
       setUpdating(false);
-    }
-  };
-
-  const callCustomer = () => {
-    if (delivery?.customer_phone) {
-      Linking.openURL(`tel:${delivery.customer_phone}`);
+      setIsConfirmModalVisible(false);
     }
   };
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6750A4" />
-        <Text style={{ color: '#6750A4', marginTop: 16 }}>Initializing GPS Tracking...</Text>
+        <Text style={styles.loadingText}>Initializing Tracking...</Text>
       </View>
     );
   }
 
-  if (!delivery) return null;
-
-  const destCoords: [number, number] =
-    delivery.customer_lat && delivery.customer_lon
-      ? [Number(delivery.customer_lon), Number(delivery.customer_lat)]
-      : [38.74, 9.03];
+  const destCoords: [number, number] = delivery?.customer_lat && delivery?.customer_lon
+    ? [Number(delivery.customer_lon), Number(delivery.customer_lat)]
+    : [38.74, 9.03];
 
   const driverCoords: [number, number] = currentLocation
     ? [currentLocation.coords.longitude, currentLocation.coords.latitude]
     : destCoords;
 
-  // Calculate dynamic bounding box encompassing both points
-  const minLng = Math.min(driverCoords[0], destCoords[0]);
-  const maxLng = Math.max(driverCoords[0], destCoords[0]);
-  const minLat = Math.min(driverCoords[1], destCoords[1]);
-  const maxLat = Math.max(driverCoords[1], destCoords[1]);
+
+  const config = STATUS_CONFIG[delivery?.status || 'pending'] || STATUS_CONFIG.pending;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <View>
-        <View style={{ width: "100%", height: 500, overflow: "hidden" }}>
-          {/* v10 API — identical to Customer App's DeliveryLocation.tsx */}
-          <MapView
-            style={{ flex: 1 }}
-            styleURL="https://tiles.openfreemap.org/styles/bright"
-            logoEnabled={false}
-            attributionEnabled={false}
-            onDidFinishLoadingStyle={() => setMapLoaded(true)}
-          >
-            <Camera
-              bounds={{
-                ne: [maxLng, maxLat],
-                sw: [minLng, minLat],
-                paddingLeft: 40,
-                paddingRight: 40,
-                paddingTop: 80, // Accommodate back button
-                paddingBottom: 40,
-              }}
-              animationMode="flyTo"
-              animationDuration={1500}
-            />
-            <RasterSource
-              id="osm"
-              tileUrlTemplates={["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"]}
-              tileSize={256}
-            >
-              <RasterLayer id="osmLayer" sourceID="osm" />
-            </RasterSource>
 
-            {/* Route Polyline */}
-            {routeGeoJSON && (
-              <ShapeSource id="routeSource" shape={routeGeoJSON}>
-                <LineLayer
-                  id="routeFill"
-                  style={{
-                    lineColor: '#6750A4',
-                    lineWidth: 5,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                  }}
-                />
-              </ShapeSource>
-            )}
+      <View style={styles.mapContainer}>
+        <MapView
+          style={styles.map}
+          styleURL="https://tiles.openfreemap.org/styles/bright"
+          logoEnabled={false}
+          attributionEnabled={false}
+        >
+          <Camera
+            bounds={{
+              ne: [Math.max(driverCoords[0], destCoords[0]) + 0.005, Math.max(driverCoords[1], destCoords[1]) + 0.005],
+              sw: [Math.min(driverCoords[0], destCoords[0]) - 0.005, Math.min(driverCoords[1], destCoords[1]) - 0.005],
+              paddingLeft: 40, paddingRight: 40, paddingTop: 40, paddingBottom: 150
+            }}
+            animationMode="flyTo"
+            animationDuration={2000}
+          />
 
-            {/* Destination Marker */}
-            <MarkerView coordinate={destCoords}>
-              <View style={{ alignItems: 'center', justifyContent: 'center', width: 100 }}>
-                <View style={{
-                  backgroundColor: 'white',
-                  padding: 3,
-                  borderRadius: 100,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
-                  elevation: 5,
-                  zIndex: 4
-                }}>
-                  <Entypo name="location-pin" size={28} color="#EF4444" />
-                </View>
-                <View className="bg-[#6C57A5] px-2 py-1 rounded-md mt-1">
-                  <Text className="text-secondary text-[10px] font-bold">Destination</Text>
-                </View>
-              </View>
-            </MarkerView>
+          <RasterSource id="osm" tileUrlTemplates={["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"]} tileSize={256}>
+            <RasterLayer id="osmLayer" sourceID="osm" />
+          </RasterSource>
 
-            {/* Driver Marker */}
-            {currentLocation && (
-              <MarkerView coordinate={driverCoords}>
-                <View style={{ alignItems: 'center' }}>
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 22,
-                      backgroundColor: '#6750A4',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 3,
-                      borderColor: '#FFFFFF',
-                      shadowColor: '#6750A4',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
-                      elevation: 8,
-                      zIndex: 4
-                    }}
-                  >
-                    <MaterialCommunityIcons name="truck-delivery" size={22} color="#FFFFFF" />
-                  </View>
-                  <View style={{ backgroundColor: '#6750A4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginTop: 4 }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '900' }}>YOU</Text>
-                  </View>
+          {routeGeoJSON && (
+            <ShapeSource id="routeSource" shape={routeGeoJSON}>
+              <LineLayer
+                id="routeLayer"
+                style={{ lineColor: '#6750A4', lineWidth: 5, lineCap: 'round', lineJoin: 'round' }}
+              />
+            </ShapeSource>
+          )}
+
+          <MarkerView coordinate={destCoords}>
+            <View style={styles.destMarker}>
+              <Ionicons name="location" size={30} color="#EF4444" />
+            </View>
+          </MarkerView>
+
+          <MarkerView coordinate={driverCoords}>
+            <View style={[styles.driverMarker, { transform: [{ rotate: `${currentLocation?.coords.heading || 0}deg` }] }]}>
+              <MaterialCommunityIcons name="truck-delivery" size={24} color="white" />
+            </View>
+          </MarkerView>
+        </MapView>
+
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.bottomSheet}>
+        <View style={styles.orderInfo}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
+            <View style={{ gap: 10 }}>
+              <Text style={{
+                fontWeight: "bold",
+                fontSize: 16,
+                color: "#6750A4"
+              }}>
+                Order ID: #{order_id}
+              </Text>
+
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: config.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+              <MaterialCommunityIcons name={config.icon} size={16} color={config.text} />
+              <Text style={{
+                color: config.text, fontSize: 10,
+                fontWeight: "700",
+                textTransform: "uppercase",
+                marginLeft: 5
+              }}>{config.label}</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
+            {/* customer image */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {delivery?.customer_image ?
+                <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
+                  <Image
+                    source={{ uri: delivery.customer_image }}
+                    style={{ height: 50, width: 50, borderRadius: 125, resizeMode: "cover" }} />
                 </View>
-              </MarkerView>
-            )}
-          </MapView>
+                :
+                <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
+                  <Ionicons name="person" size={24} color="#64748B" />
+                </View>
+              }
+              <Text style={styles.customerName}>{delivery?.customer_name || 'Customer'}</Text>
+            </View>
+            <View>
+              <TouchableOpacity
+                style={styles.callButton}
+                onPress={() => delivery?.customer_phone && Linking.openURL(`tel:${delivery.customer_phone}`)}
+              >
+                <Ionicons name="call" size={18} color="#fff" />
+                {/* <Text style={styles.callButtonText}>Call</Text> */}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
-        {/* Map loading overlay */}
-        {!mapLoaded && (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color="#6750A4" />
-            <Text style={{ marginTop: 8, color: '#94A3B8', fontSize: 12 }}>Loading Map...</Text>
-          </View>
-        )}
-        {/* Floating Back Button */}
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            position: 'absolute',
-            top: 50,
-            left: 20,
-            backgroundColor: '#FFFFFF',
-            width: 34,
-            height: 34,
-            borderRadius: 22,
-            borderWidth: 1,
-            borderColor: "#6750A4",
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.15,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#6750A4" />
-        </TouchableOpacity>
-        <View>
-          {/* Overlay Info */}
-          <View style={{ flexDirection: "column",  padding: 16, gap: 32, borderTopRightRadius: 44, borderTopLeftRadius: 44 }}>
-            <View style={{ backgroundColor: '#ffffff', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#6750A4' }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <View>
-                  <Text style={{ color: '#6750A4', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>Live Delivery</Text>
-                  <Text style={{ color: '#6750A4', fontSize: 18, fontWeight: '900' }}>Order #{delivery.vendor_order}</Text>
-                </View>
-                <View style={{ backgroundColor: '#059669', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 }}>
-                  <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>{delivery.status.replace(/_/g, ' ').toUpperCase()}</Text>
-                </View>
-              </View>
+        <View style={styles.actionButtons}>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ backgroundColor: '#ffffff', padding: 1, borderRadius: 118, borderWidth:1, borderColor: '#6750A4' }}>
-                  {delivery.customer_image ? (
-                    <Image
-                      source={{ uri: delivery.customer_image }}
-                      style={{ width: 40, height: 40, borderRadius: 112 }}
-                    />
-                  ) : (
-                    <View style={{ width: 40, height: 40, borderRadius: 112, justifyContent: 'center', alignItems: 'center' }}>
-                      <Ionicons name="person" size={20} color="#6750A4" />
-                    </View>
-                  )}
-                </View>
-                <Text style={{ color: '#6750A4', fontSize: 14, fontWeight: '600' }}>{delivery.customer_name || 'Customer'}</Text>
-              </View>
 
-              {delivery.customer_phone && (
-                <TouchableOpacity
-                  onPress={callCustomer}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}
-                >
-                  <Ionicons name="call" size={20} color="#29ac1dff" />
-                  <Text style={{ color: '#6750A4', fontSize: 13 }}>
-                    {delivery.customer_phone}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {delivery.status === 'out_for_delivery' && (
-            <TouchableOpacity
-              onPress={handleComplete}
-              disabled={updating}
-              style={{
-                backgroundColor: '#059669',
-                borderRadius: 120,
-                padding: 20,
-                alignItems: 'center',
-                shadowColor: '#059669',
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.3,
-                shadowRadius: 20,
-                elevation: 10,
-                justifyContent: "center",
-                marginTop: 10
-              }}
-            >
-              {updating ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900' }}>COMPLETE DELIVERY</Text>
-              )}
-            </TouchableOpacity>
-            )}
-          </View>
+          <TouchableOpacity
+            style={styles.completeButton}
+            onPress={() => setIsConfirmModalVisible(true)}
+          >
+            <Text style={styles.completeButtonText}>Complete Delivery</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <ConfirmActionModal 
-        visible={isConfirmModalVisible}
-        title="Complete Delivery"
-        description="Are you sure you have successfully delivered this order to the customer?"
-        confirmText="Yes, Completed"
-        cancelText="Not Yet"
-        variant="success"
-        isLoading={updating}
-        onConfirm={onConfirmComplete}
-        onClose={() => setIsConfirmModalVisible(false)}
-      />
-
-      <ConfirmActionModal 
-        visible={isSuccessModalVisible}
-        title="Success!"
-        description="Order has been successfully fulfilled. You can now go back to see your summary."
-        confirmText="Done"
-        cancelText="Close"
-        variant="success"
-        info={true}
-        onConfirm={() => {
-            setIsSuccessModalVisible(false);
-            router.back();
-        }}
-        onClose={() => setIsSuccessModalVisible(false)}
-      />
+      <Modal visible={isConfirmModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Delivery</Text>
+            <Text style={styles.modalText}>Has the order been successfully delivered?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setIsConfirmModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmButton} onPress={onConfirmComplete} disabled={updating}>
+                {updating ? <ActivityIndicator color="white" /> : <Text style={styles.confirmButtonText}>Confirm</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  mapContainer: { flex: 1, position: 'relative' },
+  map: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  loadingText: { marginTop: 12, color: '#6750A4', fontWeight: '600' },
+  backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
+  bottomSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, elevation: 20 },
+  orderInfo: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#6750A4',
+    borderRadius: 16,
+    padding: 12,
+  },
+  customerName: { fontSize: 20, fontWeight: '700', color: '#1E293B' },
+  addressText: { fontSize: 14, color: '#64748B', marginTop: 4 },
+  actionButtons: { flexDirection: 'row', marginTop: 24, gap: 12 },
+  callButton: { paddingHorizontal: 10, height: 40, borderRadius: 116, borderWeight: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: "#16A34A" },
+  callButtonText: { color: '#fff', fontWeight: '600' },
+  completeButton: { flex: 2, height: 50, backgroundColor: '#16A34A', borderRadius: 116, alignItems: 'center', justifyContent: 'center' },
+  completeButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  destMarker: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
+
+  driverMarker: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#6750A4',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 24, padding: 24, width: '100%' },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: '#1E293B' },
+  modalText: { fontSize: 16, color: '#64748B', marginTop: 12 },
+  modalActions: { flexDirection: 'row', marginTop: 24, gap: 12 },
+  cancelButton: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9' },
+  cancelButtonText: { color: '#64748B', fontWeight: '600' },
+  confirmButton: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: '#6750A4' },
+  confirmButtonText: { color: '#fff', fontWeight: '600' }
+});

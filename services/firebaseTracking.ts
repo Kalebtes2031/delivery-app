@@ -8,29 +8,20 @@ export const firebaseTracking = {
   async updateLocation(trackingId: string, latitude: number, longitude: number, heading?: number | null) {
     try {
       const ref = database().ref(`deliveries/${trackingId}`);
+      
       const payload = {
         latitude,
         longitude,
         heading: heading ?? 0,
         updated_at: database.ServerValue.TIMESTAMP,
       };
+      
       console.log('[Firebase] Writing to:', `deliveries/${trackingId}`, payload);
       await ref.update(payload);
       console.log('[Firebase] ✅ Write successful');
     } catch (error: any) {
       console.error('[Firebase] ❌ Write FAILED:', error?.message || error);
-      console.error('[Firebase] This usually means your Realtime Database rules are rejecting writes.');
-      console.error('[Firebase] Go to Firebase Console → Realtime Database → Rules and set:');
-      console.error(`[Firebase] {
-  "rules": {
-    "deliveries": {
-      "$tracking_id": {
-        ".read": true,
-        ".write": true
-      }
-    }
-  }
-}`);
+      console.error('[Firebase] Check your google-services.json and Firebase Console Rules.');
     }
   },
 

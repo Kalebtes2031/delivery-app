@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,47 +12,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useDelivery } from '@/context/DeliveryContext';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
 import ToggleSwitch from '@/components/ToggleButton';
-import { DeliveryAssignment } from '@/types';
-import { getDeliveries, getDriverStats } from '@/services/api';
+import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
 
 const { width } = Dimensions.get('window');
 
-// Using dynamic stats from the API now, this is just a type reference
-type DriverStat = {
-  label: string;
-  value: string;
-  icon: string;
-  color: string;
-  type: 'ion' | 'material';
-};
-
-const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; icon: any }> = {
-  pending: { bg: '#FFF7ED', text: '#EA580C', label: 'Assigned', icon: 'clock-outline' },
-  accepted: { bg: '#EFF6FF', text: '#2563EB', label: 'Accepted', icon: 'check-circle-outline' },
-  picked_up: { bg: '#FAF5FF', text: '#9333EA', label: 'Picked Up', icon: 'package-variant' },
-  out_for_delivery: { bg: '#F0FDF4', text: '#16A34A', label: 'In Transit', icon: 'truck-fast-outline' },
-  delivered: { bg: '#F8FAFC', text: '#64748B', label: 'Fulfilled', icon: 'check-all' },
-  failed: { bg: '#FEF2F2', text: '#DC2626', label: 'Failed', icon: 'alert-circle-outline' },
-};
-
-
-const STATUS_ORDER = [
-  "pending",
-  "accepted",
-  "picked_up",
-  "out_for_delivery",
-  "delivered",
-];
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, toggleOnlineStatus } = useAuth();
-  const [deliveries, setDeliveries] = useState<DeliveryAssignment[]>([]);
-  const [driverStats, setDriverStats] = useState({ earnings: '0.00', assigned_orders: 0, pending_orders: 0, total_orders: 0 });
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
 
   const handleToggleOnline = async () => {
@@ -67,33 +38,14 @@ export default function HomeScreen() {
   };
 
   const isOnline = user?.memberships?.some(m => m.role === 'delivery' && m.is_active);
- 
-  const fetchDeliveries = useCallback(async () => {
-    try {
-      const [deliveriesRes, statsRes] = await Promise.all([
-        getDeliveries(),
-        getDriverStats()
-      ]);
-      setDeliveries(Array.isArray(deliveriesRes.data) ? deliveriesRes.data : (deliveriesRes.data as any).results || []);
-      setDriverStats(statsRes.data);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchDeliveries();
+    refreshAll();
   };
 
   useEffect(() => {
-    setLoading(true);
-    fetchDeliveries();
-  }, [fetchDeliveries]);
+    refreshAll();
+  }, []);
 
 
   // Find the latest delivery that is currently "Out for Delivery"
@@ -166,7 +118,13 @@ export default function HomeScreen() {
           ].map((stat, index) => (
             <TouchableOpacity 
               key={index} 
-              style={styles.statCard}
+              style={[
+                styles.statCard,
+                { 
+                  borderColor: stat.color + '20',
+                  shadowColor: stat.color,
+                }
+              ]}
               onPress={stat.onPress}
               disabled={!stat.onPress}
             >
@@ -288,10 +246,16 @@ export default function HomeScreen() {
               })}
             </View>
           </TouchableOpacity>
-        ) : (
+        ) : loading ? (
           <View style={styles.emptyHeroCard}>
             <MaterialCommunityIcons name="radar" size={40} color="#6750A4" style={{ opacity: 0.5 }} />
             <Text style={styles.emptyHeroText}>Searching for new orders...</Text>
+          </View>
+        ) : (
+          <View style={styles.emptyHeroCard}>
+            <MaterialCommunityIcons name="package-variant-closed-remove" size={40} color="#94A3B8" style={{ opacity: 0.6 }} />
+            <Text style={styles.emptyHeroText}>No active deliveries right now</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>New orders will appear here when assigned</Text>
           </View>
         )}
 
@@ -398,11 +362,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 20,
     alignItems: 'center',
-    shadowColor: '#6750A4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
   },
   statIconCircle: { padding: 8, borderRadius: 12, marginBottom: 8 },
   statValue: { fontSize: 16, fontWeight: '800', color: '#1E293B' },

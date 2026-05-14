@@ -11,71 +11,46 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { getDeliveries } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { useDelivery } from '@/context/DeliveryContext';
 import type { DeliveryAssignment, DeliveryStatus } from '@/types';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import ToggleSwitch from '@/components/ToggleButton';
-
-const STATUS_TABS: { label: string; value: DeliveryStatus | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Assigned', value: 'pending' },
-  { label: 'Picked Up', value: 'picked_up' },
-  { label: 'In Transit', value: 'out_for_delivery' },
-  { label: 'Fulfilled', value: 'delivered' },
-];
-
-const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; icon: any }> = {
-  pending: { bg: '#FFF7ED', text: '#EA580C', label: 'Assigned', icon: 'clock-outline' },
-  accepted: { bg: '#EFF6FF', text: '#2563EB', label: 'Accepted', icon: 'check-circle-outline' },
-  picked_up: { bg: '#FAF5FF', text: '#9333EA', label: 'Picked Up', icon: 'package-variant' },
-  out_for_delivery: { bg: '#F0FDF4', text: '#16A34A', label: 'In Transit', icon: 'truck-fast-outline' },
-  delivered: { bg: '#F8FAFC', text: '#64748B', label: 'Fulfilled', icon: 'check-all' },
-  failed: { bg: '#FEF2F2', text: '#DC2626', label: 'Failed', icon: 'alert-circle-outline' },
-};
+import { STATUS_TABS, STATUS_CONFIG } from '@/constants/deliveryConstants';
 
 export default function OrdersScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const [deliveries, setDeliveries] = useState<DeliveryAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { deliveries: allDeliveries, isLoading, isRefreshing, refreshDeliveries } = useDelivery();
   const { filter } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState<DeliveryStatus | 'all'>((filter as any) || 'all');
 
-  const fetchDeliveries = useCallback(async () => {
-    try {
-      const status = activeTab === 'all' ? undefined : activeTab;
-      const { data } = await getDeliveries(status);
-      setDeliveries(Array.isArray(data) ? data.sort((a: DeliveryAssignment, b: DeliveryAssignment) => b.vendor_order - a.vendor_order) : (data as any).results.sort((a: DeliveryAssignment, b: DeliveryAssignment) => b.vendor_order - a.vendor_order) || []);
-    } catch (error) {
-      console.error('Failed to fetch deliveries:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [activeTab]);
+  // Derive filtered + sorted deliveries from context
+  const deliveries = activeTab === 'all'
+    ? [...allDeliveries].sort((a, b) => b.vendor_order - a.vendor_order)
+    : allDeliveries
+        .filter(d => d.status === activeTab)
+        .sort((a, b) => b.vendor_order - a.vendor_order);
+
+  const loading = isLoading;
+  const refreshing = isRefreshing;
 
   useEffect(() => {
-    setLoading(true);
-    fetchDeliveries();
-  }, [activeTab]);
+    refreshDeliveries();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       if (filter) {
         setActiveTab(filter as any);
-        // Clear the param so it doesn't re-apply when clicking other tabs
         router.setParams({ filter: undefined });
-      } else {
-        fetchDeliveries();
       }
-    }, [fetchDeliveries, filter])
+      refreshDeliveries();
+    }, [filter])
   );
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchDeliveries();
+    refreshDeliveries();
   };
 
   const renderDeliveryCard = ({ item }: { item: DeliveryAssignment }) => {
@@ -126,13 +101,13 @@ export default function OrdersScreen() {
         </View>
 
         {/* Card Footer */}
-        <View style={styles.cardFooter}>
+        {/* <View style={styles.cardFooter}>
           <View style={styles.footerAction}>
             <Ionicons name="navigate-circle-outline" size={20} color="#6750A4" />
             <Text style={styles.footerActionText}>View Map</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-        </View>
+        </View> */}
       </TouchableOpacity>
     );
   };

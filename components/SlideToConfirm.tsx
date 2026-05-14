@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Dimensions, Animated } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Text, Dimensions, Animated, Easing } from 'react-native';
 import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -19,7 +19,53 @@ interface SlideToConfirmProps {
 
 export default function SlideToConfirm({ onConfirm, label, color, icon, isLoading }: SlideToConfirmProps) {
   const [isCompleted, setIsCompleted] = useState(false);
-  const translateX = React.useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  // Animated hint arrows
+  const arrowAnim = useRef(new Animated.Value(0)).current;
+  const arrowAnim2 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!isCompleted && !isLoading) {
+      const loop = Animated.loop(
+        Animated.parallel([
+          // First arrow (original)
+          Animated.sequence([
+            Animated.timing(arrowAnim, {
+              toValue: 1,
+              duration: 1500,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.timing(arrowAnim, {
+              toValue: 0,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ]),
+
+          // Second arrow (delayed)
+          Animated.sequence([
+            Animated.delay(300), // 👈 delay here
+            Animated.timing(arrowAnim2, {
+              toValue: 1,
+              duration: 1500,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.timing(arrowAnim2, {
+              toValue: 0,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      );
+
+      loop.start();
+      return () => loop.stop();
+    }
+  }, [isCompleted, isLoading]);
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX } }],
@@ -54,18 +100,60 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
     }
   };
 
-  const opacity = translateX.interpolate({
+  const labelOpacity = translateX.interpolate({
     inputRange: [0, SUCCESS_THRESHOLD / 2],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
+  // Arrow animation: slides right and fades out
+  const arrowTranslateX = arrowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 140],
+  });
+  const arrowOpacity = arrowAnim.interpolate({
+    inputRange: [0, 0.3, 0.7, 1],
+    outputRange: [0, 1, 1, 0],
+  });
+  const arrowTranslateX2 = arrowAnim2.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 140],
+  });
+
+  const arrowOpacity2 = arrowAnim2.interpolate({
+    inputRange: [0, 0.3, 0.7, 1],
+    outputRange: [0, 1, 1, 0],
+  });
   return (
     <View style={[styles.container, { backgroundColor: color + '20' }]}>
-      <Animated.View style={[styles.textContainer, { opacity }]}>
-        <Text style={[styles.label, { color }]}>{label}</Text>
+      {/* Label + animated hint arrows */}
+      <Animated.View style={[styles.textContainer, { opacity: labelOpacity }]}>
+        <View style={styles.labelRow}>
+
+          {!isCompleted && !isLoading && (
+            <>
+              <Animated.View style={{
+                transform: [{ translateX: arrowTranslateX }],
+                opacity: arrowOpacity,
+                marginLeft: 8,
+              }}>
+                <MaterialCommunityIcons name="chevron-double-right" size={20} color={color} />
+              </Animated.View>
+              {/* <Animated.View style={{
+                transform: [{ translateX: arrowTranslateX2 }],
+                opacity: arrowOpacity2,
+                marginLeft: 8,
+                position: 'absolute', 
+              }}>
+                <MaterialCommunityIcons name="chevron-double-right" size={20} color={color} />
+              </Animated.View> */}
+            </>
+
+          )}<Text style={[styles.label, { color: color + '50' }]}>{label}</Text>
+        </View>
       </Animated.View>
 
+      {/* Draggable knob */}
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onHandlerStateChange}
@@ -86,18 +174,19 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
             },
           ]}
         >
-          <MaterialCommunityIcons 
-            name={(isCompleted || isLoading) ? "check" : (icon as any || "chevron-right")} 
-            size={28} 
-            color="#fff" 
+          <MaterialCommunityIcons
+            name={(isCompleted || isLoading) ? "check" : (icon as any || "chevron-right")}
+            size={28}
+            color="#fff"
           />
         </Animated.View>
       </PanGestureHandler>
-      
+
+      {/* Static right-side hint */}
       {!isCompleted && !isLoading && (
-         <View style={styles.hintContainer}>
-            <MaterialCommunityIcons name="chevron-double-right" size={20} color={color} style={styles.hintIcon} />
-         </View>
+        <View style={styles.hintContainer}>
+          <MaterialCommunityIcons name="chevron-right" size={18} color={color} style={styles.hintIcon} />
+        </View>
       )}
     </View>
   );
@@ -133,6 +222,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   label: {
     fontSize: 16,
     fontWeight: '800',
@@ -141,10 +235,10 @@ const styles = StyleSheet.create({
   },
   hintContainer: {
     position: 'absolute',
-    right: 20,
+    right: 16,
     zIndex: 1,
   },
   hintIcon: {
-    opacity: 0.5,
+    opacity: 0.3,
   }
 });
