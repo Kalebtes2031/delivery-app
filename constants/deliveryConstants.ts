@@ -36,6 +36,7 @@ export const STATUS_TABS: { label: string; value: DeliveryStatus | 'all' }[] = [
 
 export interface DriverStats {
   earnings: string;
+  cash_on_hand: string;
   assigned_orders: number;
   pending_orders: number;
   total_orders: number;

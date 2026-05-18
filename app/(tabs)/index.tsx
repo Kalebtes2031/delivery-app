@@ -100,7 +100,7 @@ export default function HomeScreen() {
         {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
         <View style={styles.statsGrid}>
           {[
-            { label: 'Earnings', value: `${driverStats.earnings} ETB`, icon: 'cash-outline', color: '#10B981', type: 'ion' },
+            { label: 'Cash on Hand', value: `${driverStats.cash_on_hand || '0.00'} ETB`, icon: 'wallet-outline', color: '#10B981', type: 'ion' },
             { 
               label: 'Assigned Orders', 
               value: driverStats.pending_orders.toString(), 

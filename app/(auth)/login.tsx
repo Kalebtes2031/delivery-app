@@ -67,7 +67,7 @@ export default function LoginScreen() {
                 letterSpacing: 1,
               }}
             >
-              QINE DELIVERY APP
+              ACTIVE DELIVERY APP
             </Text>
             {/* <Text
               style={{

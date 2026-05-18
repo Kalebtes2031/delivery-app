@@ -130,13 +130,13 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <Text style={styles.versionText}>Qine Delivery App</Text>
+        <Text style={styles.versionText}>Active Delivery App</Text>
       </ScrollView>
 
       <ConfirmActionModal
         visible={showLogoutConfirm}
         title="Sign Out"
-        description="Are you sure you want to sign out from the Qine Delivery App?"
+        description="Are you sure you want to sign out from the Active Delivery App?"
         confirmText="Yes"
         cancelText="No"
         onConfirm={logout}

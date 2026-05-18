@@ -27,6 +27,7 @@ interface DeliveryContextType {
 
 const DEFAULT_STATS: DriverStats = {
   earnings: '0.00',
+  cash_on_hand: '0.00',
   assigned_orders: 0,
   pending_orders: 0,
   total_orders: 0,

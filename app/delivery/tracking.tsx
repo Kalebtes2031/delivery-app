@@ -294,8 +294,8 @@ const styles = StyleSheet.create({
   actionButtons: { flexDirection: 'row', marginTop: 24, gap: 12 },
   callButton: { paddingHorizontal: 10, height: 40, borderRadius: 116, borderWeight: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: "#16A34A" },
   callButtonText: { color: '#fff', fontWeight: '600' },
-  completeButton: { flex: 2, height: 50, backgroundColor: '#16A34A', borderRadius: 116, alignItems: 'center', justifyContent: 'center' },
-  completeButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  completeButton: { flex: 2, height: 50, backgroundColor: '#059669', borderRadius: 116, alignItems: 'center', justifyContent: 'center' },
+  completeButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
   destMarker: {
     width: 36,
     height: 36,
