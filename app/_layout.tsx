@@ -1,11 +1,12 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DeliveryProvider } from '@/context/DeliveryContext';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { initI18n } from '@/i18n';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -52,6 +53,19 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    initI18n()
+      .then(() => setI18nReady(true))
+      .catch((error) => {
+        console.error("Error initializing i18n:", error);
+        setI18nReady(true);
+      });
+  }, []);
+
+  if (!i18nReady) return null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>

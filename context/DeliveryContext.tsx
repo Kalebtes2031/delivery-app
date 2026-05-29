@@ -16,6 +16,7 @@ interface DeliveryContextType {
   driverStats: DriverStats;
   isLoading: boolean;
   isRefreshing: boolean;
+  error: string | null;
 
   // Actions
   refreshDeliveries: (status?: DeliveryStatus) => Promise<void>;
@@ -38,6 +39,7 @@ const DeliveryContext = createContext<DeliveryContextType>({
   driverStats: DEFAULT_STATS,
   isLoading: true,
   isRefreshing: false,
+  error: null,
   refreshDeliveries: async () => {},
   refreshStats: async () => {},
   refreshAll: async () => {},
@@ -52,6 +54,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [driverStats, setDriverStats] = useState<DriverStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Cache for individual delivery details (keyed by id)
   const [detailCache, setDetailCache] = useState<Record<number, DeliveryAssignment>>({});
@@ -59,15 +62,20 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   // ── Fetch all deliveries (optionally filtered by status) ──
   const refreshDeliveries = useCallback(async (status?: DeliveryStatus) => {
     try {
+      setError(null);
       const { data } = await getDeliveries(status);
+      // Handle both plain array (pagination disabled) and paginated envelope
       const list = Array.isArray(data) ? data : (data as any).results || [];
-      // Sort by vendor_order descending (newest first)
+      // Sort by assigned_at descending (newest first) — matches backend ordering
       const sorted = list.sort(
-        (a: DeliveryAssignment, b: DeliveryAssignment) => b.vendor_order - a.vendor_order
+        (a: DeliveryAssignment, b: DeliveryAssignment) =>
+          new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()
       );
       setDeliveries(sorted);
-    } catch (error) {
-      console.error('[DeliveryContext] Failed to fetch deliveries:', error);
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message || 'Failed to load deliveries';
+      setError(message);
+      console.error('[DeliveryContext] Failed to fetch deliveries:', message);
     }
   }, []);
 
@@ -139,6 +147,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         driverStats,
         isLoading,
         isRefreshing,
+        error,
         refreshDeliveries,
         refreshStats,
         refreshAll,

@@ -101,7 +101,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon={<Ionicons name="language-outline" size={20} color="#fff" />}
             label="Language"
-            // onPress={() => router.push("/language")}
+            onPress={() => router.push("/language")}
           />
 
           <MenuItem
