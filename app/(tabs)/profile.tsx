@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Ionicons, Feather, Entypo, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
+import { useTranslation } from 'react-i18next'; 
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -52,7 +53,9 @@ function MenuItem({
         }}>
           {icon}
         </View>
-        <Text style={{ fontWeight: '600', fontSize: 16, color: "#fff" }}>{label}</Text>
+        <Text style={{ fontWeight: '600', fontSize: 16, color: "#fff" }} numberOfLines={1}
+    adjustsFontSizeToFit
+    minimumFontScale={0.8} >{label}</Text>
       </View>
       {!danger && <Entypo name="chevron-right" size={20} color="#fff" />}
     </TouchableOpacity>
@@ -63,6 +66,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { t } = useTranslation('driverProfile'); 
 
   return (
     <SafeAreaView style={styles.container}>
@@ -94,51 +98,51 @@ export default function ProfileScreen() {
         <View style={styles.menuContainer}>
           <MenuItem
             icon={<Ionicons name="person-outline" size={20} color="#fff" />}
-            label="Edit Profile"
+            label={t('editProfile')}
             onPress={() => router.push("/myprofile")}
           />
 
           <MenuItem
             icon={<Ionicons name="language-outline" size={20} color="#fff" />}
-            label="Language"
+            label={t('language')}
             onPress={() => router.push("/language")}
           />
 
           <MenuItem
             icon={<Ionicons name="document-text-outline" size={20} color="#fff" />}
-            label="Terms and Conditions"
+            label={t('termsAndConditions')}
             // onPress={() => router.push("/terms")}
           />
 
           <MenuItem
             icon={<Ionicons name="shield-checkmark-outline" size={20} color="#fff" />}
-            label="Privacy Policy"
+            label={t('privacyPolicy')}
             // onPress={() => router.push("/privacy-policy")}
           />
 
           <MenuItem
             icon={<Ionicons name="help-circle-outline" size={20} color="#fff" />}
-            label="Help & Support"
+            label={t('helpAndSupport')}
             // onPress={() => router.push("/help")}
           />
 
           <MenuItem
             icon={<MaterialIcons name="logout" size={20} color="#ff6b6b" />}
-            label="Sign Out"
+            label={t('signOut')}
             danger
             onPress={() => setShowLogoutConfirm(true)}
           />
         </View>
 
-        <Text style={styles.versionText}>Active Delivery App</Text>
+        <Text style={styles.versionText}>{t('activeDeliveryApp')}</Text>
       </ScrollView>
 
       <ConfirmActionModal
         visible={showLogoutConfirm}
-        title="Sign Out"
-        description="Are you sure you want to sign out from the Active Delivery App?"
-        confirmText="Yes"
-        cancelText="No"
+        title={t('signOutConfirmTitle')}
+        description={t('signOutConfirmDescription')}
+        confirmText={t('yes')}
+        cancelText={t('no')}
         onConfirm={logout}
         onClose={() => setShowLogoutConfirm(false)}
       />

@@ -1,0 +1,22 @@
+// en/profile.ts
+export default {
+  edit_profile: "Edit Profile",
+  personal_information: "Personal Information",
+  first_name: "First Name",
+  first_name_required: "First name is required.",
+  last_name: "Last Name",
+  last_name_required: "Last name is required.",
+  phone_number: "Phone Number",
+  update_profile: "Update Profile",
+  change_password: "Change Password",
+  current_password: "Current Password",
+  new_password: "New Password",
+  confirm_password: "Confirm Password",
+  password_min_length: "Password must be at least 8 characters",
+  passwords_do_not_match: "Passwords do not match.",
+  success: "Success",
+  profile_updated: "Profile updated successfully.",
+  password_changed: "Password changed successfully.",
+  profile_update_failed: "Profile update failed.",
+  password_change_failed: "Failed to change password.",
+};

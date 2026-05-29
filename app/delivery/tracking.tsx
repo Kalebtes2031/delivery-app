@@ -7,6 +7,7 @@ import { getDeliveryDetail, updateDeliveryStatus } from '@/services/api';
 import { firebaseTracking } from '@/services/firebaseTracking';
 import * as Location from 'expo-location';
 import { STATUS_TABS, STATUS_CONFIG } from '@/constants/deliveryConstants';
+import { useTranslation } from 'react-i18next'; // 👈 added
 
 export default function DriverTrackingScreen() {
   const { MapView, Camera, MarkerView, ShapeSource, LineLayer, RasterSource, RasterLayer } = MapLibreGL as any;
@@ -22,6 +23,9 @@ export default function DriverTrackingScreen() {
 
   const locationSubscription = useRef<Location.LocationObjectSubscription | null>(null);
   const hasFetchedRoute = useRef(false);
+
+  const { t, i18n } = useTranslation('driverOrders'); // 👈 translation hook
+  const isAmharic = i18n.language?.startsWith('am');
 
   useEffect(() => {
     initTracking();
@@ -57,7 +61,7 @@ export default function DriverTrackingScreen() {
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location access is required for tracking.');
+        Alert.alert(t('permissionDenied'), t('permissionDeniedMessage'));
         router.back();
         return;
       }
@@ -89,7 +93,7 @@ export default function DriverTrackingScreen() {
       );
     } catch (error) {
       console.error('Tracking Error:', error);
-      Alert.alert('Error', 'Could not initialize tracking.');
+      Alert.alert(t('errorTitle'), t('couldNotInitializeTracking'));
       router.back();
     } finally {
       setLoading(false);
@@ -109,7 +113,7 @@ export default function DriverTrackingScreen() {
       }
       router.back();
     } catch (error: any) {
-      Alert.alert('Error', 'Update failed');
+      Alert.alert(t('errorTitle'), t('updateFailed'));
     } finally {
       setUpdating(false);
       setIsConfirmModalVisible(false);
@@ -120,7 +124,7 @@ export default function DriverTrackingScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6750A4" />
-        <Text style={styles.loadingText}>Initializing Tracking...</Text>
+        <Text style={styles.loadingText}>{t('initializingTracking')}</Text>
       </View>
     );
   }
@@ -133,8 +137,15 @@ export default function DriverTrackingScreen() {
     ? [currentLocation.coords.longitude, currentLocation.coords.latitude]
     : destCoords;
 
-
   const config = STATUS_CONFIG[delivery?.status || 'pending'] || STATUS_CONFIG.pending;
+
+  // Localized customer name
+  const customerDefault = delivery?.customer_name || t('customer');
+  const customerAmField = (delivery as any)?.customer_name_am;
+  const customerNested = (delivery as any)?.customer;
+  const customerName = isAmharic && (customerAmField || customerNested?.name_am)
+    ? customerAmField || customerNested?.name_am
+    : customerDefault;
 
   return (
     <View style={styles.container}>
@@ -197,9 +208,8 @@ export default function DriverTrackingScreen() {
                 fontSize: 16,
                 color: "#6750A4"
               }}>
-                Order ID: #{order_id}
+                {t('orderNumber', { id: order_id })}
               </Text>
-
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: config.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
               <MaterialCommunityIcons name={config.icon} size={16} color={config.text} />
@@ -208,7 +218,9 @@ export default function DriverTrackingScreen() {
                 fontWeight: "700",
                 textTransform: "uppercase",
                 marginLeft: 5
-              }}>{config.label}</Text>
+              }}>
+                {t(`status.${delivery.status}`)} {/* 👈 translated status */}
+              </Text>
             </View>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
@@ -225,7 +237,7 @@ export default function DriverTrackingScreen() {
                   <Ionicons name="person" size={24} color="#64748B" />
                 </View>
               }
-              <Text style={styles.customerName}>{delivery?.customer_name || 'Customer'}</Text>
+              <Text style={styles.customerName}>{customerName}</Text>
             </View>
             <View>
               <TouchableOpacity
@@ -240,13 +252,11 @@ export default function DriverTrackingScreen() {
         </View>
 
         <View style={styles.actionButtons}>
-
-
           <TouchableOpacity
             style={styles.completeButton}
             onPress={() => setIsConfirmModalVisible(true)}
           >
-            <Text style={styles.completeButtonText}>Complete Delivery</Text>
+            <Text style={styles.completeButtonText}>{t('completeDelivery')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -254,14 +264,14 @@ export default function DriverTrackingScreen() {
       <Modal visible={isConfirmModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Delivery</Text>
-            <Text style={styles.modalText}>Has the order been successfully delivered?</Text>
+            <Text style={styles.modalTitle}>{t('confirmDelivery')}</Text>
+            <Text style={styles.modalText}>{t('deliveryConfirmationMessage')}</Text>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => setIsConfirmModalVisible(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.confirmButton} onPress={onConfirmComplete} disabled={updating}>
-                {updating ? <ActivityIndicator color="white" /> : <Text style={styles.confirmButtonText}>Confirm</Text>}
+                {updating ? <ActivityIndicator color="white" /> : <Text style={styles.confirmButtonText}>{t('confirm')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -305,7 +315,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 4,
   },
-
   driverMarker: {
     width: 40,
     height: 40,

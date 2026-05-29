@@ -16,6 +16,7 @@ import { useDelivery } from '@/context/DeliveryContext';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
 import ToggleSwitch from '@/components/ToggleButton';
 import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
+import { useTranslation } from 'react-i18next'; // 👈 added
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const { user, toggleOnlineStatus } = useAuth();
   const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
+  const { t } = useTranslation('deliveryHome'); // 👈 translation hook
 
   const handleToggleOnline = async () => {
     setIsToggling(true);
@@ -81,8 +83,10 @@ export default function HomeScreen() {
         {/* --- SECTION 1: THE SKYLINE (Header) --- */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greetingText}>Hello {user?.first_name || 'Delivery'},</Text>
-            <Text style={styles.userName}>Good Afternoon</Text>
+            <Text style={styles.greetingText}>
+              {t('helloUser', { name: user?.first_name || 'Delivery' })}
+            </Text>
+            <Text style={styles.userName}>{t('goodAfternoon')}</Text>
           </View>
           <View style={styles.headerActions}>
             <ToggleSwitch 
@@ -100,16 +104,16 @@ export default function HomeScreen() {
         {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
         <View style={styles.statsGrid}>
           {[
-            { label: 'Cash on Hand', value: `${driverStats.cash_on_hand || '0.00'} ETB`, icon: 'wallet-outline', color: '#10B981', type: 'ion' },
+            { label: t('cashOnHand'), value: `${driverStats.cash_on_hand || '0.00'} ETB`, icon: 'wallet-outline', color: '#10B981', type: 'ion' },
             { 
-              label: 'Assigned Orders', 
+              label: t('assignedOrders'), 
               value: driverStats.pending_orders.toString(), 
               icon: 'package-variant-closed', 
               color: '#6366F1', 
               type: 'material',
               onPress: () => router.push({ pathname: '/orders', params: { filter: 'pending' } })
             },
-            { label: 'Total Orders', 
+            { label: t('totalOrders'), 
               value: driverStats.total_orders.toString(), 
               icon: 'package-variant-closed', color: '#6366F1', 
               type: 'material',
@@ -143,9 +147,9 @@ export default function HomeScreen() {
 
         {/* --- SECTION 3: THE COMMAND CENTER (Active Task Hero) --- */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Current Shipment</Text>
+          <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
           <TouchableOpacity onPress={() => router.push('/orders')}>
-            <Text style={styles.seeAllText}>View All</Text>
+            <Text style={styles.seeAllText}>{t('viewAll')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -156,12 +160,16 @@ export default function HomeScreen() {
           >
             <View style={styles.heroRow}>
               <View style={styles.heroInfo}>
-                <Text style={styles.heroCustomerName}>Order #{activeDelivery.vendor_order || 'Customer'}</Text>
+                <Text style={styles.heroCustomerName}>
+                  {t('orderNumber', { id: activeDelivery.vendor_order || 'Customer' })}
+                </Text>
                 {/* <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.company_address}</Text> */}
               </View>
               <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
                 <MaterialCommunityIcons name={STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text} />
-                <Text style={[styles.statusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>{STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.label}</Text>
+                <Text style={[styles.statusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
+                  {t(`status.${activeDelivery.status.toLowerCase()}`)}
+                </Text>
               </View>
             </View>
             <View style={styles.heroRow}>
@@ -179,7 +187,7 @@ export default function HomeScreen() {
                 </View>
                 <View>
 
-                  <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || 'Customer'}</Text>
+                  <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || t('customer')}</Text>
                   <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.customer_phone}</Text>
                 </View>
               </View>
@@ -239,7 +247,7 @@ export default function HomeScreen() {
                       isCurrent && { color: '#F59E0B', fontWeight: '900' },
                       isFuture && { color: 'rgba(255,255,255,0.4)' }
                     ]}>
-                      {config.label}
+                      {t(`status.${status}`)}
                     </Text>
                   </View>
                 );
@@ -249,21 +257,21 @@ export default function HomeScreen() {
         ) : loading ? (
           <View style={styles.emptyHeroCard}>
             <MaterialCommunityIcons name="radar" size={40} color="#6750A4" style={{ opacity: 0.5 }} />
-            <Text style={styles.emptyHeroText}>Searching for new orders...</Text>
+            <Text style={styles.emptyHeroText}>{t('searchingForOrders')}</Text>
           </View>
         ) : (
           <View style={styles.emptyHeroCard}>
             <MaterialCommunityIcons name="package-variant-closed-remove" size={40} color="#94A3B8" style={{ opacity: 0.6 }} />
-            <Text style={styles.emptyHeroText}>No active deliveries right now</Text>
-            <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>New orders will appear here when assigned</Text>
+            <Text style={styles.emptyHeroText}>{t('noActiveDeliveries')}</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>{t('newOrdersWillAppear')}</Text>
           </View>
         )}
 
         {/* --- SECTION 4: DELIVERY SUMMARY --- */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Delivery Summary</Text>
+          <Text style={styles.sectionTitle}>{t('deliverySummary')}</Text>
           <TouchableOpacity onPress={() => router.push('/orders')}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllText}>{t('seeAll')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -286,19 +294,21 @@ export default function HomeScreen() {
                     </View>
                   )}
                   <View style={styles.customerInfo}>
-                    <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || 'Customer'}</Text>
-                    <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || 'No email provided'}</Text>
+                    <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
+                    <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                   </View>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
                   <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
-                  <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>{STATUS_CONFIG[delivery.status.toLowerCase()]?.label}</Text>
+                  <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
+                    {t(`status.${delivery.status.toLowerCase()}`)}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))
           ) : (
             <View style={styles.emptySummary}>
-              <Text style={styles.emptySummaryText}>No recent activities</Text>
+              <Text style={styles.emptySummaryText}>{t('noRecentActivities')}</Text>
             </View>
           )}
         </View>
@@ -307,7 +317,7 @@ export default function HomeScreen() {
   );
 }
 
-// Sub-component for Quick Actions
+// Sub-component for Quick Actions (unused, but kept as is)
 const ActionButton = ({ icon, label, color }: { icon: any, label: string, color: string }) => (
   <TouchableOpacity style={styles.actionCard}>
     <View style={[styles.actionIconBox, { backgroundColor: color }]}>

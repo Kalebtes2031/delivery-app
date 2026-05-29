@@ -37,7 +37,9 @@ export interface DeliveryAssignment {
   customer_email: string | null;
   customer_image: string | null;
   company_name: string | null;
+  company_name_am: string | null;
   company_address: string | null;
+
 }
 
 export type DeliveryStatus =

@@ -20,11 +20,13 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { updateProfile, changePassword as changePasswordApi } from '@/services/api';
 import BackButton from '@/components/BackButton';
+import { useTranslation } from 'react-i18next'; 
 
 export default function MyProfileScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
+  const { t } = useTranslation("profile"); // 👈 translation hook (default namespace)
 
   // Profile Form State
   const [profileForm, setProfileForm] = useState({
@@ -91,7 +93,7 @@ export default function MyProfileScreen() {
       await updateProfile(formData);
       await refreshUser();
     } catch (error: any) {
-      setErrors(prev => ({ ...prev, profile_image: 'Failed to synchronize profile image.' }));
+      setErrors(prev => ({ ...prev, profile_image: t('profile_update_failed') }));
     } finally {
       setIsUpdating(false);
     }
@@ -109,8 +111,8 @@ export default function MyProfileScreen() {
 
   const handleProfileSave = async () => {
     const newErrors: Record<string, string> = {};
-    if (!profileForm.first_name) newErrors.first_name = 'First name is required.';
-    if (!profileForm.last_name) newErrors.last_name = 'Last name is required.';
+    if (!profileForm.first_name) newErrors.first_name = t('first_name_required');
+    if (!profileForm.last_name) newErrors.last_name = t('last_name_required');
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -121,9 +123,9 @@ export default function MyProfileScreen() {
     try {
       await updateProfile(profileForm);
       await refreshUser();
-      Alert.alert('Success', 'Profile information updated successfully.');
+      Alert.alert(t('success'), t('profile_updated'));
     } catch (error: any) {
-      setErrors({ profile_general: 'An error occurred during profile update.' });
+      setErrors({ profile_general: t('profile_update_failed') });
     } finally {
       setIsUpdating(false);
     }
@@ -134,11 +136,11 @@ export default function MyProfileScreen() {
     const newErrors: Record<string, string> = {};
 
     if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match.';
+      newErrors.confirmPassword = t('passwords_do_not_match');
     }
 
     if (newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters.';
+      newErrors.newPassword = t('password_min_length'); // note: Amharic says 6, adjust if needed
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -150,9 +152,9 @@ export default function MyProfileScreen() {
     try {
       await changePasswordApi(currentPassword, newPassword);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      Alert.alert('Success', 'Security credentials updated successfully.');
+      Alert.alert(t('success'), t('password_changed'));
     } catch (error: any) {
-      const detail = error.response?.data?.detail || error.response?.data?.current_password?.[0] || error.response?.data?.non_field_errors?.[0] || 'Security update failed.';
+      const detail = error.response?.data?.detail || error.response?.data?.current_password?.[0] || error.response?.data?.non_field_errors?.[0] || t('password_change_failed');
       setErrors({ currentPassword: detail });
     } finally {
       setIsUpdating(false);
@@ -163,7 +165,7 @@ export default function MyProfileScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      <BackButton title='Edit Profile' color='gray' />
+      <BackButton title={t('edit_profile')} color='gray' />
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -187,31 +189,31 @@ export default function MyProfileScreen() {
           {errors.profile_image && <Text style={styles.errorTextCenter}>{errors.profile_image}</Text>}
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Personal Information</Text>
+            <Text style={styles.sectionLabel}>{t('personal_information')}</Text>
             <View style={styles.card}>
               <InputGroup 
-                label="First Name" 
+                label={t('first_name')} 
                 value={profileForm.first_name} 
-                onChangeText={(t: string) => {
-                  setProfileForm({...profileForm, first_name: t});
+                onChangeText={(t_val: string) => {
+                  setProfileForm({...profileForm, first_name: t_val});
                   clearError('first_name');
                 }} 
                 error={errors.first_name}
               />
               <InputGroup 
-                label="Last Name" 
+                label={t('last_name')} 
                 value={profileForm.last_name} 
-                onChangeText={(t: string) => {
-                  setProfileForm({...profileForm, last_name: t});
+                onChangeText={(t_val: string) => {
+                  setProfileForm({...profileForm, last_name: t_val});
                   clearError('last_name');
                 }} 
                 error={errors.last_name}
               />
               <InputGroup 
-                label="Phone Number" 
+                label={t('phone_number')} 
                 value={profileForm.phone_number} 
-                onChangeText={(t: string) => {
-                  setProfileForm({...profileForm, phone_number: t});
+                onChangeText={(t_val: string) => {
+                  setProfileForm({...profileForm, phone_number: t_val});
                   clearError('phone_number');
                 }} 
                 keyboardType="phone-pad"
@@ -226,41 +228,41 @@ export default function MyProfileScreen() {
                 onPress={handleProfileSave} 
                 disabled={!isProfileChanged || isUpdating}
               >
-                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Update Profile</Text>}
+                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('update_profile')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Password Settings</Text>
+            <Text style={styles.sectionLabel}>{t('change_password')}</Text>
             <View style={styles.card}>
               <InputGroup 
-                label="Current Password" 
+                label={t('current_password')} 
                 secureTextEntry 
                 value={passwordForm.currentPassword}
-                onChangeText={(t: string) => {
-                  setPasswordForm({...passwordForm, currentPassword: t});
+                onChangeText={(t_val: string) => {
+                  setPasswordForm({...passwordForm, currentPassword: t_val});
                   clearError('currentPassword');
                 }}
                 error={errors.currentPassword}
               />
               <View style={styles.divider} />
               <InputGroup 
-                label="New Password" 
+                label={t('new_password')} 
                 secureTextEntry 
                 value={passwordForm.newPassword}
-                onChangeText={(t: string) => {
-                  setPasswordForm({...passwordForm, newPassword: t});
+                onChangeText={(t_val: string) => {
+                  setPasswordForm({...passwordForm, newPassword: t_val});
                   clearError('newPassword');
                 }}
                 error={errors.newPassword}
               />
               <InputGroup 
-                label="Confirm Password" 
+                label={t('confirm_password')} 
                 secureTextEntry 
                 value={passwordForm.confirmPassword}
-                onChangeText={(t: string) => {
-                  setPasswordForm({...passwordForm, confirmPassword: t});
+                onChangeText={(t_val: string) => {
+                  setPasswordForm({...passwordForm, confirmPassword: t_val});
                   clearError('confirmPassword');
                 }}
                 error={errors.confirmPassword}
@@ -273,7 +275,7 @@ export default function MyProfileScreen() {
                 onPress={handlePasswordUpdate} 
                 disabled={!isPasswordFilled || isUpdating}
               >
-                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Update Password</Text>}
+                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('change_password')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -284,6 +286,7 @@ export default function MyProfileScreen() {
   );
 }
 
+// Sub‑component remains the same, just using t() for label/placeholder
 const InputGroup = ({ label, secureTextEntry, error, ...props }: any) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPassword = secureTextEntry;

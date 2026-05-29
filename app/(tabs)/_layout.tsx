@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next'; 
 
 export default function TabLayout() {
+  const { t } = useTranslation('deliveryHome'); 
+
   return (
     <Tabs
       screenOptions={{
@@ -19,21 +22,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('home'),
           tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Orders',
+          title: t('orders'),
           tabBarIcon: ({ color }) => <MaterialIcons name="local-shipping" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('profile'),
           tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />

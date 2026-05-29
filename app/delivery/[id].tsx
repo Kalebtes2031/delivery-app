@@ -29,6 +29,7 @@ import {
   STATUS_CONFIG,
   NEXT_ACTION,
 } from "@/constants/deliveryConstants";
+import { useTranslation } from "react-i18next"; // 👈 added
 
 const { width } = Dimensions.get("window");
 
@@ -39,6 +40,21 @@ export default function DeliveryDetailScreen() {
   const [delivery, setDelivery] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+
+  const { t, i18n } = useTranslation("driverOrders");
+  const isAmharic = i18n.language?.startsWith("am");
+
+  // Helper for localized names (same as OrdersScreen)
+  const getLocalName = (
+    defaultName: string | undefined,
+    amField?: string | null,
+    nestedObj?: { name_am?: string; name?: string } | null
+  ): string => {
+    if (!isAmharic) return defaultName || '';
+    if (amField) return amField;
+    if (nestedObj?.name_am) return nestedObj.name_am;
+    return defaultName || '';
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -51,7 +67,7 @@ export default function DeliveryDetailScreen() {
       const data = await getDeliveryById(Number(id));
       setDelivery(data);
     } catch (error) {
-      Alert.alert("Error", "Could not load delivery details.");
+      Alert.alert(t("errorTitle"), t("couldNotLoadDelivery"));
       router.back();
     } finally {
       setLoading(false);
@@ -69,7 +85,7 @@ export default function DeliveryDetailScreen() {
       setDelivery(updated);
       if (action.next === "delivered") router.back();
     } catch (error: any) {
-      Alert.alert("Error", error.response?.data?.error || "Update failed");
+      Alert.alert(t("errorTitle"), error.response?.data?.error || t("updateFailed"));
     } finally {
       setUpdating(false);
     }
@@ -87,6 +103,23 @@ export default function DeliveryDetailScreen() {
   const currentIndex = STATUS_ORDER.indexOf(delivery.status.toLowerCase());
   const hasBottomActions = delivery.status !== "delivered" && Boolean(action);
   const orderDetail = delivery.vendor_order_detail;
+
+ 
+  // console.log(delivery);
+const companyName =
+  isAmharic
+    ? orderDetail?.company?.name_am || delivery?.company_name || t("vendor")
+    : delivery?.company_name || orderDetail?.company?.name || t("vendor");
+  
+  const customerDefault = delivery.customer_name || t('customer');
+  const customerAmField = (delivery as any).customer_name_am;
+  const customerNested = (delivery as any).customer;
+  const customerName = getLocalName(customerDefault, customerAmField, customerNested) || customerDefault;
+
+  // Localized subcategory name (if available)
+  const subCategoryDefault = orderDetail?.company?.sub_category_name || '';
+  const subCategoryAm = (orderDetail?.company as any)?.sub_category_name_am;
+  const subCategoryName = isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
 
   return (
     <View style={styles.container}>
@@ -109,7 +142,7 @@ export default function DeliveryDetailScreen() {
             </TouchableOpacity>
             <View style={styles.headerInfo}>
               <Text style={styles.heroOrderTitle}>
-                Order #{delivery.vendor_order}
+                {t('orderNumber', { id: delivery.vendor_order })}
               </Text>
               {/* <Text style={styles.heroInvoiceTitle}>{orderDetail?.tax_invoice?.invoice_number}</Text> */}
             </View>
@@ -191,7 +224,7 @@ export default function DeliveryDetailScreen() {
                       },
                     ]}
                   >
-                    {STATUS_CONFIG[status].label}
+                    {t(`status.${status}`)} {/* 👈 translated status */}
                   </Text>
                 </View>
               );
@@ -207,9 +240,9 @@ export default function DeliveryDetailScreen() {
               { borderLeftColor: "#6750A4", borderLeftWidth: 4 },
             ]}
           >
-            <Text style={styles.miniLabel}>PICKUP FROM</Text>
+            <Text style={styles.miniLabel}>{t('pickupFrom')}</Text>
             <Text style={styles.miniTitle} numberOfLines={1}>
-              {delivery.company_name}
+              {companyName}
             </Text>
             <TouchableOpacity
               style={styles.miniAction}
@@ -231,7 +264,7 @@ export default function DeliveryDetailScreen() {
               },
             ]}
           >
-            <Text style={styles.miniLabel}>DELIVER TO</Text>
+            <Text style={styles.miniLabel}>{t('deliverTo')}</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -251,7 +284,7 @@ export default function DeliveryDetailScreen() {
                 </View>
               )}
               <Text style={styles.miniTitle} numberOfLines={1}>
-                {delivery.customer_name}
+                {customerName}
               </Text>
             </View>
             <View style={{ position: "absolute", bottom: 8, right: 8 }}>
@@ -280,11 +313,11 @@ export default function DeliveryDetailScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardLabel}>
-              ORDER ITEMS ({orderDetail?.items?.length || 0})
+              {t('orderItems', { count: orderDetail?.items?.length || 0 })}
             </Text>
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryText}>
-                {orderDetail?.company?.sub_category_name}
+                {subCategoryName}
               </Text>
             </View>
           </View>
@@ -309,9 +342,9 @@ export default function DeliveryDetailScreen() {
               />
               <View style={styles.itemInfo}>
                 <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemSku}>SKU: {item.sku}</Text>
+                <Text style={styles.itemSku}>{t('sku')}: {item.sku}</Text>
                 <View style={styles.itemPriceRow}>
-                  <Text style={styles.itemQty}>Qty: {item.qty}</Text>
+                  <Text style={styles.itemQty}>{t('qty')}: {item.qty}</Text>
                   <Text style={styles.itemPrice}>
                     {item.unit_price} {orderDetail?.tax_invoice?.currency}
                   </Text>
@@ -323,13 +356,13 @@ export default function DeliveryDetailScreen() {
           {/* --- BILLING SUMMARY --- */}
           <View style={styles.billingSection}>
             <View style={styles.billingRow}>
-              <Text style={styles.billingText}>Subtotal</Text>
+              <Text style={styles.billingText}>{t('subtotal')}</Text>
               <Text style={styles.billingValue}>
                 {orderDetail?.subtotal} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
             <View style={[styles.billingRow, styles.totalRow]}>
-              <Text style={styles.totalText}>Total Amount</Text>
+              <Text style={styles.totalText}>{t('totalAmount')}</Text>
               <Text style={styles.totalValue}>
                 {orderDetail?.amount} {orderDetail?.tax_invoice?.currency}
               </Text>
@@ -345,7 +378,7 @@ export default function DeliveryDetailScreen() {
           style={styles.trackingFloatingBtn}
         >
           <FontAwesome6 name="route" size={18} color="#fff" />
-          <Text style={styles.trackingFloatingText}>Track Order</Text>
+          <Text style={styles.trackingFloatingText}>{t('trackOrder')}</Text>
         </TouchableOpacity>
       )}
 
@@ -353,7 +386,7 @@ export default function DeliveryDetailScreen() {
       {hasBottomActions && <View style={styles.bottomHub}>
         {action && (
           <SlideToConfirm
-            label={action.label}
+            label={t(`actions.${delivery.status}`)} // translated action label
             color={action.color}
             icon={action.icon}
             onConfirm={handleStatusUpdate}
@@ -380,7 +413,7 @@ export default function DeliveryDetailScreen() {
             }}
           >
             <FontAwesome6 name="route" size={18} color="#fff" />
-            <Text style={styles.trackingFloatingText}>Track Order</Text>
+            <Text style={styles.trackingFloatingText}>{t('trackOrder')}</Text>
           </TouchableOpacity>
         )} */}
       </View>}
