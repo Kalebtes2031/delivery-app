@@ -14,17 +14,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter your username and password.');
+      Alert.alert(t('login.errors.loginFailed'), t('login.errors.emptyFields'));
       return;
     }
 
@@ -34,9 +37,9 @@ export default function LoginScreen() {
     } catch (error: any) {
       const message =
         error.response?.status === 401
-          ? 'Invalid username or password.'
-          : 'Something went wrong. Please try again.';
-      Alert.alert('Login Failed', message);
+          ? t('login.errors.invalidCredentials')
+          : t('login.errors.somethingWrong');
+      Alert.alert(t('login.errors.loginFailed'), message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +70,7 @@ export default function LoginScreen() {
                 letterSpacing: 1,
               }}
             >
-              ACTIVE DELIVERY APP
+              {t('login.title')}
             </Text>
             {/* <Text
               style={{
@@ -94,12 +97,12 @@ export default function LoginScreen() {
                   marginLeft: 4,
                 }}
               >
-                Username
+                {t('login.username')}
               </Text>
               <TextInput
                 value={username}
                 onChangeText={setUsername}
-                placeholder="Enter your username"
+                placeholder={t('login.usernamePlaceholder')}
                 placeholderTextColor="#6750A4"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -128,13 +131,13 @@ export default function LoginScreen() {
                   marginLeft: 4,
                 }}
               >
-                Password
+                {t('login.password')}
               </Text>
               <View>
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Enter your password"
+                  placeholder={t('login.passwordPlaceholder')}
                   placeholderTextColor="#6750A4"
                   secureTextEntry={!showPassword}
                   style={{
@@ -184,7 +187,7 @@ export default function LoginScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>
-                Sign In
+                {t('login.signIn')}
               </Text>
             )}
           </TouchableOpacity>
@@ -198,7 +201,7 @@ export default function LoginScreen() {
               marginTop: 32,
             }}
           >
-            Contact your company admin if you don't have credentials
+            {t('login.footer')}
           </Text>
         </View>
       </KeyboardAvoidingView>
