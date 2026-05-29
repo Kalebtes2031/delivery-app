@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmActionModalProps {
   visible: boolean;
@@ -17,16 +18,23 @@ interface ConfirmActionModalProps {
 
 export default function ConfirmActionModal({
   visible,
-  title = 'Are you sure?',
-  description = 'This action cannot be undone.',
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  title,
+  description,
+  confirmText,
+  cancelText,
   isLoading = false,
   variant = 'danger',
   onConfirm,
   onClose,
   info = false,
 }: ConfirmActionModalProps) {
+  const { t } = useTranslation(['ConfirmActionModal']);
+  
+  // Use translated default values if not provided by parent
+  const finalTitle = title || t('defaultTitle');
+  const finalDescription = description || t('defaultDescription');
+  const finalConfirmText = confirmText || t('confirm');
+  const finalCancelText = cancelText || t('cancel');
   
   const isDanger = variant === 'danger';
   const isSuccess = variant === 'success';
@@ -65,7 +73,7 @@ export default function ConfirmActionModal({
               <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
                 <Feather name={iconName} size={20} color={iconColor} />
               </View>
-              <Text style={styles.titleText}>{title}</Text>
+              <Text style={styles.titleText}>{finalTitle}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Feather name="x" size={20} color="#6b7280" />
@@ -74,7 +82,7 @@ export default function ConfirmActionModal({
 
           {/* Body */}
           <View style={styles.body}>
-            <Text style={styles.descriptionText}>{description}</Text>
+            <Text style={styles.descriptionText}>{finalDescription}</Text>
           </View>
 
           {/* Footer */}
@@ -84,7 +92,7 @@ export default function ConfirmActionModal({
               disabled={isLoading}
               style={styles.cancelBtn}
             >
-              <Text style={styles.cancelBtnText}>{cancelText}</Text>
+              <Text style={styles.cancelBtnText}>{finalCancelText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -95,7 +103,7 @@ export default function ConfirmActionModal({
               {isLoading && (
                 <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
               )}
-              <Text style={styles.confirmBtnText}>{confirmText}</Text>
+              <Text style={styles.confirmBtnText}>{finalConfirmText}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
