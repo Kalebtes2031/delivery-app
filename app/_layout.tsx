@@ -39,6 +39,8 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="delivery/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="cash-on-hand" options={{ headerShown: false }} />
+        <Stack.Screen name="reviews" options={{ headerShown: false }} />
         <Stack.Screen name="delivery/tracking" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="help" options={{ headerShown: false }} />

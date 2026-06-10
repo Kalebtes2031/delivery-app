@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Config from '@/constants/Config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { DeliveryAssignment, DeliveryStatus, LoginResponse, User } from '@/types';
+import type { DeliveryAssignment, DeliveryStatus, LoginResponse, User, DeliveryReviewsResponse } from '@/types';
 
 // ── Axios Instance ──
 
@@ -87,6 +87,11 @@ export const getDriverStats = async () => {
   return api.get<{ earnings: string; cash_on_hand: string; assigned_orders: number; pending_orders: number; total_orders: number }>('/deliveries/stats/');
 };
 
+// COD orders the driver has delivered but not yet remitted to admin (cash on hand)
+export const getCashOnHandOrders = async () => {
+  return api.get<DeliveryAssignment[]>('/deliveries/cash-on-hand/');
+};
+
 export const getDeliveryDetail = async (id: number) => {
   return api.get<DeliveryAssignment>(`/deliveries/${id}/`);
 };
@@ -110,6 +115,13 @@ export const updateProfile = async (data: any) => {
     : {};
     
   return api.patch<User>('/auth/users/me/', data, { headers });
+};
+
+// ── Ratings & Reviews ──
+
+// Ratings & reviews the authenticated driver received from customers
+export const getMyDeliveryReviews = async () => {
+  return api.get<DeliveryReviewsResponse>('/reviews/my-delivery-reviews/');
 };
 
 export const changePassword = async (currentPassword: string, newPassword: string) => {

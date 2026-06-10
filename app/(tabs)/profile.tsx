@@ -11,9 +11,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons, Feather, Entypo, MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
-import { useTranslation } from 'react-i18next'; 
+import StarRating from '@/components/StarRating';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -63,10 +64,20 @@ function MenuItem({
 }
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { t } = useTranslation('driverProfile'); 
+  const { t } = useTranslation('driverProfile');
+
+  // Keep the rating fresh whenever the profile tab regains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshUser();
+    }, [refreshUser]),
+  );
+
+  const totalReviews = user?.total_reviews ?? 0;
+  const avgRating = parseFloat(user?.average_rating || '0') || 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,8 +102,32 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>
             {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
           </Text>
-          <Text style={styles.userHandle}>{user?.email}</Text>
+          {/* <Text style={styles.userHandle}>{user?.email}</Text> */}
         </View>
+
+        {/* --- RATING CARD --- */}
+        <TouchableOpacity
+          style={styles.ratingCard}
+          activeOpacity={0.85}
+          onPress={() => router.push('/reviews')}
+        >
+          <View style={styles.ratingScoreBox}>
+            <Text style={styles.ratingScore}>{avgRating.toFixed(1)}</Text>
+            <Ionicons name="star" size={14} color="#FBBF24" />
+          </View>
+
+          <View style={styles.ratingMiddle}>
+            <Text style={styles.ratingTitle}>{t('yourRating')}</Text>
+            <StarRating rating={avgRating} size={16} />
+            <Text style={styles.ratingCount}>
+              {totalReviews > 0 ? t('reviewsCount', { count: totalReviews }) : t('noRatingYet')}
+            </Text>
+          </View>
+
+          <View style={styles.ratingChevron}>
+            <Entypo name="chevron-right" size={20} color="#6750A4" />
+          </View>
+        </TouchableOpacity>
 
         {/* --- MENU OPTIONS --- */}
         <View style={styles.menuContainer}>
@@ -153,7 +188,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FBFBFF' },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 40 },
-  header: { alignItems: 'center', marginTop: 3, marginBottom: 20 },
+  header: { alignItems: 'center', marginTop: 3, marginBottom: 10 },
   avatarWrapper: { marginBottom: 5 },
   avatarPlaceholder: {
     width: 110, height: 110, borderRadius: 55, backgroundColor: '#6750A4',
@@ -164,6 +199,42 @@ const styles = StyleSheet.create({
   avatarInitial: { fontSize: 44, color: '#fff', fontWeight: '900' },
   userName: { fontSize: 26, fontWeight: '800', color: '#1E293B' },
   userHandle: { fontSize: 15, color: '#94A3B8', fontWeight: '600' },
+  ratingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  ratingScoreBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: '#6750A4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  ratingScore: { fontSize: 24, fontWeight: '900', color: '#fff' },
+  ratingMiddle: { flex: 1, gap: 4 },
+  ratingTitle: { fontSize: 15, fontWeight: '800', color: '#1E293B' },
+  ratingCount: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
+  ratingChevron: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#6750A415',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   menuContainer: {
     backgroundColor: '#6750A4',
     borderRadius: 28,

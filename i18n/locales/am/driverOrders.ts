@@ -25,6 +25,7 @@ export default {
   customer: "ደንበኛ",
   customerLocation: "የደንበኛ አድራሻ",
   viewMap: "ካርታውን ይመልከቱ",
+  viewDetails: "ዝርዝሩን ይመልከቱ",
   noAssignments: "እስካሁን የተመደበ ትዕዛዝ የለም",
   newOrdersWillAppear: "አዳዲስ ትዕዛዞች እዚህ ጋር ይታያሉ",
   orderItems: "የትዕዛዝ ዕቃዎች ({{count}})",

@@ -26,6 +26,7 @@ export default {
   customer: "Customer",
   customerLocation: "Customer Location",
   viewMap: "View Map",
+  viewDetails: "View details",
   noAssignments: "No assignments yet",
   newOrdersWillAppear: "New orders will appear here",
   orderItems: "ORDER ITEMS ({{count}})",

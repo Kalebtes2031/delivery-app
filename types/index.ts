@@ -8,7 +8,26 @@ export interface User {
   last_name: string;
   phone_number?: string;
   profile_image?: string;
+  average_rating?: string;
+  total_reviews?: number;
   memberships: UserMembership[];
+}
+
+export interface DeliveryReview {
+  id: number;
+  rating: number;
+  comment: string;
+  created_at: string;
+  customer_name: string | null;
+  customer_image: string | null;
+  order_number: number | null;
+}
+
+export interface DeliveryReviewsResponse {
+  average_rating: string;
+  total_reviews: number;
+  distribution: Record<string, number>;
+  reviews: DeliveryReview[];
 }
 
 export interface UserMembership {

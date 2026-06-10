@@ -45,8 +45,8 @@ export default function OrdersScreen() {
     activeTab === "all"
       ? [...allDeliveries].sort((a, b) => b.vendor_order - a.vendor_order)
       : allDeliveries
-          .filter((d) => d.status === activeTab)
-          .sort((a, b) => b.vendor_order - a.vendor_order);
+        .filter((d) => d.status === activeTab)
+        .sort((a, b) => b.vendor_order - a.vendor_order);
 
   const loading = isLoading;
   const refreshing = isRefreshing;
@@ -78,17 +78,17 @@ export default function OrdersScreen() {
     });
     const dateAssigned = new Date(item.assigned_at).toLocaleDateString();
     const dateTimeAssigned = `${dateAssigned} at ${timeAssigned}`;
-    
-    // Localized names with fallback
-   const company =
-  (item as any)?.vendor_order_detail?.company;
 
-const companyName = isAmharic
-  ? company?.name_am || company?.name || t("vendor")
-  : company?.name || company?.name_am || t("vendor");
-   const customerName = isAmharic
-  ? (item as any)?.customer_name_am || item.customer_name || t("customer")
-  : item.customer_name || (item as any)?.customer_name_am || t("customer");
+    // Localized names with fallback
+    const company =
+      (item as any)?.vendor_order_detail?.company;
+
+    const companyName = isAmharic
+      ? company?.name_am || company?.name || t("vendor")
+      : company?.name || company?.name_am || t("vendor");
+    const customerName = isAmharic
+      ? (item as any)?.customer_name_am || item.customer_name || t("customer")
+      : item.customer_name || (item as any)?.customer_name_am || t("customer");
 
     return (
       <TouchableOpacity
@@ -134,7 +134,6 @@ const companyName = isAmharic
                 {item.company_address}
               </Text>
             </View>
-
             <View style={styles.addressBlock}>
               <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
               <Text style={styles.customerName} numberOfLines={1}>
@@ -147,14 +146,13 @@ const companyName = isAmharic
           </View>
         </View>
 
-        {/* Card Footer */}
-        {/* <View style={styles.cardFooter}>
-          <View style={styles.footerAction}>
-            <Ionicons name="navigate-circle-outline" size={20} color="#6750A4" />
-            <Text style={styles.footerActionText}>{t('viewMap')}</Text>
+        {/* Card Footer — tap hint so users know the whole card is tappable */}
+        <View style={styles.cardFooter}>
+          <Text style={styles.tapHintText}>{t("viewDetails")}</Text>
+          <View style={styles.arrowCircle}>
+            <Ionicons name="arrow-forward" size={16} color="#fff" />
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-        </View> */}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -296,7 +294,7 @@ const styles = StyleSheet.create({
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
   line: { width: 2, flex: 1, backgroundColor: "#E2E8F0", marginVertical: 4 },
-  addressContainer: { flex: 1, gap: 20 },
+  addressContainer: { gap: 20 },
   addressBlock: { gap: 2 },
   addressLabel: {
     fontSize: 10,
@@ -311,10 +309,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
     paddingTop: 12,
+    marginTop: 2,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "center",
+    gap: 8,
   },
+  tapHintText: { color: "#6750A4", fontWeight: "700", fontSize: 13 },
+  arrowCircle: { padding: 8, borderRadius: 24, backgroundColor: "#6750A4" },
   footerAction: { flexDirection: "row", alignItems: "center", gap: 6 },
   footerActionText: { color: "#6750A4", fontWeight: "700", fontSize: 14 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },

@@ -104,7 +104,14 @@ export default function HomeScreen() {
         {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
         <View style={styles.statsGrid}>
           {[
-            { label: t('cashOnHand'), value: `${driverStats.cash_on_hand || '0.00'} ETB`, icon: 'wallet-outline', color: '#10B981', type: 'ion' },
+            {
+              label: t('cashOnHand'),
+              value: `${driverStats.cash_on_hand || '0.00'} ETB`,
+              icon: 'wallet-outline',
+              color: '#10B981',
+              type: 'ion',
+              onPress: () => router.push('/cash-on-hand')
+            },
             { 
               label: t('assignedOrders'), 
               value: driverStats.pending_orders.toString(), 
