@@ -131,4 +131,22 @@ export const changePassword = async (currentPassword: string, newPassword: strin
   });
 };
 
+// ── Notifications (FCM) ──
+export const registerDevice = (
+  fcm_token: string,
+  platform: 'android' | 'ios' | 'web',
+  app: 'customer' | 'delivery' | 'admin',
+) => api.post('/notifications/devices/', { fcm_token, platform, app });
+
+export const unregisterDevice = (fcm_token: string) =>
+  api.delete('/notifications/devices/', { data: { fcm_token } });
+
+export const getNotifications = () => api.get('/notifications/');
+
+export const getUnreadCount = () =>
+  api.get<{ unread: number }>('/notifications/unread-count/');
+
+export const markNotificationsRead = (ids?: number[]) =>
+  api.post('/notifications/mark-read/', ids ? { ids } : {});
+
 export default api;

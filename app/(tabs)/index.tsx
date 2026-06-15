@@ -17,12 +17,14 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-ico
 import ToggleSwitch from '@/components/ToggleButton';
 import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
 import { useTranslation } from 'react-i18next'; // 👈 added
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 const { width } = Dimensions.get('window');
 
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { unread: unreadCount } = useUnreadNotifications();
   const { user, toggleOnlineStatus } = useAuth();
   const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
@@ -94,9 +96,9 @@ export default function HomeScreen() {
               onToggle={handleToggleOnline} 
               isLoading={isToggling}
             />
-            <TouchableOpacity  >
+            <TouchableOpacity onPress={() => router.push('/notifications')}>
               <Ionicons name="notifications-outline" size={24} color="#1E293B" />
-              <View style={styles.notificationDot} />
+              {unreadCount > 0 && <View style={styles.notificationDot} />}
             </TouchableOpacity>
           </View>
         </View>

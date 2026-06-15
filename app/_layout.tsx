@@ -7,6 +7,8 @@ import { DeliveryProvider } from '@/context/DeliveryContext';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initI18n } from '@/i18n';
+import '@/services/pushBackground';
+import PushRegistrar from '@/components/PushRegistrar';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -35,9 +37,11 @@ function RootLayoutNav() {
 
   return (
     <>
+      <PushRegistrar />
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="delivery/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="cash-on-hand" options={{ headerShown: false }} />
         <Stack.Screen name="reviews" options={{ headerShown: false }} />
