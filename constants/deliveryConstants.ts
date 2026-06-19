@@ -29,6 +29,7 @@ export const NEXT_ACTION: Record<string, { label: string; next: DeliveryStatus; 
 export const STATUS_TABS: { label: string; value: DeliveryStatus | 'all' }[] = [
   { label: 'All',        value: 'all' },
   { label: 'Assigned',   value: 'pending' },
+  { label: 'Accepted',   value: 'accepted' },
   { label: 'Picked Up',  value: 'picked_up' },
   { label: 'In Transit', value: 'out_for_delivery' },
   { label: 'Completed',  value: 'delivered' },

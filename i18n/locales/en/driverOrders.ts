@@ -3,10 +3,10 @@ export default {
   allOrders: "All Orders",
   tabs: {
     all: "All",
-    pending: "Pending",
+    pending: "Assigned",
     accepted: "Accepted",
     picked_up: "Picked Up",
-    out_for_delivery: "Out for Delivery",
+    out_for_delivery: "In Transit",
     delivered: "Delivered",
     failed: "Failed",
   },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
@@ -68,6 +69,30 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { t } = useTranslation('driverProfile');
+  // Animation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      // Reset to initial values before animating
+      fadeAnim.setValue(0);
+      slideAnim.setValue(20);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [fadeAnim, slideAnim])
+  );
 
   // Keep the rating fresh whenever the profile tab regains focus
   useFocusEffect(
@@ -75,13 +100,19 @@ export default function ProfileScreen() {
       refreshUser();
     }, [refreshUser]),
   );
-
   const totalReviews = user?.total_reviews ?? 0;
   const avgRating = parseFloat(user?.average_rating || '0') || 0;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+            <Animated.View
+        style={{
+          flex: 1,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
@@ -181,6 +212,7 @@ export default function ProfileScreen() {
         onConfirm={logout}
         onClose={() => setShowLogoutConfirm(false)}
       />
+      </Animated.View>
     </SafeAreaView>
   );
 }

@@ -219,7 +219,9 @@ export default function DriverTrackingScreen() {
                 textTransform: "uppercase",
                 marginLeft: 5
               }}>
-                {t(`status.${delivery.status}`)} {/* 👈 translated status */}
+                {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
+                 delivery.status === 'pending' ? 'ASSIGNED' : 
+                 t(`status.${delivery.status}`)}
               </Text>
             </View>
           </View>

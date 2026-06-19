@@ -2,9 +2,11 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const { t } = useTranslation('deliveryHome'); 
+    const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -13,8 +15,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#999999',
         tabBarStyle: {
           backgroundColor: '#ffffff',
-          height: 55,
-          paddingBottom: 5,
+          height: 55 + insets.bottom,
+          paddingBottom: insets.bottom + 5,
         },
         headerShown: false,
       }}

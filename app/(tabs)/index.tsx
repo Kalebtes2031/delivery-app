@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   Dimensions,
   Image,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useDelivery } from '@/context/DeliveryContext';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
@@ -28,7 +29,32 @@ export default function HomeScreen() {
   const { user, toggleOnlineStatus } = useAuth();
   const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
-  const { t } = useTranslation('deliveryHome'); // 👈 translation hook
+  const { t } = useTranslation('deliveryHome'); 
+
+   // Animation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      // Reset to initial values before animating
+      fadeAnim.setValue(0);
+      slideAnim.setValue(20);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [fadeAnim, slideAnim])
+  );
 
   const handleToggleOnline = async () => {
     setIsToggling(true);
@@ -73,34 +99,89 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          contentContainerStyle={styles.scrollContent}>
 
-        showsVerticalScrollIndicator={false}
-
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={styles.scrollContent}>
-
-        {/* --- SECTION 1: THE SKYLINE (Header) --- */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greetingText}>
-              {t('helloUser', { name: user?.first_name || 'Delivery' })}
-            </Text>
-            <Text style={styles.userName}>{t('goodAfternoon')}</Text>
+        {/* --- SECTION 1: HEADER WITH CURVED BOTTOM RIGHT --- */}
+        <View style={{ position: 'relative', marginBottom: 15, marginHorizontal: -20 }}>
+          <View style={styles.headerGradient}>
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity 
+                  onPress={() => router.push('/profile')} 
+                  activeOpacity={0.8}
+                  style={styles.avatarTouchable}
+                >
+                  <View style={styles.avatarContainer}>
+                    {user?.profile_image ? (
+                      <Image 
+                        source={{ uri: user.profile_image }} 
+                        style={styles.avatarImage} 
+                      />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarText}>
+                          {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.avatarRing} />
+                  </View>
+                </TouchableOpacity>
+                <View style={styles.headerTextContainer}>
+                  <Text style={styles.greetingText}>
+                    {t('helloUser', { name: user?.first_name || 'Delivery' })}
+                  </Text>
+                  <Text style={styles.userName}>{t('goodAfternoon')}</Text>
+                </View>
+              </View>
+              <View style={styles.headerActions}>
+                <ToggleSwitch 
+                  isOn={!!isOnline} 
+                  onToggle={handleToggleOnline} 
+                  isLoading={isToggling}
+                />
+                <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notifButton}>
+                  <View style={styles.notifIconWrapper}>
+                    <Ionicons name="notifications-outline" size={20} color="#fff" />
+                    {unreadCount > 0 && <View style={styles.notificationDot} />}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <View style={styles.headerActions}>
-            <ToggleSwitch 
-              isOn={!!isOnline} 
-              onToggle={handleToggleOnline} 
-              isLoading={isToggling}
-            />
-            <TouchableOpacity onPress={() => router.push('/notifications')}>
-              <Ionicons name="notifications-outline" size={24} color="#1E293B" />
-              {unreadCount > 0 && <View style={styles.notificationDot} />}
-            </TouchableOpacity>
-          </View>
+
+          {/* Curved bottom right corner effect */}
+          <View style={{
+            position: 'absolute',
+            bottom: -30,
+            right: 0,
+            width: 50,
+            height: 30,
+            backgroundColor: '#ffffff',
+            borderTopRightRadius: 150,
+            zIndex: 1,
+          }} />
+          <View style={{
+            position: 'absolute',
+            bottom: -30,
+            right: 0,
+            width: 50,
+            height: 30,
+            backgroundColor: '#6750A4',
+            zIndex: 0,
+          }} />
         </View>
 
         {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
@@ -112,7 +193,9 @@ export default function HomeScreen() {
               icon: 'wallet-outline',
               color: '#10B981',
               type: 'ion',
-              onPress: () => router.push('/cash-on-hand')
+              onPress: () => {
+                router.push('/cash-on-hand');
+              }
             },
             { 
               label: t('assignedOrders'), 
@@ -120,13 +203,29 @@ export default function HomeScreen() {
               icon: 'package-variant-closed', 
               color: '#6366F1', 
               type: 'material',
-              onPress: () => router.push({ pathname: '/orders', params: { filter: 'pending' } })
+              onPress: () => {
+                // Navigate with a small delay for smooth transition
+                setTimeout(() => {
+                  router.push({
+                    pathname: '/orders',
+                    params: { filter: 'pending' }
+                  });
+                }, 100);
+              }
             },
             { label: t('totalOrders'), 
               value: driverStats.total_orders.toString(), 
               icon: 'package-variant-closed', color: '#6366F1', 
               type: 'material',
-              onPress: () => router.push({ pathname: '/orders', params: { filter: 'all' } }) 
+              onPress: () => {
+                // Force navigation with a unique key to trigger animation
+                setTimeout(() => {
+                  router.push({
+                    pathname: '/orders',
+                    params: { filter: 'all', t: Date.now() }
+                  });
+                }, 100);
+              }
             },
           ].map((stat, index) => (
             <TouchableOpacity 
@@ -140,6 +239,7 @@ export default function HomeScreen() {
               ]}
               onPress={stat.onPress}
               disabled={!stat.onPress}
+              activeOpacity={0.7}
             >
               <View style={[styles.statIconCircle, { backgroundColor: stat.color + '15' }]}>
                 {stat.type === 'ion' ? (
@@ -156,7 +256,10 @@ export default function HomeScreen() {
 
         {/* --- SECTION 3: THE COMMAND CENTER (Active Task Hero) --- */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
+          <View style={styles.sectionTitleWrapper}>
+            <View style={styles.sectionAccentBar} />
+            <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
+          </View>
           <TouchableOpacity onPress={() => router.push('/orders')}>
             <Text style={styles.seeAllText}>{t('viewAll')}</Text>
           </TouchableOpacity>
@@ -166,46 +269,52 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.heroCard}
             onPress={() => router.push(`/delivery/${activeDelivery.id}`)}
+            activeOpacity={0.85}
           >
-            <View style={styles.heroRow}>
-              <View style={styles.heroInfo}>
-                <Text style={styles.heroCustomerName}>
+            {/* Card Header with Order Number and Status */}
+            <View style={styles.heroCardHeader}>
+              <View style={styles.heroOrderInfo}>
+                <View style={styles.heroOrderIcon}>
+                  <MaterialCommunityIcons name="receipt-text-outline" size={16} color="#fff" />
+                </View>
+                <Text style={styles.heroOrderText}>
                   {t('orderNumber', { id: activeDelivery.vendor_order || 'Customer' })}
                 </Text>
-                {/* <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.company_address}</Text> */}
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
-                <MaterialCommunityIcons name={STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text} />
-                <Text style={[styles.statusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
-                  {t(`status.${activeDelivery.status.toLowerCase()}`)}
+              <View style={[styles.heroStatusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
+                <View style={[styles.heroStatusDot, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]} />
+                <Text style={[styles.heroStatusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
+                  {activeDelivery.status === 'pending' ? 'ASSIGNED' : 
+                   activeDelivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
+                   t(`status.${activeDelivery.status.toLowerCase()}`).toUpperCase()}
                 </Text>
               </View>
             </View>
-            <View style={styles.heroRow}>
-              <View style={styles.herocusotmerContainer}>
-                <View style={styles.heroCustomerAvator}>
-                  {activeDelivery?.customer_image ? (
-                    <Image source={{ uri: activeDelivery?.customer_image }} style={styles.customerAvatar} />
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarPlaceholderText}>
-                        {activeDelivery.customer_name?.charAt(0) || 'C'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View>
 
-                  <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || t('customer')}</Text>
-                  <Text style={styles.heroAddress} numberOfLines={1}>{activeDelivery.customer_phone}</Text>
+            {/* Customer Info */}
+            <View style={styles.heroCustomerSection}>
+              <View style={styles.heroCustomerAvatarWrapper}>
+                {activeDelivery?.customer_image ? (
+                  <Image source={{ uri: activeDelivery?.customer_image }} style={styles.heroCustomerAvatar} />
+                ) : (
+                  <View style={styles.heroCustomerAvatarPlaceholder}>
+                    <Text style={styles.heroCustomerAvatarText}>
+                      {activeDelivery.customer_name?.charAt(0) || 'C'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.heroCustomerDetails}>
+                <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || t('customer')}</Text>
+                <View style={styles.heroCustomerPhone}>
+                  <Ionicons name="call-outline" size={12} color="rgba(255,255,255,0.6)" />
+                  <Text style={styles.heroCustomerPhoneText}>{activeDelivery.customer_phone}</Text>
                 </View>
               </View>
-              {/* <View style={styles.heroActionBtn}>
-                <FontAwesome6 name="location-arrow" size={20} color="#fff" />
-              </View> */}
             </View>
-            {/* progress tracker */}
-            <View style={styles.progressContainer}>
+
+            {/* Progress Tracker */}
+            <View style={styles.heroProgressContainer}>
               {STATUS_ORDER.map((status, index) => {
                 const isCompleted = index < currentIndex;
                 const isCurrent = index === currentIndex;
@@ -213,50 +322,41 @@ export default function HomeScreen() {
                 const config = STATUS_CONFIG[status];
 
                 return (
-                  <View key={status} style={styles.stepWrapper}>
-
-                    {/* --- THE NODE ZONE (Handles vertical centering) --- */}
-                    <View style={styles.nodeZone}>
-
-                      {/* Connecting Line - Now centered perfectly via top: '50%' */}
+                  <View key={status} style={styles.heroStepWrapper}>
+                    <View style={styles.heroNodeZone}>
                       {index !== 0 && (
                         <View
                           style={[
-                            styles.progressLine,
+                            styles.heroProgressLine,
                             {
-                              backgroundColor: isCompleted || isCurrent ? '#16A34A' : 'rgba(255,255,255,0.2)',
-                              // Adjusting width to bridge the gap perfectly between centers
-                              left: '-50%',
-                              right: '50%'
+                              backgroundColor: isCompleted || isCurrent ? '#16A34A' : 'rgba(255,255,255,0.15)',
                             }
                           ]}
                         />
                       )}
-
-                      {/* Step Indicator */}
                       <View style={[
-                        styles.stepIndicator,
-                        isCompleted && styles.indicatorCompleted,
-                        isCurrent && styles.indicatorCurrent,
-                        isFuture && styles.indicatorFuture
+                        styles.heroStepIndicator,
+                        isCompleted && styles.heroIndicatorCompleted,
+                        isCurrent && styles.heroIndicatorCurrent,
+                        isFuture && styles.heroIndicatorFuture
                       ]}>
                         <MaterialCommunityIcons
                           name={isCompleted ? 'check-bold' : STATUS_CONFIG[status].icon}
-                          size={isCurrent ? 18 : 14}
-                          color={isFuture ? 'rgba(255,255,255,0.5)' : '#fff'}
+                          size={isCurrent ? 14 : 12}
+                          color={isFuture ? 'rgba(255,255,255,0.4)' : '#fff'}
                         />
-                        {isCurrent && <View style={styles.pulseRing} />}
+                        {isCurrent && <View style={styles.heroPulseRing} />}
                       </View>
                     </View>
-
-                    {/* --- THE LABEL ZONE --- */}
                     <Text style={[
-                      styles.stepLabel,
-                      isCompleted && { color: '#fff', fontWeight: '600' },
-                      isCurrent && { color: '#F59E0B', fontWeight: '900' },
-                      isFuture && { color: 'rgba(255,255,255,0.4)' }
+                      styles.heroStepLabel,
+                      isCompleted && styles.heroStepCompleted,
+                      isCurrent && styles.heroStepCurrent,
+                      isFuture && styles.heroStepFuture
                     ]}>
-                      {t(`status.${status}`)}
+                      {status === 'pending' ? 'ASSIGNED' : 
+                       status === 'out_for_delivery' ? 'IN TRANSIT' :
+                       t(`status.${status}`).toUpperCase()}
                     </Text>
                   </View>
                 );
@@ -278,7 +378,10 @@ export default function HomeScreen() {
 
         {/* --- SECTION 4: DELIVERY SUMMARY --- */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('deliverySummary')}</Text>
+          <View style={styles.sectionTitleWrapper}>
+            <View style={styles.sectionAccentBar} />
+            <Text style={styles.sectionTitle}>{t('deliverySummary')}</Text>
+          </View>
           <TouchableOpacity onPress={() => router.push('/orders')}>
             <Text style={styles.seeAllText}>{t('seeAll')}</Text>
           </TouchableOpacity>
@@ -292,26 +395,31 @@ export default function HomeScreen() {
                 style={styles.summaryItem}
                 onPress={() => router.push(`/delivery/${delivery.id}`)}
               >
-                <View style={styles.summaryLeft}>
-                  {delivery.customer_image ? (
-                    <Image source={{ uri: delivery.customer_image }} style={styles.customerAvatar} />
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarPlaceholderText}>
-                        {delivery.customer_name?.charAt(0) || 'C'}
-                      </Text>
+                <View style={styles.summaryItemWrapper}>
+                  <View style={styles.summaryLeft}>
+                    {delivery.customer_image ? (
+                      <Image source={{ uri: delivery.customer_image }} style={styles.customerAvatar} />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarPlaceholderText}>
+                          {delivery.customer_name?.charAt(0) || 'C'}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.summaryAccentBar} />
+                    <View style={styles.customerInfo}>
+                      <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
+                      <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                     </View>
-                  )}
-                  <View style={styles.customerInfo}>
-                    <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
-                    <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                   </View>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
-                  <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
-                  <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
-                    {t(`status.${delivery.status.toLowerCase()}`)}
-                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
+                    <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
+                    <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
+                      {delivery.status === 'pending' ? 'ASSIGNED' : 
+                       delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
+                       t(`status.${delivery.status.toLowerCase()}`).toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
               </TouchableOpacity>
             ))
@@ -322,6 +430,7 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -340,16 +449,105 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  // Header
+  // Modern Header with Curved Bottom Right
+  headerGradient: {
+    backgroundColor: '#6750A4',
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 0,
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 20,
+    paddingBottom: 0,
   },
-  greetingText: { fontSize: 14, color: '#6750A4', fontWeight: '500' },
-  userName: { fontSize: 24, color: '#6750A4', fontWeight: '800' },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerTextContainer: {
+    marginLeft: 4,
+  },
+  avatarTouchable: {
+    position: 'relative',
+  },
+  avatarContainer: {
+    position: 'relative',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  avatarRing: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    right: -2,
+    bottom: -2,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+
+  greetingText: { 
+    fontSize: 12, 
+    color: 'rgba(255,255,255,0.8)', 
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  userName: { 
+    fontSize: 17, 
+    color: '#fff', 
+    fontWeight: '700', 
+    marginTop: -1,
+    letterSpacing: -0.2,
+  },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  notifButton: {
+    position: 'relative',
+  },
+  notifIconWrapper: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
   iconButton: {
     backgroundColor: '#fff',
     padding: 10,
@@ -398,45 +596,221 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B', marginBottom: 15 },
+  sectionTitleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sectionAccentBar: {
+    width: 2.5,
+    height: 20,
+    borderRadius: 1.5,
+    backgroundColor: '#6750A4',
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#6750A4', marginBottom: 0 },
   seeAllText: { color: '#6750A4', fontWeight: '700' },
 
-  // Hero Card
+  // Hero Card - Professional Style
   heroCard: {
     backgroundColor: '#6750A4',
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 25,
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  heroBadge: {
-    backgroundColor: '#ffffff',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  // Card Header
+  heroCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  heroOrderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroOrderIcon: {
+    width: 28,
+    height: 28,
     borderRadius: 8,
-    marginBottom: 15,
-  },
-
-  heroBadgeText: { color: '#36a13bff', fontSize: 10, fontWeight: '800' },
-  heroCustomerAvator: {
-    width: 48,
-    height: 48,
-    borderRadius: 124,
-    backgroundColor: '#fff',
-  },
-  herocusotmerContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 5 },
-  heroRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  heroInfo: { flex: 1 },
-  heroCustomerName: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  heroAddress: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
-  heroActionBtn: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  heroOrderText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  heroStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    gap: 6,
+  },
+  heroStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  heroStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  // Customer Section
+  heroCustomerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 18,
+  },
+  heroCustomerAvatarWrapper: {
+    position: 'relative',
+  },
+  heroCustomerAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  heroCustomerAvatarPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  heroCustomerAvatarText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  heroCustomerDetails: {
+    flex: 1,
+    gap: 2,
+  },
+  heroCustomerName: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  heroCustomerPhone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroCustomerPhoneText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  // Progress Tracker
+  heroProgressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  heroStepWrapper: {
+    flex: 1,
     alignItems: 'center',
   },
+  heroNodeZone: {
+    height: 36,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginBottom: 4,
+  },
+  heroProgressLine: {
+    position: 'absolute',
+    height: 2.5,
+    top: '50%',
+    marginTop: -1.25,
+    width: '100%',
+    zIndex: -1,
+  },
+  heroStepIndicator: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.15)',
+    zIndex: 2,
+  },
+  heroIndicatorCompleted: {
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
+  },
+  heroIndicatorCurrent: {
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
+    transform: [{ scale: 1.1 }],
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  heroIndicatorFuture: {
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  heroPulseRing: {
+    position: 'absolute',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+    opacity: 0.3,
+  },
+  heroStepLabel: {
+    fontSize: 7,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    color: 'rgba(255,255,255,0.4)',
+    fontWeight: '600',
+  },
+  heroStepCompleted: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  heroStepCurrent: {
+    color: '#F59E0B',
+    fontWeight: '800',
+  },
+  heroStepFuture: {
+    color: 'rgba(255,255,255,0.3)',
+  },
+  heroAddress: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3 },
   progressBarFill: { height: '100%', backgroundColor: '#fff', borderRadius: 3 },
 
@@ -475,28 +849,41 @@ const styles = StyleSheet.create({
 
   // Delivery Summary
   summaryList: {
-    gap: 12,
+    gap: 10,
     marginBottom: 20,
   },
   summaryItem: {
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    gap: 10,
+    borderRadius: 16,
+    padding: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F2F5',
+    overflow: 'hidden',
+  },
+  summaryItemWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#6750A4',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    padding: 14,
+    paddingLeft: 14,
+  },
+  summaryAccentBar: {
+    width: 2.5,
+    height: 30,
+    backgroundColor: '#6750A4',
+    borderRadius: 2,
+    marginHorizontal: 8,
+    opacity: 0.5,
   },
   summaryLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 12,
   },
   customerAvatar: {
     width: 48,

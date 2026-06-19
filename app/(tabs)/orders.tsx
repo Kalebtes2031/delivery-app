@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   RefreshControl,
   StyleSheet,
   ScrollView,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -40,6 +41,40 @@ export default function OrdersScreen() {
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
 
+  
+  // Animation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  // Reset animation when component mounts or filter changes
+  const resetAnimation = useCallback(() => {
+    fadeAnim.setValue(0);
+    slideAnim.setValue(20);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
+  useFocusEffect(
+    useCallback(() => {
+      resetAnimation();
+    }, [resetAnimation])
+  );
+
+  // Also trigger animation when filter param changes
+  useEffect(() => {
+    resetAnimation();
+  }, [filter, resetAnimation]);
   // Derive filtered + sorted deliveries from context
   const deliveries =
     activeTab === "all"
@@ -96,61 +131,69 @@ export default function OrdersScreen() {
         activeOpacity={0.9}
         style={styles.card}
       >
-        {/* Card Header */}
-        <View style={styles.cardHeader}>
-          <View>
-            <Text style={styles.orderIdText}>
-              {t("orderNumber", { id: item.vendor_order })}
-            </Text>
-            <Text style={styles.timeText}>
-              {t("assignedAt", { time: timeAssigned })}
-            </Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-            <MaterialCommunityIcons
-              name={config.icon}
-              size={14}
-              color={config.text}
-            />
-            <Text style={[styles.statusText, { color: config.text }]}>
-              {t(`status.${item.status}`)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Route Visualization */}
-        <View style={styles.routeContainer}>
-          <View style={styles.routeIcons}>
-            <View style={[styles.dot, { backgroundColor: "#6750A4" }]} />
-            <View style={styles.line} />
-            <Ionicons name="location" size={18} color="#EF4444" />
-          </View>
-
-          <View style={styles.addressContainer}>
-            <View style={styles.addressBlock}>
-              <Text style={styles.addressLabel}>{t("pickupFrom")}</Text>
-              <Text style={{ flexShrink: 1 }}>{companyName}</Text>
-              <Text style={styles.addressText} numberOfLines={1}>
-                {item.company_address}
+        {/* Vertical Line - Left Side */}
+        <View style={styles.verticalLine} />
+        
+        {/* Card Content */}
+        <View style={styles.cardContent}>
+          {/* Card Header */}
+          <View style={styles.cardHeader}>
+            <View>
+              <Text style={styles.orderIdText}>
+                {t("orderNumber", { id: item.vendor_order })}
+              </Text>
+              <Text style={styles.timeText}>
+                {t("assignedAt", { time: timeAssigned })}
               </Text>
             </View>
-            <View style={styles.addressBlock}>
-              <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
-              <Text style={styles.customerName} numberOfLines={1}>
-                {customerName}
-              </Text>
-              <Text style={styles.addressText} numberOfLines={1}>
-                {t("customerLocation")}
+            <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
+              <MaterialCommunityIcons
+                name={config.icon}
+                size={14}
+                color={config.text}
+              />
+              <Text style={[styles.statusText, { color: config.text }]}>
+                {item.status === 'out_for_delivery' ? 'In Transit' : 
+                 item.status === 'pending' ? 'Assigned' : 
+                 t(`status.${item.status}`)}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* Card Footer — tap hint so users know the whole card is tappable */}
-        <View style={styles.cardFooter}>
-          <Text style={styles.tapHintText}>{t("viewDetails")}</Text>
-          <View style={styles.arrowCircle}>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
+          {/* Route Visualization */}
+          <View style={styles.routeContainer}>
+            <View style={styles.routeIcons}>
+              <View style={[styles.dot, { backgroundColor: "#6750A4" }]} />
+              <View style={styles.line} />
+              <Ionicons name="location" size={18} color="#EF4444" />
+            </View>
+
+            <View style={styles.addressContainer}>
+              <View style={styles.addressBlock}>
+                <Text style={styles.addressLabel}>{t("pickupFrom")}</Text>
+                <Text style={{ flexShrink: 1 }}>{companyName}</Text>
+                <Text style={styles.addressText} numberOfLines={1}>
+                  {item.company_address}
+                </Text>
+              </View>
+              <View style={styles.addressBlock}>
+                <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
+                <Text style={styles.customerName} numberOfLines={1}>
+                  {customerName}
+                </Text>
+                <Text style={styles.addressText} numberOfLines={1}>
+                  {t("customerLocation")}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Card Footer — tap hint so users know the whole card is tappable */}
+          <View style={styles.cardFooter}>
+            <Text style={styles.tapHintText}>{t("viewDetails")}</Text>
+            <View style={styles.arrowCircle}>
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -159,17 +202,38 @@ export default function OrdersScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+            <Animated.View
+        style={{
+          flex: 1,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
       {/* Header */}
-      <View style={styles.header}>
+      <Animated.View 
+        style={[
+          styles.header,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }
+        ]}
+      >
         <View>
-          {/* <Text style={styles.welcomeText}>{t('helloUser', { name: user?.first_name || 'Driver' })}</Text> */}
           <Text style={styles.titleText}>{t("allOrders")}</Text>
         </View>
         {/* <ToggleSwitch /> */}
-      </View>
+      </Animated.View>
 
       {/* Status Filter Tabs */}
-      <View style={{ marginBottom: 15, backgroundColor: "white" }}>
+      <Animated.View 
+        style={{
+          marginBottom: 15, 
+          backgroundColor: "white",
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -192,7 +256,7 @@ export default function OrdersScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
+      </Animated.View>
 
       {/* Deliveries List */}
       {loading ? (
@@ -217,7 +281,7 @@ export default function OrdersScreen() {
               <MaterialCommunityIcons
                 name="package-variant-closed"
                 size={80}
-                color="#E2E8F0"
+                color="#6750A4"
               />
               <Text style={styles.emptyTitle}>{t("noAssignments")}</Text>
               <Text style={styles.emptySubtitle}>
@@ -227,6 +291,7 @@ export default function OrdersScreen() {
           }
         />
       )}
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -242,7 +307,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   welcomeText: { color: "#94A3B8", fontSize: 14, fontWeight: "500" },
-  titleText: { color: "#1E293B", fontSize: 24, fontWeight: "800" },
+  titleText: { color: "#6750A4", fontSize: 24, fontWeight: "800" },
   tabsContainer: { paddingHorizontal: 24, paddingTop: 5 },
   tab: {
     paddingHorizontal: 20,
@@ -260,13 +325,27 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 16,
+    padding: 0,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 3,
+    flexDirection: "row",
+    overflow: "hidden",
+  },
+  cardContent: {
+    flex: 1,
+    padding: 16,
+  },
+  verticalLine: {
+    width: 3.5,
+    alignSelf: "stretch",
+    backgroundColor: "#6750A4",
+    borderRadius: 2,
+    opacity: 0.6,
+    marginVertical: 8,
   },
   cardHeader: {
     flexDirection: "row",
@@ -274,7 +353,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 15,
   },
-  orderIdText: { fontSize: 16, fontWeight: "700", color: "#1E293B" },
+orderIdText: { fontSize: 16, fontWeight: "700", color: "#6750A4", letterSpacing: -0.2 },
   timeText: { fontSize: 12, color: "#94A3B8", marginTop: 2 },
   statusBadge: {
     flexDirection: "row",
@@ -296,12 +375,13 @@ const styles = StyleSheet.create({
   line: { width: 2, flex: 1, backgroundColor: "#E2E8F0", marginVertical: 4 },
   addressContainer: { gap: 20 },
   addressBlock: { gap: 2 },
-  addressLabel: {
+addressLabel: {
     fontSize: 10,
-    color: "#94A3B8",
-    fontWeight: "700",
+    color: "#8B7BB5",
+    fontWeight: "600",
     letterSpacing: 0.5,
-  },
+    textTransform: "uppercase",
+},
   companyName: { fontSize: 15, fontWeight: "600", color: "#334155" },
   customerName: { fontSize: 15, fontWeight: "600", color: "#334155" },
   addressText: { fontSize: 13, color: "#64748B" },
@@ -324,8 +404,8 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#475569",
+    color: "#6750A4",
     marginTop: 16,
   },
-  emptySubtitle: { fontSize: 14, color: "#94A3B8", marginTop: 4 },
+  emptySubtitle: { fontSize: 14, color: "#8B7BB5", marginTop: 4 },
 });

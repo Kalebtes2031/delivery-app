@@ -12,7 +12,7 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import SlideToConfirm from "@/components/SlideToConfirm";
 import { useDelivery } from "@/context/DeliveryContext";
@@ -43,6 +43,7 @@ export default function DeliveryDetailScreen() {
 
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
+    const insets = useSafeAreaInsets();
 
   // Helper for localized names (same as OrdersScreen)
   const getLocalName = (
@@ -157,7 +158,7 @@ const companyName =
         contentContainerStyle={{
           paddingTop: 20,
           // Keep content above the bottom action hub only when the hub is visible.
-          paddingBottom: hasBottomActions ? 120 : 20,
+          paddingBottom: hasBottomActions ? 140 + insets.bottom : 20,
         }}
       >
         {/* --- STATUS PIPELINE --- */}
@@ -224,7 +225,9 @@ const companyName =
                       },
                     ]}
                   >
-                    {t(`status.${status}`)} {/* 👈 translated status */}
+                    {status === 'out_for_delivery' ? 'In Transit' : 
+                     status === 'pending' ? 'Assigned' : 
+                     t(`status.${status}`)}
                   </Text>
                 </View>
               );
@@ -375,7 +378,7 @@ const companyName =
       {["out_for_delivery"].includes(delivery.status) && (
         <TouchableOpacity
           onPress={() => router.push(`/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}`)}
-          style={styles.trackingFloatingBtn}
+          style={[styles.trackingFloatingBtn, { bottom: 120 + insets.bottom }]}
         >
           <FontAwesome6 name="route" size={18} color="#fff" />
           <Text style={styles.trackingFloatingText}>{t('trackOrder')}</Text>
@@ -383,7 +386,7 @@ const companyName =
       )}
 
       {/* --- BOTTOM ACTION HUB --- */}
-      {hasBottomActions && <View style={styles.bottomHub}>
+      {hasBottomActions && <View style={[styles.bottomHub, { paddingBottom: 20 + insets.bottom }]}>
         {action && (
           <SlideToConfirm
             label={t(`actions.${delivery.status}`)} // translated action label
@@ -623,7 +626,7 @@ const styles = StyleSheet.create({
   // Tracking Floating
   trackingFloatingBtn: {
     position: "absolute",
-    bottom: 110,
+    bottom: 120,
     right: 20,
     backgroundColor: "#6750A4",
     paddingHorizontal: 20,
@@ -646,6 +649,7 @@ const styles = StyleSheet.create({
     width: width,
     backgroundColor: "#fff",
     padding: 20,
+    paddingBottom: 20,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     shadowColor: "#000",
