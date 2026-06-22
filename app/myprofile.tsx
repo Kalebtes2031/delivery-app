@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -20,13 +22,91 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { updateProfile, changePassword as changePasswordApi } from '@/services/api';
 import BackButton from '@/components/BackButton';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
+
+// --- Modern Success Modal Component ---
+interface SuccessModalProps {
+  visible: boolean;
+  message: string;
+  subtitle?: string;
+  onClose: () => void;
+}
+
+const SuccessModal = ({ visible, message, subtitle, onClose }: SuccessModalProps) => {
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      scaleAnim.setValue(0.5);
+      opacityAnim.setValue(0);
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible={visible} animationType="none">
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <Animated.View 
+          style={[
+            styles.modalContainer,
+            {
+              opacity: opacityAnim,
+              transform: [{ scale: scaleAnim }],
+            }
+          ]}
+        >
+          {/* Success Icon */}
+          <View style={styles.successIconWrapper}>
+            <View style={[styles.successIconGradient, { backgroundColor: '#10B981' }]}>
+  <Ionicons name="checkmark" size={40} color="white" />
+</View>
+          </View>
+
+          {/* Content */}
+          <Text style={styles.modalTitle}>{message}</Text>
+          {subtitle && <Text style={styles.modalSubtitle}>{subtitle}</Text>}
+
+          {/* Action Button */}
+          <TouchableOpacity onPress={onClose} style={styles.modalButton}>
+<View style={[styles.modalButtonGradient, { backgroundColor: '#6750A4' }]}>
+  <Text style={styles.modalButtonText}>Got it</Text>
+</View>
+          </TouchableOpacity>
+        </Animated.View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
 
 export default function MyProfileScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
-  const { t } = useTranslation("profile"); // 👈 translation hook (default namespace)
+  const { t } = useTranslation("profile"); 
+    // Success Modal State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [successSubtitle, setSuccessSubtitle] = useState('');
 
   // Profile Form State
   const [profileForm, setProfileForm] = useState({
@@ -62,6 +142,12 @@ export default function MyProfileScreen() {
         return next;
       });
     }
+  };
+    // Function to show success modal
+  const showSuccess = (message: string, subtitle?: string) => {
+    setSuccessMessage(message);
+    setSuccessSubtitle(subtitle || '');
+    setShowSuccessModal(true);
   };
 
   const pickImage = async () => {
@@ -123,7 +209,10 @@ export default function MyProfileScreen() {
     try {
       await updateProfile(profileForm);
       await refreshUser();
-      Alert.alert(t('success'), t('profile_updated'));
+showSuccess(
+  t('success') + '! 🎉',
+  t('profile_updated')
+);
     } catch (error: any) {
       setErrors({ profile_general: t('profile_update_failed') });
     } finally {
@@ -152,7 +241,10 @@ export default function MyProfileScreen() {
     try {
       await changePasswordApi(currentPassword, newPassword);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      Alert.alert(t('success'), t('password_changed'));
+      showSuccess(
+  t('success') + '! 🔐',
+  t('password_changed')
+);
     } catch (error: any) {
       const detail = error.response?.data?.detail || error.response?.data?.current_password?.[0] || error.response?.data?.non_field_errors?.[0] || t('password_change_failed');
       setErrors({ currentPassword: detail });
@@ -282,6 +374,13 @@ export default function MyProfileScreen() {
 
         </ScrollView>
       </KeyboardAvoidingView>
+            {/* Success Modal */}
+      <SuccessModal
+        visible={showSuccessModal}
+        message={successMessage}
+        subtitle={successSubtitle}
+        onClose={() => setShowSuccessModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -377,4 +476,69 @@ const styles = StyleSheet.create({
   disabledBtn: { backgroundColor: '#E2E8F0', opacity: 0.7 },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 12 },
+    // Success Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 28,
+    padding: 32,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 12,
+  },
+  successIconWrapper: {
+    marginBottom: 20,
+  },
+  successIconGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1E293B',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 20,
+  },
+  modalButton: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modalButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });
