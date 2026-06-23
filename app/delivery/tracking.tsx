@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, StatusBar, Linking, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import MapLibreGL from '@maplibre/maplibre-react-native';
@@ -24,8 +25,9 @@ export default function DriverTrackingScreen() {
   const locationSubscription = useRef<Location.LocationObjectSubscription | null>(null);
   const hasFetchedRoute = useRef(false);
 
-  const { t, i18n } = useTranslation('driverOrders'); // 👈 translation hook
+  const { t, i18n } = useTranslation('driverOrders'); 
   const isAmharic = i18n.language?.startsWith('am');
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     initTracking();
@@ -162,7 +164,10 @@ export default function DriverTrackingScreen() {
             bounds={{
               ne: [Math.max(driverCoords[0], destCoords[0]) + 0.005, Math.max(driverCoords[1], destCoords[1]) + 0.005],
               sw: [Math.min(driverCoords[0], destCoords[0]) - 0.005, Math.min(driverCoords[1], destCoords[1]) - 0.005],
-              paddingLeft: 40, paddingRight: 40, paddingTop: 40, paddingBottom: 150
+              paddingLeft: 40, 
+              paddingRight: 40, 
+              paddingTop: 40, 
+              paddingBottom: 150 + insets.bottom
             }}
             animationMode="flyTo"
             animationDuration={2000}
@@ -199,7 +204,7 @@ export default function DriverTrackingScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.bottomSheet}>
+      <View style={[styles.bottomSheet, { paddingBottom: 24 + insets.bottom }]}>
         <View style={styles.orderInfo}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
             <View style={{ gap: 10 }}>
@@ -290,7 +295,18 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingText: { marginTop: 12, color: '#6750A4', fontWeight: '600' },
   backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
-  bottomSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, elevation: 20 },
+  bottomSheet: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 32, 
+    borderTopRightRadius: 32, 
+    padding: 24, 
+    paddingBottom: 24,
+    elevation: 20,
+  },
   orderInfo: {
     flexDirection: "column",
     alignItems: "flex-start",

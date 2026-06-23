@@ -122,8 +122,8 @@ const companyName =
   const subCategoryAm = (orderDetail?.company as any)?.sub_category_name_am;
   const subCategoryName = isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
 
-  return (
-    <View style={styles.container}>
+return (
+  <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
 
       {/* --- HERO HEADER --- */}
@@ -157,10 +157,11 @@ const companyName =
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: 20,
-          // Keep content above the bottom action hub only when the hub is visible.
-          paddingBottom: hasBottomActions ? 140 + insets.bottom : 20,
-        }}
-      >
+    paddingBottom: hasBottomActions 
+      ? 140 + insets.bottom 
+      : 20 + insets.bottom,
+  }}
+>
         {/* --- STATUS PIPELINE --- */}
         <View style={styles.card}>
           <View style={styles.progressContainer}>
@@ -372,6 +373,9 @@ const companyName =
             </View>
           </View>
         </View>
+        
+        {/* Add extra bottom padding when no bottom actions */}
+        {!hasBottomActions && <View style={{ height: insets.bottom + 20 }} />}
       </ScrollView>
 
       {/* --- FLOATING TRACKING BUTTON --- */}
@@ -386,7 +390,11 @@ const companyName =
       )}
 
       {/* --- BOTTOM ACTION HUB --- */}
-      {hasBottomActions && <View style={[styles.bottomHub, { paddingBottom: 20 + insets.bottom }]}>
+      {hasBottomActions && (
+        <View style={[styles.bottomHub, { 
+          paddingBottom: 20 + insets.bottom,
+          paddingTop: 20
+        }]}>
         {action && (
           <SlideToConfirm
             label={t(`actions.${delivery.status}`)} // translated action label
@@ -419,13 +427,17 @@ const companyName =
             <Text style={styles.trackingFloatingText}>{t('trackOrder')}</Text>
           </TouchableOpacity>
         )} */}
-      </View>}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
+container: { 
+  flex: 1, 
+  backgroundColor: "#F8FAFC" 
+},
   loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   // Hero Section
@@ -577,7 +589,13 @@ const styles = StyleSheet.create({
   pulseRingCompleted: {
     borderColor: "#16A34A",
   },
-  stepLabel: { fontSize: 8, color: "#94A3B8", marginTop: 4, fontWeight: "600" },
+stepLabel: { 
+  fontSize: 8, 
+  color: "#94A3B8", 
+  marginTop: 4, 
+  fontWeight: "600",
+  textAlign: "center" 
+},
 
   // Item List
   itemRow: {
