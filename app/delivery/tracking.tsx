@@ -8,11 +8,13 @@ import { getDeliveryDetail, updateDeliveryStatus } from '@/services/api';
 import { firebaseTracking } from '@/services/firebaseTracking';
 import * as Location from 'expo-location';
 import { STATUS_TABS, STATUS_CONFIG } from '@/constants/deliveryConstants';
-import { useTranslation } from 'react-i18next'; // 👈 added
+import { useTranslation } from 'react-i18next';
+import SlideToConfirm from '@/components/SlideToConfirm'; // ADDED
 
 export default function DriverTrackingScreen() {
   const { MapView, Camera, MarkerView, ShapeSource, LineLayer, RasterSource, RasterLayer } = MapLibreGL as any;
-  const { id, order_id } = useLocalSearchParams();
+  const { id, order_id, viewOnly } = useLocalSearchParams();
+  const isViewOnly = viewOnly === "true";
   const router = useRouter();
 
   const [delivery, setDelivery] = useState<any>(null);
@@ -21,6 +23,9 @@ export default function DriverTrackingScreen() {
   const [routeGeoJSON, setRouteGeoJSON] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const [slideLoading, setSlideLoading] = useState(false);
+  const [distance, setDistance] = useState<string | null>(null); // ADDED
+  const [estimatedTime, setEstimatedTime] = useState<string | null>(null); // ADDED
 
   const locationSubscription = useRef<Location.LocationObjectSubscription | null>(null);
   const hasFetchedRoute = useRef(false);
@@ -91,6 +96,46 @@ export default function DriverTrackingScreen() {
               location.coords.heading
             );
           }
+
+          //  Calculate distance and estimated time (only if not delivered) ---
+          if (data.status !== 'delivered' && data.status !== 'completed') {
+            const customerLat = Number(data.customer_lat);
+            const customerLon = Number(data.customer_lon);
+            if (customerLat && customerLon) {
+              // Haversine formula to calculate distance
+              const R = 6371;
+              const dLat = (customerLat - location.coords.latitude) * Math.PI / 180;
+              const dLon = (customerLon - location.coords.longitude) * Math.PI / 180;
+              const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(location.coords.latitude * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              const dist = R * c;
+              
+              // Format distance
+              if (dist < 1) {
+                setDistance(`${Math.round(dist * 1000)}m`);
+              } else {
+                setDistance(`${dist.toFixed(1)}km`);
+              }
+              
+              // Estimate time
+              const avgSpeed = 30;
+              const timeHours = dist / avgSpeed;
+              const timeMinutes = Math.round(timeHours * 60);
+              
+              if (timeMinutes < 1) {
+                setEstimatedTime('< 1 min');
+              } else if (timeMinutes < 60) {
+                setEstimatedTime(`~${timeMinutes} min`);
+              } else {
+                const hours = Math.floor(timeMinutes / 60);
+                const mins = timeMinutes % 60;
+                setEstimatedTime(`~${hours}h ${mins}m`);
+              }
+            }
+          }
         }
       );
     } catch (error) {
@@ -102,9 +147,9 @@ export default function DriverTrackingScreen() {
     }
   };
 
-  const onConfirmComplete = async () => {
+  const handleSlideConfirm = async () => {
     if (!delivery) return;
-    setUpdating(true);
+    setSlideLoading(true);
     try {
       await updateDeliveryStatus(delivery.id, 'delivered' as any);
       if (locationSubscription.current) {
@@ -117,7 +162,7 @@ export default function DriverTrackingScreen() {
     } catch (error: any) {
       Alert.alert(t('errorTitle'), t('updateFailed'));
     } finally {
-      setUpdating(false);
+      setSlideLoading(false);
       setIsConfirmModalVisible(false);
     }
   };
@@ -204,7 +249,87 @@ export default function DriverTrackingScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.bottomSheet, { paddingBottom: 24 + insets.bottom }]}>
+      <View style={[styles.bottomSheet, { 
+        paddingBottom: 16 + insets.bottom,
+        paddingTop: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#fff',
+      }]}>
+        
+        {/* ===== VIEW-ONLY MODE:  */}
+        {isViewOnly ? (
+          <View style={styles.viewOnlyContainer}>
+            {/* Clean Handle */}
+            <View style={styles.cleanHandle} />
+
+            {/* Row 1: Order + Status */}
+            <View style={styles.cleanRow}>
+              <View style={styles.cleanOrder}>
+                <Text style={styles.cleanOrderLabel}>Order</Text>
+                <Text style={styles.cleanOrderNumber}>#{order_id}</Text>
+              </View>
+              <View style={[styles.cleanStatus, { backgroundColor: config.bg }]}>
+                <MaterialCommunityIcons name={config.icon} size={12} color={config.text} />
+                <Text style={[styles.cleanStatusText, { color: config.text }]}>
+                  {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
+                   delivery.status === 'pending' ? 'ASSIGNED' : 
+                   t(`status.${delivery.status}`)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Row 2: Distance + Time  */}
+            <View style={styles.cleanStats}>
+              <View style={styles.cleanStat}>
+                <View style={styles.cleanStatIcon}>
+                  <Ionicons name="location-outline" size={18} color="#6750A4" />
+                </View>
+                <Text style={[styles.cleanStatValue, { color: '#6750A4' }]}>{distance || '--'}</Text>
+                <Text style={styles.cleanStatLabel}>Distance</Text>
+              </View>
+              <View style={styles.cleanDivider} />
+              <View style={styles.cleanStat}>
+                <View style={[styles.cleanStatIcon, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}>
+                  <Ionicons name="time-outline" size={18} color="#D97706" />
+                </View>
+                <Text style={[styles.cleanStatValue, { color: '#D97706' }]}>{estimatedTime || '--'}</Text>
+                <Text style={styles.cleanStatLabel}>Est. Time</Text>
+              </View>
+            </View>
+
+            {/* Row 3: Customer Name + Call + Close  */}
+            <View style={styles.cleanCustomerRow}>
+              {/* Customer Name - Dynamic width (fits the name) */}
+              <View style={styles.cleanCustomerNameCard}>
+                {delivery?.customer_image ? (
+                  <Image source={{ uri: delivery.customer_image }} style={styles.cleanCustomerImage} />
+                ) : (
+                  <View style={styles.cleanCustomerPlaceholder}>
+                    <Ionicons name="person" size={12} color="#6750A4" />
+                  </View>
+                )}
+                <Text style={styles.cleanCustomerName} numberOfLines={1}>{customerName}</Text>
+              </View>
+              
+              {/* Call Button  */}
+              <TouchableOpacity
+                style={styles.cleanCallCard}
+                onPress={() => delivery?.customer_phone && Linking.openURL(`tel:${delivery.customer_phone}`)}
+              >
+                <Ionicons name="call-outline" size={14} color="#fff" />
+                <Text style={styles.cleanCallText}>Call</Text>
+              </TouchableOpacity>
+
+              {/* Close Button  */}
+              <TouchableOpacity style={styles.cleanClose} onPress={() => router.back()}>
+                <Ionicons name="close-outline" size={14} color="#fff" />
+                <Text style={styles.cleanCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          /* ===== NORMAL MODE:  */
+          <>
         <View style={styles.orderInfo}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
             <View style={{ gap: 10 }}>
@@ -215,29 +340,46 @@ export default function DriverTrackingScreen() {
               }}>
                 {t('orderNumber', { id: order_id })}
               </Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: config.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-              <MaterialCommunityIcons name={config.icon} size={16} color={config.text} />
-              <Text style={{
-                color: config.text, fontSize: 10,
-                fontWeight: "700",
-                textTransform: "uppercase",
-                marginLeft: 5
-              }}>
-                {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
-                 delivery.status === 'pending' ? 'ASSIGNED' : 
-                 t(`status.${delivery.status}`)}
-              </Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
-            {/* customer image */}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              {delivery?.customer_image ?
-                <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
-                  <Image
-                    source={{ uri: delivery.customer_image }}
-                    style={{ height: 50, width: 50, borderRadius: 125, resizeMode: "cover" }} />
+                  {(distance || estimatedTime) && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      {delivery?.status === 'delivered' || delivery?.status === 'completed' ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
+                          <Text style={{ fontSize: 12, color: "#16A34A", fontWeight: "600" }}>✅ Completed</Text>
+                        </View>
+                      ) : (
+                        <>
+                          {distance && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Ionicons name="location-outline" size={14} color="#6750A4" />
+                              <Text style={{ fontSize: 12, color: "#6750A4", fontWeight: "600" }}>📍 {distance}</Text>
+                            </View>
+                          )}
+                          {estimatedTime && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Ionicons name="time-outline" size={14} color="#F59E0B" />
+                              <Text style={{ fontSize: 12, color: "#F59E0B", fontWeight: "600" }}>🕐 {estimatedTime}</Text>
+                            </View>
+                          )}
+                        </>
+                      )}
+                    </View>
+                  )}
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: config.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                  <MaterialCommunityIcons name={config.icon} size={16} color={config.text} />
+                  <Text style={{ color: config.text, fontSize: 10, fontWeight: "700", textTransform: "uppercase", marginLeft: 5 }}>
+                    {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
+                     delivery.status === 'pending' ? 'ASSIGNED' : 
+                     t(`status.${delivery.status}`)}
+                  </Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  {delivery?.customer_image ?
+                    <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
+                      <Image source={{ uri: delivery.customer_image }} style={{ height: 50, width: 50, borderRadius: 125, resizeMode: "cover" }} />
                 </View>
                 :
                 <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
@@ -252,20 +394,24 @@ export default function DriverTrackingScreen() {
                 onPress={() => delivery?.customer_phone && Linking.openURL(`tel:${delivery.customer_phone}`)}
               >
                 <Ionicons name="call" size={18} color="#fff" />
-                {/* <Text style={styles.callButtonText}>Call</Text> */}
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={() => setIsConfirmModalVisible(true)}
-          >
-            <Text style={styles.completeButtonText}>{t('completeDelivery')}</Text>
-          </TouchableOpacity>
-        </View>
+            {!isViewOnly && (
+              <View style={styles.actionButtons}>
+                <SlideToConfirm
+                  label={t('completeDelivery')}
+                  color="#6750A4"
+                  icon="check-circle"
+                  onConfirm={handleSlideConfirm}
+                  isLoading={slideLoading}
+                />
+              </View>
+            )}
+          </>
+        )}
       </View>
 
       <Modal visible={isConfirmModalVisible} transparent animationType="fade">
@@ -277,8 +423,8 @@ export default function DriverTrackingScreen() {
               <TouchableOpacity style={styles.cancelButton} onPress={() => setIsConfirmModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton} onPress={onConfirmComplete} disabled={updating}>
-                {updating ? <ActivityIndicator color="white" /> : <Text style={styles.confirmButtonText}>{t('confirm')}</Text>}
+              <TouchableOpacity style={styles.confirmButton} onPress={handleSlideConfirm} disabled={slideLoading}>
+                {slideLoading ? <ActivityIndicator color="white" /> : <Text style={styles.confirmButtonText}>{t('confirm')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -319,11 +465,9 @@ const styles = StyleSheet.create({
   },
   customerName: { fontSize: 20, fontWeight: '700', color: '#1E293B' },
   addressText: { fontSize: 14, color: '#64748B', marginTop: 4 },
-  actionButtons: { flexDirection: 'row', marginTop: 24, gap: 12 },
+  actionButtons: { flexDirection: 'row', marginTop: 24, gap: 12, width: '100%' },
   callButton: { paddingHorizontal: 10, height: 40, borderRadius: 116, borderWeight: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: "#16A34A" },
   callButtonText: { color: '#fff', fontWeight: '600' },
-  completeButton: { flex: 2, height: 50, backgroundColor: '#059669', borderRadius: 116, alignItems: 'center', justifyContent: 'center' },
-  completeButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
   destMarker: {
     width: 36,
     height: 36,
@@ -352,5 +496,356 @@ const styles = StyleSheet.create({
   cancelButton: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9' },
   cancelButtonText: { color: '#64748B', fontWeight: '600' },
   confirmButton: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: '#6750A4' },
-  confirmButtonText: { color: '#fff', fontWeight: '600' }
+  confirmButtonText: { color: '#fff', fontWeight: '600' },
+
+  // ===== VIEW-ONLY PREMIUM STYLES =====
+  handleBar: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  premiumHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  premiumHeaderIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  premiumHeaderTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  premiumHeaderSub: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  premiumOrderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 16,
+    gap: 10,
+  },
+  premiumOrderLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  premiumOrderNumber: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  premiumStatusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+    marginLeft: 'auto',
+  },
+  premiumStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  premiumStatsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  premiumStatCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  premiumStatIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  premiumStatValue: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  premiumStatLabel: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  premiumCustomerCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  premiumCustomerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  premiumCustomerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  premiumCustomerPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  premiumCustomerName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  premiumCustomerPhone: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+  },
+  premiumCallButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#16A34A',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  premiumCallText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  premiumCloseButton: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  premiumCloseText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // ===== VIEW-ONLY COMPACT STYLES =====
+  viewOnlyContainer: {
+    paddingHorizontal: 0,
+    paddingVertical: 2,
+  },
+  cleanHandle: {
+    width: 30,
+    height: 3,
+    backgroundColor: '#6750A4',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 6,
+    opacity: 0.25,
+  },
+  cleanRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+    paddingHorizontal: 0,
+  },
+  cleanOrder: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  cleanOrderLabel: {
+    color: '#9CA3AF',
+    fontSize: 10,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cleanOrderNumber: {
+    color: '#6750A4',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  cleanStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    gap: 3,
+  },
+  cleanStatusText: {
+    fontSize: 8,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  cleanStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 8,
+    borderWidth: 1.5,
+    borderColor: '#C5AFD9',
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cleanStat: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  cleanStatIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F3F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#C5AFD9',
+  },
+  cleanStatValue: {
+    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  cleanStatLabel: {
+    color: '#9CA3AF',
+    fontSize: 9,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cleanDivider: {
+    width: 1.5,
+    height: 28,
+    backgroundColor: '#C5AFD9',
+    opacity: 0.5,
+  },
+  cleanCustomerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 6,
+    marginBottom: 4,
+  },
+  cleanCustomerNameCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderWidth: 1.5,
+    borderColor: '#C5AFD9',
+  },
+  cleanCustomerImage: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: '#C5AFD9',
+  },
+  cleanCustomerPlaceholder: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#F3F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cleanCustomerName: {
+    color: '#1F2937',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  cleanCallCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#22C55E',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 0,
+    shadowColor: '#22C55E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+    minWidth: 55,
+    marginLeft: 'auto',
+  },
+  cleanCallText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  cleanClose: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    backgroundColor: '#EF4444',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 0,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+    minWidth: 50,
+  },
+  cleanCloseText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
 });

@@ -23,7 +23,7 @@ export const NEXT_ACTION: Record<string, { label: string; next: DeliveryStatus; 
   pending:          { label: 'Accept Order',      next: 'accepted',         color: '#2D5BD0', icon: 'check-circle' },
   accepted:         { label: 'Confirm Pickup',    next: 'picked_up',        color: '#6750A4', icon: 'package-variant' },
   picked_up:        { label: 'Start Navigation',  next: 'out_for_delivery', color: '#10B981', icon: 'navigation' },
-  out_for_delivery: { label: 'Complete Delivery', next: 'delivered',        color: '#059669', icon: 'check-all' },
+  out_for_delivery: { label: 'Complete Delivery', next: 'delivered',        color: '#6750A4', icon: 'check-all' },
 };
 
 export const STATUS_TABS: { label: string; value: DeliveryStatus | 'all' }[] = [

@@ -155,7 +155,13 @@ export default function HomeScreen() {
                 <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notifButton}>
                   <View style={styles.notifIconWrapper}>
                     <Ionicons name="notifications-outline" size={20} color="#fff" />
-                    {unreadCount > 0 && <View style={styles.notificationDot} />}
+                    {unreadCount > 0 && (
+                      <View style={styles.notificationBadge}>
+                        <Text style={styles.notificationBadgeText}>
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </TouchableOpacity>
               </View>
@@ -555,17 +561,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
-  notificationDot: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-    borderWidth: 1.5,
-    borderColor: '#fff',
-  },
+notificationBadge: {
+  position: 'absolute',
+  top: -4,
+  right: -4,
+  minWidth: 18,
+  height: 18,
+  borderRadius: 9,
+  backgroundColor: '#ffffff', 
+  borderWidth: 1.5,
+  borderColor: '#6750A4',  
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 4,
+},
+notificationBadgeText: {
+  color: '#6750A4',  
+  fontSize: 10,
+  fontWeight: '700',
+  textAlign: 'center',
+},
 
   // Stats Grid
   statsGrid: {

@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -22,7 +23,7 @@ import {
 } from "@expo/vector-icons";
 import ToggleSwitch from "@/components/ToggleButton";
 import { STATUS_TABS, STATUS_CONFIG } from "@/constants/deliveryConstants";
-import { useTranslation } from "react-i18next"; // 👈 added
+import { useTranslation } from "react-i18next";
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -41,6 +42,50 @@ export default function OrdersScreen() {
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
 
+  // State to store location names
+  const [locationNames, setLocationNames] = useState<Record<number, string>>({});
+
+  // Helper to get location name from coordinates
+  const getLocationName = useCallback(async (lat: string, lon: string, deliveryId: number) => {
+    if (locationNames[deliveryId]) return; // Already fetched
+    
+    try {
+      // Using OpenStreetMap Nominatim API (free, no key required)
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=16&addressdetails=1`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data && data.display_name) {
+        // Shorten the address to show only city/area
+        const parts = data.display_name.split(',');
+        let shortName = parts.slice(0, 3).join(',').trim();
+        // If too long, shorten further
+        if (shortName.length > 30) {
+          shortName = parts.slice(0, 2).join(',').trim();
+        }
+        setLocationNames(prev => ({ ...prev, [deliveryId]: shortName }));
+      } else {
+        // Fallback to coordinates
+        setLocationNames(prev => ({ ...prev, [deliveryId]: `${lat}, ${lon}` }));
+      }
+    } catch (error) {
+      console.log('Error fetching location name:', error);
+      // Fallback to coordinates
+      setLocationNames(prev => ({ ...prev, [deliveryId]: `${lat}, ${lon}` }));
+    }
+  }, [locationNames]);
+
+  // Navigation helper - opens in-app tracking map with customer location (view-only)
+  const openNavigation = (deliveryId: number, orderId: number) => {
+    router.push({
+      pathname: "/delivery/tracking",
+      params: { 
+        id: deliveryId.toString(), 
+        order_id: orderId.toString(),
+        viewOnly: "true" // ADDED: Tells tracking screen to hide complete button
+      }
+    });
+  };
   
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -165,7 +210,20 @@ export default function OrdersScreen() {
             <View style={styles.routeIcons}>
               <View style={[styles.dot, { backgroundColor: "#6750A4" }]} />
               <View style={styles.line} />
-              <Ionicons name="location" size={18} color="#EF4444" />
+              {(item.customer_lat && item.customer_lon) ? (
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    openNavigation(item.id, item.vendor_order);
+                  }}
+                  activeOpacity={0.7}
+                  style={styles.locationIconTouchable}
+                >
+                  <Ionicons name="location" size={22} color="#EF4444" />
+                </TouchableOpacity>
+              ) : (
+                <Ionicons name="location" size={18} color="#EF4444" />
+              )} 
             </View>
 
             <View style={styles.addressContainer}>
@@ -337,7 +395,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 16,
+    padding: 14,
   },
   verticalLine: {
     width: 3.5,
@@ -351,7 +409,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 15,
+    marginBottom: 12,
   },
 orderIdText: { fontSize: 16, fontWeight: "700", color: "#6750A4", letterSpacing: -0.2 },
   timeText: { fontSize: 12, color: "#94A3B8", marginTop: 2 },
@@ -367,24 +425,28 @@ orderIdText: { fontSize: 16, fontWeight: "700", color: "#6750A4", letterSpacing:
   routeContainer: { flexDirection: "row", marginBottom: 15 },
   routeIcons: {
     alignItems: "center",
-    width: 20,
-    marginRight: 15,
+    width: 28,
+    marginRight: 12,
     paddingVertical: 5,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
   line: { width: 2, flex: 1, backgroundColor: "#E2E8F0", marginVertical: 4 },
-  addressContainer: { gap: 20 },
+  addressContainer: { flex: 1, gap: 16 },
   addressBlock: { gap: 2 },
 addressLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#8B7BB5",
     fontWeight: "600",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     textTransform: "uppercase",
 },
-  companyName: { fontSize: 15, fontWeight: "600", color: "#334155" },
-  customerName: { fontSize: 15, fontWeight: "600", color: "#334155" },
-  addressText: { fontSize: 13, color: "#64748B" },
+  companyName: { fontSize: 14, fontWeight: "600", color: "#334155" },
+  customerName: { fontSize: 14, fontWeight: "600", color: "#334155" },
+  locationIconTouchable: {
+    padding: 2,
+    marginVertical: 0,
+  },
+  addressText: { fontSize: 12, color: "#64748B" },
   cardFooter: {
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",

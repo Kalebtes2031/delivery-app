@@ -8,12 +8,14 @@ import {
   RefreshControl,
   ActivityIndicator,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { getNotifications, markNotificationsRead } from '@/services/api';
+import { useDelivery } from '@/context/DeliveryContext';
 
 interface Notif {
   id: number;
@@ -22,6 +24,12 @@ interface Notif {
   body: string;
   is_read: boolean;
   created_at: string;
+  data?: {
+    type?: string;
+    event?: string;
+    tracking_id?: string;
+    vendor_order_id?: number;
+  };
 }
 
 const META: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
@@ -52,6 +60,7 @@ function timeAgo(iso: string): string {
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { deliveries, refreshDeliveries } = useDelivery();
   const [items, setItems] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,13 +98,50 @@ export default function NotificationsScreen() {
     }
   };
 
+  // Navigation handler - finds delivery ID from vendor_order_id
   const onPressItem = async (n: Notif) => {
-    if (n.is_read) return;
-    try {
-      await markNotificationsRead([n.id]);
-      setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
-    } catch {
-      /* ignore */
+    // Mark as read first
+    if (!n.is_read) {
+      try {
+        await markNotificationsRead([n.id]);
+        setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Get vendor_order_id from notification data
+    const vendorOrderId = n.data?.vendor_order_id;
+    
+    if (!vendorOrderId) {
+      Alert.alert('Info', 'No linked delivery found for this notification');
+      return;
+    }
+
+    // Get deliveries from context (already available)
+    const deliveryList = deliveries || [];
+    
+    // Find the delivery assignment that matches the vendor_order_id
+    let matchedDelivery = deliveryList.find(
+      (delivery) => delivery.vendor_order === vendorOrderId
+    );
+
+    // If not found in existing deliveries, try refreshing once
+    if (!matchedDelivery) {
+      await refreshDeliveries();
+      // Get updated deliveries from context
+      const updatedList = deliveries || [];
+      matchedDelivery = updatedList.find(
+        (delivery) => delivery.vendor_order === vendorOrderId
+      );
+    }
+
+    if (matchedDelivery) {
+      // Navigate to delivery detail using the delivery assignment ID
+      router.push(`/delivery/${matchedDelivery.id}`);
+    } else {
+      // If not found, show alert instead of trying fallback
+      Alert.alert('Info', 'Delivery not found for this notification');
     }
   };
 
