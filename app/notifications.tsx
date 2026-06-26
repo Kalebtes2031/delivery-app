@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { getNotifications, markNotificationsRead } from '@/services/api';
 import { useDelivery } from '@/context/DeliveryContext';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 interface Notif {
   id: number;
@@ -61,6 +62,7 @@ function timeAgo(iso: string): string {
 export default function NotificationsScreen() {
   const router = useRouter();
   const { deliveries, refreshDeliveries } = useDelivery();
+  const { refetch: refetchUnread } = useUnreadNotifications();
   const [items, setItems] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,29 +72,32 @@ export default function NotificationsScreen() {
       const { data } = await getNotifications();
       const results = (data as { results?: Notif[] }).results ?? (data as Notif[]);
       setItems(results);
+      // ✅ Sync badge count
+      await refetchUnread();
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [refetchUnread]);
 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
   );
-
   const onRefresh = () => {
     setRefreshing(true);
     load();
+    refetchUnread();
   };
 
   const markAll = async () => {
     try {
       await markNotificationsRead();
       setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      await refetchUnread();
     } catch {
       /* ignore */
     }
@@ -105,6 +110,8 @@ export default function NotificationsScreen() {
       try {
         await markNotificationsRead([n.id]);
         setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
+        // ✅ Sync badge count
+        await refetchUnread();
       } catch {
         /* ignore */
       }

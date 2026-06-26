@@ -15,9 +15,10 @@ export function useUnreadNotifications() {
     }
     try {
       const { data } = await getUnreadCount();
+      console.log('🔔 Unread count from API:', data.unread);
       setUnread(data.unread);
-    } catch {
-      /* ignore */
+    } catch (error) {
+      console.log('🔔 Failed to fetch unread count:', error);
     }
   }, [isAuthenticated]);
 

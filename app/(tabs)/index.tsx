@@ -749,10 +749,12 @@ notificationBadgeText: {
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 2,
   },
   heroStepWrapper: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   heroNodeZone: {
     height: 36,
@@ -761,6 +763,7 @@ notificationBadgeText: {
     justifyContent: 'center',
     position: 'relative',
     marginBottom: 4,
+    paddingHorizontal: 0,
   },
   heroProgressLine: {
     position: 'absolute',
@@ -769,6 +772,7 @@ notificationBadgeText: {
     marginTop: -1.25,
     width: '100%',
     zIndex: -1,
+    left: '0%',
   },
   heroStepIndicator: {
     width: 26,
@@ -871,11 +875,6 @@ notificationBadgeText: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 3,
     borderWidth: 1,
     borderColor: '#F0F2F5',
     overflow: 'hidden',

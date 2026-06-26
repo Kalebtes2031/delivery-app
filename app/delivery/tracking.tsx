@@ -26,6 +26,9 @@ export default function DriverTrackingScreen() {
   const [slideLoading, setSlideLoading] = useState(false);
   const [distance, setDistance] = useState<string | null>(null); // ADDED
   const [estimatedTime, setEstimatedTime] = useState<string | null>(null); // ADDED
+  // ADD: State for image zoom modal
+  const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
+  const [zoomImageUri, setZoomImageUri] = useState<string | null>(null);
 
   const locationSubscription = useRef<Location.LocationObjectSubscription | null>(null);
   const hasFetchedRoute = useRef(false);
@@ -251,7 +254,7 @@ export default function DriverTrackingScreen() {
 
       <View style={[styles.bottomSheet, { 
         paddingBottom: 16 + insets.bottom,
-        paddingTop: 12,
+        paddingTop: 8,
         paddingHorizontal: 16,
         backgroundColor: '#fff',
       }]}>
@@ -259,18 +262,24 @@ export default function DriverTrackingScreen() {
         {/* ===== VIEW-ONLY MODE:  */}
         {isViewOnly ? (
           <View style={styles.viewOnlyContainer}>
-            {/* Clean Handle */}
-            <View style={styles.cleanHandle} />
+            {/* Bottom Sheet Header with Cancel - X Icon Only */}
+            <View style={styles.bottomSheetHeader}>
+              <View style={styles.cleanHandle} />
+              <TouchableOpacity style={styles.bottomCancelButton} onPress={() => router.back()}>
+                <Ionicons name="close-outline" size={20} color="#6750A4" />
+              </TouchableOpacity>
+            </View>
 
-            {/* Row 1: Order + Status */}
+            {/* Row 1: Order + Status (In One Row) - Premium Status */}
             <View style={styles.cleanRow}>
               <View style={styles.cleanOrder}>
                 <Text style={styles.cleanOrderLabel}>Order</Text>
                 <Text style={styles.cleanOrderNumber}>#{order_id}</Text>
               </View>
-              <View style={[styles.cleanStatus, { backgroundColor: config.bg }]}>
-                <MaterialCommunityIcons name={config.icon} size={12} color={config.text} />
-                <Text style={[styles.cleanStatusText, { color: config.text }]}>
+              <View style={[styles.premiumStatusBadge, { backgroundColor: config.bg }]}>
+                <View style={[styles.premiumStatusDot, { backgroundColor: config.text }]} />
+                <MaterialCommunityIcons name={config.icon} size={11} color={config.text} />
+                <Text style={[styles.premiumStatusText, { color: config.text }]}>
                   {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
                    delivery.status === 'pending' ? 'ASSIGNED' : 
                    t(`status.${delivery.status}`)}
@@ -297,10 +306,20 @@ export default function DriverTrackingScreen() {
               </View>
             </View>
 
-            {/* Row 3: Customer Name + Call + Close  */}
+            {/* Row 3: Customer Name + Call  */}
             <View style={styles.cleanCustomerRow}>
               {/* Customer Name - Dynamic width (fits the name) */}
-              <View style={styles.cleanCustomerNameCard}>
+              <TouchableOpacity 
+                style={styles.cleanCustomerNameCard}
+                onPress={() => {
+                  if (delivery?.customer_image) {
+                    setZoomImageUri(delivery.customer_image);
+                    setIsImageZoomVisible(true);
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.customerImageWrapper}>
                 {delivery?.customer_image ? (
                   <Image source={{ uri: delivery.customer_image }} style={styles.cleanCustomerImage} />
                 ) : (
@@ -308,22 +327,22 @@ export default function DriverTrackingScreen() {
                     <Ionicons name="person" size={12} color="#6750A4" />
                   </View>
                 )}
+
+                  {delivery?.customer_image && (
+                    <View style={styles.zoomIndicatorBelow}>
+                      <Ionicons name="expand-outline" size={10} color="#FFFFFF" />
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.cleanCustomerName} numberOfLines={1}>{customerName}</Text>
-              </View>
+              </TouchableOpacity>
               
-              {/* Call Button  */}
+              {/* Call Button - Icon Only (Matches Normal Mode) */}
               <TouchableOpacity
                 style={styles.cleanCallCard}
                 onPress={() => delivery?.customer_phone && Linking.openURL(`tel:${delivery.customer_phone}`)}
               >
-                <Ionicons name="call-outline" size={14} color="#fff" />
-                <Text style={styles.cleanCallText}>Call</Text>
-              </TouchableOpacity>
-
-              {/* Close Button  */}
-              <TouchableOpacity style={styles.cleanClose} onPress={() => router.back()}>
-                <Ionicons name="close-outline" size={14} color="#fff" />
-                <Text style={styles.cleanCloseText}>Close</Text>
+                <Ionicons name="call" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -366,9 +385,10 @@ export default function DriverTrackingScreen() {
                     </View>
                   )}
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: config.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                  <MaterialCommunityIcons name={config.icon} size={16} color={config.text} />
-                  <Text style={{ color: config.text, fontSize: 10, fontWeight: "700", textTransform: "uppercase", marginLeft: 5 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: config.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: config.text + '30' }}>
+                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: config.text }} />
+                  <MaterialCommunityIcons name={config.icon} size={12} color={config.text} />
+                  <Text style={{ color: config.text, fontSize: 8, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 }}>
                     {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
                      delivery.status === 'pending' ? 'ASSIGNED' : 
                      t(`status.${delivery.status}`)}
@@ -377,17 +397,27 @@ export default function DriverTrackingScreen() {
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  {delivery?.customer_image ?
-                    <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
-                      <Image source={{ uri: delivery.customer_image }} style={{ height: 50, width: 50, borderRadius: 125, resizeMode: "cover" }} />
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (delivery?.customer_image) {
+                        setZoomImageUri(delivery.customer_image);
+                        setIsImageZoomVisible(true);
+                      }
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    {delivery?.customer_image ?
+                      <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
+                        <Image source={{ uri: delivery.customer_image }} style={{ height: 50, width: 50, borderRadius: 125, resizeMode: "cover" }} />
+                      </View>
+                    :
+                      <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
+                        <Ionicons name="person" size={24} color="#64748B" />
+                      </View>
+                    }
+                  </TouchableOpacity>
+                  <Text style={styles.customerName}>{customerName}</Text>
                 </View>
-                :
-                <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
-                  <Ionicons name="person" size={24} color="#64748B" />
-                </View>
-              }
-              <Text style={styles.customerName}>{customerName}</Text>
-            </View>
             <View>
               <TouchableOpacity
                 style={styles.callButton}
@@ -430,6 +460,36 @@ export default function DriverTrackingScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Image Zoom Modal */}
+      <Modal
+        visible={isImageZoomVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsImageZoomVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.zoomOverlay} 
+          activeOpacity={1}
+          onPress={() => setIsImageZoomVisible(false)}
+        >
+          <View style={styles.zoomContainer}>
+            {zoomImageUri && (
+              <Image 
+                source={{ uri: zoomImageUri }} 
+                style={styles.zoomImage}
+                resizeMode="contain"
+              />
+            )}
+            <TouchableOpacity 
+              style={styles.zoomCloseButton}
+              onPress={() => setIsImageZoomVisible(false)}
+            >
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -440,7 +500,22 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingText: { marginTop: 12, color: '#6750A4', fontWeight: '600' },
-  backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
+    backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
+  // NEW: Header Cancel Button (Top Right)
+  headerCancelButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 44,
+    height: 44,
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
   bottomSheet: { 
     position: 'absolute', 
     bottom: 0, 
@@ -665,14 +740,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 2,
   },
+  // Bottom Sheet Header with Cancel - Center aligned
+  bottomSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+    minHeight: 24,
+  },
+  // Cancel Button - X Icon Only, White BG, Light Secondary Border
+  bottomCancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: '#C5AFD9',
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  // Remove bottomCancelText - not needed (X icon only)
+  // Clean Handle - Centered vertically
   cleanHandle: {
-    width: 30,
-    height: 3,
-    backgroundColor: '#6750A4',
+    width: 36,
+    height: 4,
+    backgroundColor: '#D1D5DB',
     borderRadius: 2,
+    opacity: 0.5,
     alignSelf: 'center',
-    marginBottom: 6,
-    opacity: 0.25,
   },
   cleanRow: {
     flexDirection: 'row',
@@ -687,8 +789,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   cleanOrderLabel: {
-    color: '#9CA3AF',
-    fontSize: 10,
+    color: '#6750A4',
+    fontSize: 15,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -698,6 +800,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  // Legacy status - kept for fallback
   cleanStatus: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -706,7 +809,50 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     gap: 3,
   },
+    // NEW: Container for Status + Cancel
+  cleanStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+
+    // NEW: Status Row (Below Cancel)
+  cleanStatusRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 6,
+    paddingHorizontal: 0,
+  },
   cleanStatusText: {
+    fontSize: 8,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  // ===== PREMIUM STATUS BADGE STYLES - COMPACT =====
+  premiumStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  premiumStatusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 1,
+  },
+  premiumStatusText: {
     fontSize: 8,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -774,56 +920,117 @@ const styles = StyleSheet.create({
   cleanCustomerNameCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
     alignSelf: 'flex-start',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderWidth: 1.5,
-    borderColor: '#C5AFD9',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 0,
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   cleanCustomerImage: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    borderColor: '#C5AFD9',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: '#6750A4',
   },
-  cleanCustomerPlaceholder: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#F3F0FF',
+    // Wrapper for customer image with zoom indicator below
+  customerImageWrapper: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Zoom indicator at bottom-right of image
+  zoomIndicatorBelow: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#6750A4',
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cleanCustomerPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#6750A4',
+  },
   cleanCustomerName: {
     color: '#1F2937',
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '600',
   },
   cleanCallCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    backgroundColor: '#22C55E',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 0,
-    shadowColor: '#22C55E',
+    backgroundColor: '#16A34A',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#16A34A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
-    minWidth: 55,
     marginLeft: 'auto',
+  },
+
+  // Image Zoom Modal Styles
+  zoomOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  zoomImage: {
+    width: '100%',
+    height: '80%',
+    borderRadius: 16,
+  },
+  zoomCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   cleanCallText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   cleanClose: {
