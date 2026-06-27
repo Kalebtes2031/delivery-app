@@ -320,11 +320,12 @@ export default function HomeScreen() {
                 const isCurrent = index === currentIndex;
                 const isFuture = index > currentIndex;
                 const config = STATUS_CONFIG[status];
+                const isLast = index === STATUS_ORDER.length - 1;
 
                 return (
                   <View key={status} style={styles.heroStepWrapper}>
                     <View style={styles.heroNodeZone}>
-                      {index !== 0 && (
+                      {!isLast && (
                         <View
                           style={[
                             styles.heroProgressLine,
@@ -729,16 +730,17 @@ const styles = StyleSheet.create({
   // Progress Tracker
   heroProgressContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     marginTop: 4,
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  heroStepWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
+heroStepWrapper: {
+  flex: 1,
+  alignItems: 'center',
+  position: 'relative',
+},
   heroNodeZone: {
     height: 36,
     width: '100%',
@@ -747,14 +749,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 4,
   },
-  heroProgressLine: {
-    position: 'absolute',
-    height: 2.5,
-    top: '50%',
-    marginTop: -1.25,
-    width: '100%',
-    zIndex: -1,
-  },
+heroProgressLine: {
+  position: 'absolute',
+  height: 2.5,
+  top: '50%',
+  marginTop: -1.25,
+  left: '50%',
+  width: '100%',
+  zIndex: -1,
+},
   heroStepIndicator: {
     width: 26,
     height: 26,

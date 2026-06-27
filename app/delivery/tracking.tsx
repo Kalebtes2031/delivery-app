@@ -253,14 +253,15 @@ export default function DriverTrackingScreen() {
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={() => setIsConfirmModalVisible(true)}
-          >
-            <Text style={styles.completeButtonText}>{t('completeDelivery')}</Text>
-          </TouchableOpacity>
-        </View>
+<View style={[styles.actionButtons, { marginBottom: 10 }]}>
+  <TouchableOpacity
+    style={styles.completeButton}
+    onPress={() => setIsConfirmModalVisible(true)}
+    activeOpacity={0.8}
+  >
+    <Text style={styles.completeButtonText}>{t('completeDelivery')}</Text>
+  </TouchableOpacity>
+</View>
       </View>
 
       <Modal visible={isConfirmModalVisible} transparent animationType="fade">
@@ -290,7 +291,24 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingText: { marginTop: 12, color: '#6750A4', fontWeight: '600' },
   backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
-  bottomSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, elevation: 20 },
+bottomSheet: { 
+  position: 'absolute', 
+  bottom: 0, 
+  left: 0, 
+  right: 0, 
+  backgroundColor: '#fff', 
+  borderTopLeftRadius: 32, 
+  borderTopRightRadius: 32, 
+  paddingHorizontal: 20,
+  paddingTop: 20,
+  paddingBottom: 20,
+  elevation: 20,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: -4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  zIndex: 10,
+},
   orderInfo: {
     flexDirection: "column",
     alignItems: "flex-start",
@@ -306,8 +324,26 @@ const styles = StyleSheet.create({
   actionButtons: { flexDirection: 'row', marginTop: 24, gap: 12 },
   callButton: { paddingHorizontal: 10, height: 40, borderRadius: 116, borderWeight: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: "#16A34A" },
   callButtonText: { color: '#fff', fontWeight: '600' },
-  completeButton: { flex: 2, height: 50, backgroundColor: '#059669', borderRadius: 116, alignItems: 'center', justifyContent: 'center' },
-  completeButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
+completeButton: { 
+  flex: 1, 
+  height: 56, 
+  backgroundColor: '#059669', 
+  borderRadius: 28, 
+  alignItems: 'center', 
+  justifyContent: 'center',
+  shadowColor: '#059669',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  elevation: 5,
+  minWidth: 120,
+},
+completeButtonText: { 
+  color: '#ffffff', 
+  fontWeight: '800', 
+  fontSize: 17,
+  letterSpacing: 0.5,
+},
   destMarker: {
     width: 36,
     height: 36,
