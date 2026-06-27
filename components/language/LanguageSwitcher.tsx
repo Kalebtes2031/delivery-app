@@ -7,15 +7,17 @@ import { useAppLanguage } from "@/hooks/useAppLanguage";
 
 const BRAND_COLOR = "#6750A4";
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ showText = true }: { showText?: boolean }) {
   const { t } = useTranslation("common");
   const { language, setLanguage, supportedLanguages } = useAppLanguage();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {t("language.title")}
-      </Text>
+      {showText && (
+        <Text style={styles.title}>
+          {t("language.title")}
+        </Text>
+      )}
       <View style={styles.buttonContainer}>
         {supportedLanguages.map((item) => {
           const selected = item.code === language;
@@ -39,7 +41,13 @@ export function LanguageSwitcher() {
               >
                 {item.nativeLabel}
               </Text>
-              {selected && <MaterialCommunityIcons name="check" size={18} color={BRAND_COLOR} />}
+              {selected ? (
+                <View style={styles.radioSelected}>
+                  <View style={styles.radioInner} />
+                </View>
+              ) : (
+                <View style={styles.radioUnselected} />
+              )}
             </TouchableOpacity>
           );
         })}
@@ -58,7 +66,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
-    marginTop: 16,
   },
   title: {
     color: '#1E293B',
@@ -74,7 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 12,
     paddingVertical: 8,
     flexDirection: 'row',
@@ -87,6 +94,7 @@ const styles = StyleSheet.create({
   },
   buttonUnselected: {
     borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
   },
   buttonText: {
     fontWeight: '600',
@@ -97,5 +105,27 @@ const styles = StyleSheet.create({
   },
   buttonTextUnselected: {
     color: '#475569',
+  },
+  radioSelected: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: BRAND_COLOR,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: BRAND_COLOR,
+  },
+  radioUnselected: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
   },
 });

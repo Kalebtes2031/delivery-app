@@ -29,9 +29,9 @@ export default function HomeScreen() {
   const { user, toggleOnlineStatus } = useAuth();
   const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
-  const { t } = useTranslation('deliveryHome'); 
+  const { t } = useTranslation('deliveryHome');
 
-   // Animation
+  // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -113,324 +113,331 @@ export default function HomeScreen() {
           }
           contentContainerStyle={styles.scrollContent}>
 
-        {/* --- SECTION 1: HEADER WITH CURVED BOTTOM RIGHT --- */}
-        <View style={{ position: 'relative', marginBottom: 15, marginHorizontal: -20 }}>
-          <View style={styles.headerGradient}>
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <TouchableOpacity 
-                  onPress={() => router.push('/profile')} 
-                  activeOpacity={0.8}
-                  style={styles.avatarTouchable}
-                >
-                  <View style={styles.avatarContainer}>
-                    {user?.profile_image ? (
-                      <Image 
-                        source={{ uri: user.profile_image }} 
-                        style={styles.avatarImage} 
-                      />
-                    ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarText}>
-                          {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
-                    <View style={styles.avatarRing} />
-                  </View>
-                </TouchableOpacity>
-                <View style={styles.headerTextContainer}>
-                  <Text style={styles.greetingText}>
-                    {t('helloUser', { name: user?.first_name || 'Delivery' })}
-                  </Text>
-                  <Text style={styles.userName}>{t('goodAfternoon')}</Text>
-                </View>
-              </View>
-              <View style={styles.headerActions}>
-                <ToggleSwitch 
-                  isOn={!!isOnline} 
-                  onToggle={handleToggleOnline} 
-                  isLoading={isToggling}
-                />
-                <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notifButton}>
-                  <View style={styles.notifIconWrapper}>
-                    <Ionicons name="notifications-outline" size={20} color="#fff" />
-                    {unreadCount > 0 && <View style={styles.notificationDot} />}
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-          {/* Curved bottom right corner effect */}
-          <View style={{
-            position: 'absolute',
-            bottom: -30,
-            right: 0,
-            width: 50,
-            height: 30,
-            backgroundColor: '#ffffff',
-            borderTopRightRadius: 150,
-            zIndex: 1,
-          }} />
-          <View style={{
-            position: 'absolute',
-            bottom: -30,
-            right: 0,
-            width: 50,
-            height: 30,
-            backgroundColor: '#6750A4',
-            zIndex: 0,
-          }} />
-        </View>
-
-        {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
-        <View style={styles.statsGrid}>
-          {[
-            {
-              label: t('cashOnHand'),
-              value: `${driverStats.cash_on_hand || '0.00'} ETB`,
-              icon: 'wallet-outline',
-              color: '#10B981',
-              type: 'ion',
-              onPress: () => {
-                router.push('/cash-on-hand');
-              }
-            },
-            { 
-              label: t('assignedOrders'), 
-              value: driverStats.pending_orders.toString(), 
-              icon: 'package-variant-closed', 
-              color: '#6366F1', 
-              type: 'material',
-              onPress: () => {
-                // Navigate with a small delay for smooth transition
-                setTimeout(() => {
-                  router.push({
-                    pathname: '/orders',
-                    params: { filter: 'pending' }
-                  });
-                }, 100);
-              }
-            },
-            { label: t('totalOrders'), 
-              value: driverStats.total_orders.toString(), 
-              icon: 'package-variant-closed', color: '#6366F1', 
-              type: 'material',
-              onPress: () => {
-                // Force navigation with a unique key to trigger animation
-                setTimeout(() => {
-                  router.push({
-                    pathname: '/orders',
-                    params: { filter: 'all', t: Date.now() }
-                  });
-                }, 100);
-              }
-            },
-          ].map((stat, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={[
-                styles.statCard,
-                { 
-                  borderColor: stat.color + '20',
-                  shadowColor: stat.color,
-                }
-              ]}
-              onPress={stat.onPress}
-              disabled={!stat.onPress}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: stat.color + '15' }]}>
-                {stat.type === 'ion' ? (
-                  <Ionicons name={stat.icon as any} size={20} color={stat.color} />
-                ) : (
-                  <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
-                )}
-              </View>
-              <Text style={[styles.statValue, { textAlign: "center", fontSize: 14 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
-              <Text style={[styles.statLabel, { textAlign: "center" }]}>{stat.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* --- SECTION 3: THE COMMAND CENTER (Active Task Hero) --- */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleWrapper}>
-            <View style={styles.sectionAccentBar} />
-            <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
-          </View>
-          <TouchableOpacity onPress={() => router.push('/orders')}>
-            <Text style={styles.seeAllText}>{t('viewAll')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {activeDelivery ? (
-          <TouchableOpacity
-            style={styles.heroCard}
-            onPress={() => router.push(`/delivery/${activeDelivery.id}`)}
-            activeOpacity={0.85}
-          >
-            {/* Card Header with Order Number and Status */}
-            <View style={styles.heroCardHeader}>
-              <View style={styles.heroOrderInfo}>
-                <View style={styles.heroOrderIcon}>
-                  <MaterialCommunityIcons name="receipt-text-outline" size={16} color="#fff" />
-                </View>
-                <Text style={styles.heroOrderText}>
-                  {t('orderNumber', { id: activeDelivery.vendor_order || 'Customer' })}
-                </Text>
-              </View>
-              <View style={[styles.heroStatusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
-                <View style={[styles.heroStatusDot, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]} />
-                <Text style={[styles.heroStatusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
-                  {activeDelivery.status === 'pending' ? 'ASSIGNED' : 
-                   activeDelivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                   t(`status.${activeDelivery.status.toLowerCase()}`).toUpperCase()}
-                </Text>
-              </View>
-            </View>
-
-            {/* Customer Info */}
-            <View style={styles.heroCustomerSection}>
-              <View style={styles.heroCustomerAvatarWrapper}>
-                {activeDelivery?.customer_image ? (
-                  <Image source={{ uri: activeDelivery?.customer_image }} style={styles.heroCustomerAvatar} />
-                ) : (
-                  <View style={styles.heroCustomerAvatarPlaceholder}>
-                    <Text style={styles.heroCustomerAvatarText}>
-                      {activeDelivery.customer_name?.charAt(0) || 'C'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.heroCustomerDetails}>
-                <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || t('customer')}</Text>
-                <View style={styles.heroCustomerPhone}>
-                  <Ionicons name="call-outline" size={12} color="rgba(255,255,255,0.6)" />
-                  <Text style={styles.heroCustomerPhoneText}>{activeDelivery.customer_phone}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Progress Tracker */}
-            <View style={styles.heroProgressContainer}>
-              {STATUS_ORDER.map((status, index) => {
-                const isCompleted = index < currentIndex;
-                const isCurrent = index === currentIndex;
-                const isFuture = index > currentIndex;
-                const config = STATUS_CONFIG[status];
-                const isLast = index === STATUS_ORDER.length - 1;
-
-                return (
-                  <View key={status} style={styles.heroStepWrapper}>
-                    <View style={styles.heroNodeZone}>
-                      {!isLast && (
-                        <View
-                          style={[
-                            styles.heroProgressLine,
-                            {
-                              backgroundColor: isCompleted || isCurrent ? '#16A34A' : 'rgba(255,255,255,0.15)',
-                            }
-                          ]}
+          {/* --- SECTION 1: HEADER WITH CURVED BOTTOM RIGHT --- */}
+          <View style={{ position: 'relative', marginBottom: 15, marginHorizontal: -20 }}>
+            <View style={styles.headerGradient}>
+              <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                  <TouchableOpacity
+                    onPress={() => router.push('/profile')}
+                    activeOpacity={0.8}
+                    style={styles.avatarTouchable}
+                  >
+                    <View style={styles.avatarContainer}>
+                      {user?.profile_image ? (
+                        <Image
+                          source={{ uri: user.profile_image }}
+                          style={styles.avatarImage}
                         />
+                      ) : (
+                        <View style={styles.avatarPlaceholder}>
+                          <Text style={styles.avatarText}>
+                            {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
+                          </Text>
+                        </View>
                       )}
-                      <View style={[
-                        styles.heroStepIndicator,
-                        isCompleted && styles.heroIndicatorCompleted,
-                        isCurrent && styles.heroIndicatorCurrent,
-                        isFuture && styles.heroIndicatorFuture
-                      ]}>
-                        <MaterialCommunityIcons
-                          name={isCompleted ? 'check-bold' : STATUS_CONFIG[status].icon}
-                          size={isCurrent ? 14 : 12}
-                          color={isFuture ? 'rgba(255,255,255,0.4)' : '#fff'}
-                        />
-                        {isCurrent && <View style={styles.heroPulseRing} />}
-                      </View>
+                      <View style={styles.avatarRing} />
                     </View>
-                    <Text style={[
-                      styles.heroStepLabel,
-                      isCompleted && styles.heroStepCompleted,
-                      isCurrent && styles.heroStepCurrent,
-                      isFuture && styles.heroStepFuture
-                    ]}>
-                      {status === 'pending' ? 'ASSIGNED' : 
-                       status === 'out_for_delivery' ? 'IN TRANSIT' :
-                       t(`status.${status}`).toUpperCase()}
+                  </TouchableOpacity>
+                  <View style={styles.headerTextContainer}>
+                    <Text style={styles.greetingText}>
+                      {t('helloUser', { name: user?.first_name || 'Delivery' })}
                     </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </TouchableOpacity>
-        ) : loading ? (
-          <View style={styles.emptyHeroCard}>
-            <MaterialCommunityIcons name="radar" size={40} color="#6750A4" style={{ opacity: 0.5 }} />
-            <Text style={styles.emptyHeroText}>{t('searchingForOrders')}</Text>
-          </View>
-        ) : (
-          <View style={styles.emptyHeroCard}>
-            <MaterialCommunityIcons name="package-variant-closed-remove" size={40} color="#94A3B8" style={{ opacity: 0.6 }} />
-            <Text style={styles.emptyHeroText}>{t('noActiveDeliveries')}</Text>
-            <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>{t('newOrdersWillAppear')}</Text>
-          </View>
-        )}
-
-        {/* --- SECTION 4: DELIVERY SUMMARY --- */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleWrapper}>
-            <View style={styles.sectionAccentBar} />
-            <Text style={styles.sectionTitle}>{t('deliverySummary')}</Text>
-          </View>
-          <TouchableOpacity onPress={() => router.push('/orders')}>
-            <Text style={styles.seeAllText}>{t('seeAll')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.summaryList}>
-          {deliveries.length > 0 ? (
-            deliveries.sort((a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()).slice(0, 5).map((delivery) => (
-              <TouchableOpacity
-                key={delivery.id}
-                style={styles.summaryItem}
-                onPress={() => router.push(`/delivery/${delivery.id}`)}
-              >
-                <View style={styles.summaryItemWrapper}>
-                  <View style={styles.summaryLeft}>
-                    {delivery.customer_image ? (
-                      <Image source={{ uri: delivery.customer_image }} style={styles.customerAvatar} />
-                    ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarPlaceholderText}>
-                          {delivery.customer_name?.charAt(0) || 'C'}
-                        </Text>
-                      </View>
-                    )}
-                    <View style={styles.summaryAccentBar} />
-                    <View style={styles.customerInfo}>
-                      <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
-                      <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
-                    </View>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
-                    <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
-                    <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
-                      {delivery.status === 'pending' ? 'ASSIGNED' : 
-                       delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                       t(`status.${delivery.status.toLowerCase()}`).toUpperCase()}
-                    </Text>
+                    <Text style={styles.userName}>{t('goodAfternoon')}</Text>
                   </View>
                 </View>
+                <View style={styles.headerActions}>
+                  <ToggleSwitch
+                    isOn={!!isOnline}
+                    onToggle={handleToggleOnline}
+                    isLoading={isToggling}
+                  />
+                  <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notifButton}>
+                    <View style={styles.notifIconWrapper}>
+                      <Ionicons name="notifications-outline" size={20} color="#fff" />
+                      {unreadCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                          <Text style={styles.notificationBadgeText}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Curved bottom right corner effect */}
+            <View style={{
+              position: 'absolute',
+              bottom: -30,
+              right: 0,
+              width: 50,
+              height: 30,
+              backgroundColor: '#ffffff',
+              borderTopRightRadius: 150,
+              zIndex: 1,
+            }} />
+            <View style={{
+              position: 'absolute',
+              bottom: -30,
+              right: 0,
+              width: 50,
+              height: 30,
+              backgroundColor: '#6750A4',
+              zIndex: 0,
+            }} />
+          </View>
+
+          {/* --- SECTION 2: THE FOUNDATION (Performance Stats) --- */}
+          <View style={styles.statsGrid}>
+            {[
+              {
+                label: t('cashOnHand'),
+                value: `${driverStats.cash_on_hand || '0.00'} ETB`,
+                icon: 'wallet-outline',
+                color: '#10B981',
+                type: 'ion',
+                onPress: () => {
+                  router.push('/cash-on-hand');
+                }
+              },
+              {
+                label: t('assignedOrders'),
+                value: driverStats.pending_orders.toString(),
+                icon: 'package-variant-closed',
+                color: '#6366F1',
+                type: 'material',
+                onPress: () => {
+                  // Navigate with a small delay for smooth transition
+                  setTimeout(() => {
+                    router.push({
+                      pathname: '/orders',
+                      params: { filter: 'pending' }
+                    });
+                  }, 100);
+                }
+              },
+              {
+                label: t('totalOrders'),
+                value: driverStats.total_orders.toString(),
+                icon: 'package-variant-closed', color: '#6366F1',
+                type: 'material',
+                onPress: () => {
+                  // Force navigation with a unique key to trigger animation
+                  setTimeout(() => {
+                    router.push({
+                      pathname: '/orders',
+                      params: { filter: 'all', t: Date.now() }
+                    });
+                  }, 100);
+                }
+              },
+            ].map((stat, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.statCard,
+                  {
+                    borderColor: stat.color + '20',
+                    shadowColor: stat.color,
+                  }
+                ]}
+                onPress={stat.onPress}
+                disabled={!stat.onPress}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.statIconCircle, { backgroundColor: stat.color + '15' }]}>
+                  {stat.type === 'ion' ? (
+                    <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+                  ) : (
+                    <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
+                  )}
+                </View>
+                <Text style={[styles.statValue, { textAlign: "center", fontSize: 14 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
+                <Text style={[styles.statLabel, { textAlign: "center" }]}>{stat.label}</Text>
               </TouchableOpacity>
-            ))
+            ))}
+          </View>
+
+          {/* --- SECTION 3: THE COMMAND CENTER (Active Task Hero) --- */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleWrapper}>
+              <View style={styles.sectionAccentBar} />
+              <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/orders')}>
+              <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {activeDelivery ? (
+            <TouchableOpacity
+              style={styles.heroCard}
+              onPress={() => router.push(`/delivery/${activeDelivery.id}`)}
+              activeOpacity={0.85}
+            >
+              {/* Card Header with Order Number and Status */}
+              <View style={styles.heroCardHeader}>
+                <View style={styles.heroOrderInfo}>
+                  <View style={styles.heroOrderIcon}>
+                    <MaterialCommunityIcons name="receipt-text-outline" size={16} color="#fff" />
+                  </View>
+                  <Text style={styles.heroOrderText}>
+                    {t('orderNumber', { id: activeDelivery.vendor_order || 'Customer' })}
+                  </Text>
+                </View>
+                <View style={[styles.heroStatusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
+                  <View style={[styles.heroStatusDot, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]} />
+                  <Text style={[styles.heroStatusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
+                    {activeDelivery.status === 'pending' ? 'ASSIGNED' :
+                      activeDelivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
+                        t(`status.${activeDelivery.status.toLowerCase()}`).toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Customer Info */}
+              <View style={styles.heroCustomerSection}>
+                <View style={styles.heroCustomerAvatarWrapper}>
+                  {activeDelivery?.customer_image ? (
+                    <Image source={{ uri: activeDelivery?.customer_image }} style={styles.heroCustomerAvatar} />
+                  ) : (
+                    <View style={styles.heroCustomerAvatarPlaceholder}>
+                      <Text style={styles.heroCustomerAvatarText}>
+                        {activeDelivery.customer_name?.charAt(0) || 'C'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.heroCustomerDetails}>
+                  <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || t('customer')}</Text>
+                  <View style={styles.heroCustomerPhone}>
+                    <Ionicons name="call-outline" size={12} color="rgba(255,255,255,0.6)" />
+                    <Text style={styles.heroCustomerPhoneText}>{activeDelivery.customer_phone}</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Progress Tracker */}
+              <View style={styles.heroProgressContainer}>
+                {STATUS_ORDER.map((status, index) => {
+                  const isCompleted = index < currentIndex;
+                  const isCurrent = index === currentIndex;
+                  const isFuture = index > currentIndex;
+                  const config = STATUS_CONFIG[status];
+                  const isLast = index === STATUS_ORDER.length - 1;
+
+                  return (
+                    <View key={status} style={styles.heroStepWrapper}>
+                      <View style={styles.heroNodeZone}>
+                        {!isLast && (
+                          <View
+                            style={[
+                              styles.heroProgressLine,
+                              {
+                                backgroundColor: isCompleted || isCurrent ? '#16A34A' : 'rgba(255,255,255,0.15)',
+                              }
+                            ]}
+                          />
+                        )}
+                        <View style={[
+                          styles.heroStepIndicator,
+                          isCompleted && styles.heroIndicatorCompleted,
+                          isCurrent && styles.heroIndicatorCurrent,
+                          isFuture && styles.heroIndicatorFuture
+                        ]}>
+                          <MaterialCommunityIcons
+                            name={isCompleted ? 'check-bold' : STATUS_CONFIG[status].icon}
+                            size={isCurrent ? 14 : 12}
+                            color={isFuture ? 'rgba(255,255,255,0.4)' : '#fff'}
+                          />
+                          {isCurrent && <View style={styles.heroPulseRing} />}
+                        </View>
+                      </View>
+                      <Text style={[
+                        styles.heroStepLabel,
+                        isCompleted && styles.heroStepCompleted,
+                        isCurrent && styles.heroStepCurrent,
+                        isFuture && styles.heroStepFuture
+                      ]}>
+                        {status === 'pending' ? 'ASSIGNED' :
+                          status === 'out_for_delivery' ? 'IN TRANSIT' :
+                            t(`status.${status}`).toUpperCase()}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </TouchableOpacity>
+          ) : loading ? (
+            <View style={styles.emptyHeroCard}>
+              <MaterialCommunityIcons name="radar" size={40} color="#6750A4" style={{ opacity: 0.5 }} />
+              <Text style={styles.emptyHeroText}>{t('searchingForOrders')}</Text>
+            </View>
           ) : (
-            <View style={styles.emptySummary}>
-              <Text style={styles.emptySummaryText}>{t('noRecentActivities')}</Text>
+            <View style={styles.emptyHeroCard}>
+              <MaterialCommunityIcons name="package-variant-closed-remove" size={40} color="#94A3B8" style={{ opacity: 0.6 }} />
+              <Text style={styles.emptyHeroText}>{t('noActiveDeliveries')}</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>{t('newOrdersWillAppear')}</Text>
             </View>
           )}
-        </View>
-      </ScrollView>
+
+          {/* --- SECTION 4: DELIVERY SUMMARY --- */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleWrapper}>
+              <View style={styles.sectionAccentBar} />
+              <Text style={styles.sectionTitle}>{t('deliverySummary')}</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/orders')}>
+              <Text style={styles.seeAllText}>{t('seeAll')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.summaryList}>
+            {deliveries.length > 0 ? (
+              deliveries.sort((a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()).slice(0, 5).map((delivery) => (
+                <TouchableOpacity
+                  key={delivery.id}
+                  style={styles.summaryItem}
+                  onPress={() => router.push(`/delivery/${delivery.id}`)}
+                >
+                  <View style={styles.summaryItemWrapper}>
+                    <View style={styles.summaryLeft}>
+                      {delivery.customer_image ? (
+                        <Image source={{ uri: delivery.customer_image }} style={styles.customerAvatar} />
+                      ) : (
+                        <View style={styles.avatarPlaceholder}>
+                          <Text style={styles.avatarPlaceholderText}>
+                            {delivery.customer_name?.charAt(0) || 'C'}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={styles.summaryAccentBar} />
+                      <View style={styles.customerInfo}>
+                        <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
+                        <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
+                      </View>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
+                      <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
+                      <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
+                        {delivery.status === 'pending' ? 'ASSIGNED' :
+                          delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
+                            t(`status.${delivery.status.toLowerCase()}`).toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.emptySummary}>
+                <Text style={styles.emptySummaryText}>{t('noRecentActivities')}</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
       </Animated.View>
     </SafeAreaView>
   );
@@ -522,16 +529,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.15)',
   },
 
-  greetingText: { 
-    fontSize: 12, 
-    color: 'rgba(255,255,255,0.8)', 
+  greetingText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
     fontWeight: '500',
     letterSpacing: 0.2,
   },
-  userName: { 
-    fontSize: 17, 
-    color: '#fff', 
-    fontWeight: '700', 
+  userName: {
+    fontSize: 17,
+    color: '#fff',
+    fontWeight: '700',
     marginTop: -1,
     letterSpacing: -0.2,
   },
@@ -556,16 +563,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
-  notificationDot: {
+  notificationBadge: {
     position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ffffff',
     borderWidth: 1.5,
-    borderColor: '#fff',
+    borderColor: '#6750A4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: '#6750A4',
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 
   // Stats Grid
@@ -735,12 +751,13 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 2,
   },
-heroStepWrapper: {
-  flex: 1,
-  alignItems: 'center',
-  position: 'relative',
-},
+  heroStepWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
+  },
   heroNodeZone: {
     height: 36,
     width: '100%',
@@ -748,16 +765,17 @@ heroStepWrapper: {
     justifyContent: 'center',
     position: 'relative',
     marginBottom: 4,
+    paddingHorizontal: 0,
   },
-heroProgressLine: {
-  position: 'absolute',
-  height: 2.5,
-  top: '50%',
-  marginTop: -1.25,
-  left: '50%',
-  width: '100%',
-  zIndex: -1,
-},
+  heroProgressLine: {
+    position: 'absolute',
+    height: 2.5,
+    top: '50%',
+    marginTop: -1.25,
+    left: '50%',
+    width: '100%',
+    zIndex: -1,
+  },
   heroStepIndicator: {
     width: 26,
     height: 26,
@@ -859,11 +877,6 @@ heroProgressLine: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 3,
     borderWidth: 1,
     borderColor: '#F0F2F5',
     overflow: 'hidden',
@@ -893,14 +906,6 @@ heroProgressLine: {
     height: 48,
     borderRadius: 24,
     backgroundColor: '#F1F5F9',
-  },
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#6750A415',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   avatarPlaceholderText: {
     fontSize: 18,
