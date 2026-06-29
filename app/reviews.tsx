@@ -97,7 +97,7 @@ export default function ReviewsScreen() {
         </Text>
       </View>
 
-      {/* Distribution bars */}
+      {/* Distribution bars 
       {total > 0 && (
         <View style={styles.distributionCard}>
           {[5, 4, 3, 2, 1].map((star) => {
@@ -115,7 +115,7 @@ export default function ReviewsScreen() {
             );
           })}
         </View>
-      )}
+      )}*/}
 
       {reviews.length > 0 && (
         <Text style={styles.sectionLabel}>{t("recentReviews")}</Text>

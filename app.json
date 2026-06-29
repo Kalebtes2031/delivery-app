@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ACTIVE DELIVERY APP",
+    "name": "Active DELIVERY APP",
     "slug": "qine_deliveryapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -27,7 +27,7 @@
         "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/qinemartreallogo.png",
         "backgroundImage": "./assets/images/qinemartreallogo.png",
         "monochromeImage": "./assets/images/qinemartreallogo.png"
@@ -44,12 +44,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/qinemartethio.jpeg",
+          "image": "./assets/images/qinemartreallogo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#6750A4",
+          "backgroundColor": "#ffffff",
           "dark": {
-            "backgroundColor": "#6750A4"
+            "backgroundColor": "#ffffff"
           }
         }
       ],
@@ -67,7 +67,9 @@
         }
       ],
       "expo-localization",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -76,7 +78,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "bb2863b6-48ef-40cf-ad04-56be2abc22d2"
+        "projectId": "49016321-b790-4898-b693-af7e18e2346a"
       }
     }
   }

@@ -337,7 +337,7 @@ export default function HomeScreen() {
                             style={[
                               styles.heroProgressLine,
                               {
-                                backgroundColor: isCompleted || isCurrent ? '#16A34A' : 'rgba(255,255,255,0.15)',
+                                backgroundColor: isCompleted ? '#16A34A' : 'rgba(255,255,255,0.15)',
                               }
                             ]}
                           />
@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
     top: '50%',
     marginTop: -1.25,
     left: '50%',
-    width: '100%',
+    width: '80%',
     zIndex: -1,
   },
   heroStepIndicator: {
