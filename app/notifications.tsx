@@ -66,12 +66,33 @@ export default function NotificationsScreen() {
   const [items, setItems] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextPage, setNextPage] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (page: number = 1) => {
     try {
-      const { data } = await getNotifications();
-      const results = (data as { results?: Notif[] }).results ?? (data as Notif[]);
-      setItems(results);
+      const { data } = await getNotifications({ page, page_size: 20 });
+      const results = (data as { results?: Notif[]; next?: string }).results ?? (data as Notif[]);
+      const next = (data as { results?: Notif[]; next?: string }).next ?? null;
+      
+      if (page > 1) {
+        // Loading more - append to existing items, but prevent duplicates
+        setItems(prev => {
+          // Create a Set of existing IDs for quick lookup
+          const existingIds = new Set(prev.map(item => item.id));
+          // Only add items that don't already exist
+          const newItems = results.filter(item => !existingIds.has(item.id));
+          return [...prev, ...newItems];
+        });
+      } else {
+        // Initial load - replace items
+        setItems(results);
+      }
+      
+      setNextPage(next);
+      setHasMore(!!next);
+      
       // ✅ Sync badge count
       await refetchUnread();
     } catch {
@@ -79,6 +100,7 @@ export default function NotificationsScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, [refetchUnread]);
 
@@ -92,6 +114,13 @@ export default function NotificationsScreen() {
     load();
     refetchUnread();
   };
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || loading) return;
+    setLoadingMore(true);
+    // Extract page number from nextPage URL or use current page + 1
+    const currentPage = Math.ceil(items.length / 20) + 1;
+    await load(currentPage);
+  }, [hasMore, loadingMore, loading, items.length, load]);
 
   const markAll = async () => {
     try {
@@ -186,6 +215,16 @@ export default function NotificationsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6750A4" />
           }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.2}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color="#6750A4" />
+                <Text style={styles.footerLoaderText}>Loading more...</Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
@@ -256,6 +295,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     backgroundColor: '#fff',
+  },
+    footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  footerLoaderText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '500',
   },
   cardUnread: { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' },
   iconWrap: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

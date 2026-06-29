@@ -141,7 +141,8 @@ export const registerDevice = (
 export const unregisterDevice = (fcm_token: string) =>
   api.delete('/notifications/devices/', { data: { fcm_token } });
 
-export const getNotifications = () => api.get('/notifications/');
+export const getNotifications = (params?: { page?: number; page_size?: number }) =>
+  api.get('/notifications/', { params });
 
 export const getUnreadCount = () =>
   api.get<{ unread: number }>('/notifications/unread-count/');

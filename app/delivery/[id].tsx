@@ -379,13 +379,21 @@ return (
       </ScrollView>
 
       {/* --- FLOATING TRACKING BUTTON --- */}
-      {["out_for_delivery"].includes(delivery.status) && (
+      {["out_for_delivery", "pending"].includes(delivery.status) && (
         <TouchableOpacity
-          onPress={() => router.push(`/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}`)}
+          onPress={() => {
+            const isPending = delivery.status === 'pending';
+            const url = isPending 
+              ? `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}&viewOnly=true`
+              : `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}`;
+            router.push(url);
+          }}
           style={[styles.trackingFloatingBtn, { bottom: 120 + insets.bottom }]}
         >
           <FontAwesome6 name="route" size={18} color="#fff" />
-          <Text style={styles.trackingFloatingText}>{t('trackOrder')}</Text>
+          <Text style={styles.trackingFloatingText}>
+            {delivery.status === 'pending' ? 'View Direction' : t('trackOrder')}
+          </Text>
         </TouchableOpacity>
       )}
 
@@ -395,6 +403,7 @@ return (
           paddingBottom: 20 + insets.bottom,
           paddingTop: 20
         }]}>
+
         {action && (
           <SlideToConfirm
             label={t(`actions.${delivery.status}`)} // translated action label
@@ -404,7 +413,6 @@ return (
             isLoading={updating}
           />
         )}
-
         {/* {delivery.status === 'delivered' && (
           <TouchableOpacity
             onPress={() => router.push(`/delivery/tracking?id=${delivery.id}`)}

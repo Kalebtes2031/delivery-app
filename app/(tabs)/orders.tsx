@@ -336,7 +336,7 @@ export default function OrdersScreen() {
               </View>
 
               {/* Deliver To - Combined Clickable Area (Icon + Name + Address) */}
-              {(item.customer_lat && item.customer_lon) ? (
+              {(item.customer_lat && item.customer_lon && item.status === 'pending') ? (
                 <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
@@ -369,8 +369,10 @@ export default function OrdersScreen() {
                   <Text style={styles.customerName} numberOfLines={1}>
                     {customerName}
                   </Text>
-                  <Text style={styles.addressText} numberOfLines={1}>
-                    {t("customerLocation")}
+                  <Text style={styles.addressText} numberOfLines={2}>
+                    {loadingLocations[item.id]
+                      ? 'Loading location...'
+                      : getDeliveryAddress()}
                   </Text>
                 </View>
               )}

@@ -170,6 +170,22 @@ export default function DriverTrackingScreen() {
     }
   };
 
+  //  Accept function for view-only mode
+  const handleAccept = async () => {
+    if (!delivery) return;
+    setSlideLoading(true);
+    try {
+      // Update status from 'pending' to 'accepted'
+      await updateDeliveryStatus(delivery.id, 'accepted' as any);
+      // Redirect to detail page after accepting
+      router.push(`/delivery/${id}`);
+    } catch (error: any) {
+      Alert.alert(t('errorTitle'), t('updateFailed'));
+    } finally {
+      setSlideLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -265,8 +281,8 @@ export default function DriverTrackingScreen() {
             {/* Bottom Sheet Header with Cancel - X Icon Only */}
             <View style={styles.bottomSheetHeader}>
               <View style={styles.cleanHandle} />
-              <TouchableOpacity style={styles.bottomCancelButton} onPress={() => router.back()}>
-                <Ionicons name="close-outline" size={20} color="#6750A4" />
+              <TouchableOpacity style={styles.bottomCancelButtonSmall} onPress={() => router.back()}>
+                <Ionicons name="close-outline" size={14} color="#6750A4" />
               </TouchableOpacity>
             </View>
 
@@ -345,6 +361,19 @@ export default function DriverTrackingScreen() {
                 <Ionicons name="call" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
+
+            {/* Row 4: Accept Slide - Only for pending status */}
+            {delivery?.status === 'pending' && (
+              <View style={styles.acceptSlideContainer}>
+                <SlideToConfirm
+                  label="Accept"
+                  color="#2D5BD0"
+                  icon="check-circle"
+                  onConfirm={handleAccept}
+                  isLoading={slideLoading}
+                />
+              </View>
+            )}
           </View>
         ) : (
           /* ===== NORMAL MODE:  */
@@ -765,14 +794,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  // Small Cancel Button - Compact
+  bottomCancelButtonSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#6750A4',
+  },
   // Remove bottomCancelText - not needed (X icon only)
   // Clean Handle - Centered vertically
   cleanHandle: {
-    width: 36,
-    height: 4,
+    width: 30,
+    height: 3,
     backgroundColor: '#D1D5DB',
     borderRadius: 2,
-    opacity: 0.5,
+    opacity: 0.4,
     alignSelf: 'center',
   },
   cleanRow: {
@@ -993,6 +1034,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     marginLeft: 'auto',
+  },
+  // Go to Delivery Button
+  acceptSlideContainer: {
+    marginTop: 8,
+    width: '100%',
   },
 
   // Image Zoom Modal Styles
