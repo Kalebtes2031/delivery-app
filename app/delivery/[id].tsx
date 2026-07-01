@@ -101,7 +101,15 @@ export default function DeliveryDetailScreen() {
 
   if (!delivery) return null;
   const action = NEXT_ACTION[delivery.status];
-  const currentIndex = STATUS_ORDER.indexOf(delivery.status.toLowerCase());
+  
+  // 🔥 FIX: Calculate currentIndex based on effective status
+  // If delivery is failed, treat it as "delivered" for the progress bar
+  const isFailed = delivery?.status === 'failed' || 
+                   delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
+                   delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
+  
+  const effectiveStatus = isFailed ? 'delivered' : delivery.status;
+  const currentIndex = STATUS_ORDER.indexOf(effectiveStatus.toLowerCase());
   const hasBottomActions = delivery.status !== "delivered" && Boolean(action);
   const orderDetail = delivery.vendor_order_detail;
 
@@ -171,6 +179,13 @@ return (
               const isFuture = index > currentIndex;
               const isDeliveredCurrent =
                 isCurrent && status === "delivered";
+              
+              // Check if this delivery should show as "Failed"
+              const isFailed = delivery?.status === 'failed' || 
+                               delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
+                               delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
+              const showAsFailed = isFailed && isDeliveredCurrent;
+              
               return (
                 <View key={status} style={styles.stepWrapper}>
                   <View style={styles.nodeZone}>
@@ -193,7 +208,7 @@ return (
                         isCompleted && styles.indicatorCompleted,
                         isCurrent &&
                           (isDeliveredCurrent
-                            ? styles.indicatorCompleted
+                            ? showAsFailed ? styles.indicatorFailed : styles.indicatorCompleted
                             : styles.indicatorCurrent),
                         isFuture && styles.indicatorFuture,
                       ]}
@@ -202,16 +217,16 @@ return (
                         name={
                           (isCompleted
                             ? "check-bold"
-                            : STATUS_CONFIG[status].icon) as any
+                            : showAsFailed ? "close-circle" : STATUS_CONFIG[status].icon) as any
                         }
                         size={isCurrent ? 16 : 12}
-                        color={isFuture ? "#9CA3AF" : "#fff"}
+                        color={isFuture ? "#9CA3AF" : showAsFailed ? "#FFFFFF" : "#fff"}
                       />
                       {isCurrent && (
                         <View
                           style={[
                             styles.pulseRing,
-                            isDeliveredCurrent && styles.pulseRingCompleted,
+                            isDeliveredCurrent && (showAsFailed ? styles.pulseRingFailed : styles.pulseRingCompleted),
                           ]}
                         />
                       )}
@@ -221,13 +236,14 @@ return (
                     style={[
                       styles.stepLabel,
                       isCurrent && {
-                        color: isDeliveredCurrent ? "#16A34A" : "#F59E0B",
+                        color: isDeliveredCurrent ? (showAsFailed ? "#DC2626" : "#16A34A") : "#F59E0B",
                         fontWeight: "900",
                       },
                     ]}
                   >
                     {status === 'out_for_delivery' ? 'In Transit' : 
                      status === 'pending' ? 'Assigned' : 
+                     showAsFailed ? 'Failed' :
                      t(`status.${status}`)}
                   </Text>
                 </View>
@@ -584,6 +600,7 @@ container: {
   },
   indicatorCompleted: { backgroundColor: "#16A34A", borderColor: "#16A34A" },
   indicatorCurrent: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
+  indicatorFailed: { backgroundColor: "#DC2626", borderColor: "#DC2626" },
   indicatorFuture: { borderColor: "#E5E7EB", backgroundColor: "#F9FAFB" },
   pulseRing: {
     position: "absolute",
@@ -596,6 +613,9 @@ container: {
   },
   pulseRingCompleted: {
     borderColor: "#16A34A",
+  },
+  pulseRingFailed: {
+    borderColor: "#DC2626",
   },
 stepLabel: { 
   fontSize: 8, 

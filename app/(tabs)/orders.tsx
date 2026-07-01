@@ -24,6 +24,16 @@ import {
 import ToggleSwitch from "@/components/ToggleButton";
 import { STATUS_TABS, STATUS_CONFIG } from "@/constants/deliveryConstants";
 import { useTranslation } from "react-i18next";
+// Helper to get display label for status
+const getStatusLabel = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'out_for_delivery': 'In Transit',
+    'pending': 'Assigned',
+    'failed': 'Failed',
+    'delivered': 'Completed',
+  };
+  return statusMap[status] || status;
+};
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -184,12 +194,57 @@ export default function OrdersScreen() {
   useEffect(() => {
     resetAnimation();
   }, [filter, resetAnimation]);
+  /**
+   * Get the effective display status of a delivery.
+   * This centralizes the logic for determining what status to show.
+   * 
+   * Why: A delivery's display status might differ from its actual status
+   * when the associated order is cancelled/rejected/failed.
+   */
+  const getEffectiveStatus = (delivery: DeliveryAssignment): DeliveryStatus => {
+    const deliveryStatus = delivery.status?.toLowerCase?.() || 'pending';
+    const orderStatus = (delivery as any)?.vendor_order_detail?.status?.toLowerCase?.() || '';
+    
+    // Check if the order is in a failed state
+    const isOrderFailed = ['cancelled', 'rejected', 'failed'].includes(orderStatus);
+    const hasFailureReason = !!(delivery as any)?.failure_reason || 
+                            !!(delivery as any)?.cancellation_reason ||
+                            !!(delivery as any)?.vendor_order_detail?.failure_reason ||
+                            !!(delivery as any)?.vendor_order_detail?.cancellation_reason;
+    
+    // If order is failed or has failure reason, show as failed
+    if (isOrderFailed || hasFailureReason) {
+      return 'failed';
+    }
+    
+    // Otherwise return the actual delivery status
+    return deliveryStatus as DeliveryStatus;
+  };
+
+  /**
+   * Check if a delivery should be considered "failed" for filtering purposes.
+   */
+  const isFailedDelivery = (delivery: DeliveryAssignment): boolean => {
+    return getEffectiveStatus(delivery) === 'failed';
+  };
+
   // Derive filtered + sorted deliveries from context
   const deliveries =
     activeTab === "all"
       ? [...allDeliveries].sort((a, b) => b.vendor_order - a.vendor_order)
       : allDeliveries
-        .filter((d) => d.status === activeTab)
+        .filter((d) => {
+          // For "failed" tab, show failed deliveries
+          if (activeTab === 'failed') {
+            return isFailedDelivery(d);
+          }
+          // For "delivered" tab, exclude failed deliveries
+          if (activeTab === 'delivered') {
+            return d.status === 'delivered' && !isFailedDelivery(d);
+          }
+          // For all other tabs, filter by status
+          return d.status === activeTab;
+        })
         .sort((a, b) => b.vendor_order - a.vendor_order);
 
   const loading = isLoading;
@@ -214,7 +269,10 @@ export default function OrdersScreen() {
   };
 
   const renderDeliveryCard = ({ item }: { item: DeliveryAssignment }) => {
-    const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
+    // Get the effective display status using the centralized helper
+    const normalizedStatus = getEffectiveStatus(item);
+    
+    const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.pending;
 
     const timeAssigned = new Date(item.assigned_at).toLocaleTimeString([], {
       hour: "2-digit",
@@ -302,9 +360,7 @@ export default function OrdersScreen() {
                 color={config.text}
               />
               <Text style={[styles.statusText, { color: config.text }]}>
-                {item.status === 'out_for_delivery' ? 'In Transit' :
-                  item.status === 'pending' ? 'Assigned' :
-                    t(`status.${item.status}`)}
+                {getStatusLabel(normalizedStatus)}
               </Text>
             </View>
           </View>
@@ -317,7 +373,11 @@ export default function OrdersScreen() {
               {/* Location Icon - Now inside the border area */}
               {(item.customer_lat && item.customer_lon) ? (
                 <View style={styles.locationIconWrapper}>
-                  <Ionicons name="location" size={28} color="#EF4444" />
+                  <Ionicons 
+                    name="location" 
+                    size={28} 
+                    color={normalizedStatus === 'delivered' ? '#6750A4' : '#EF4444'} 
+                  />
                 </View>
               ) : (
                 <View style={styles.locationIconWrapper}>

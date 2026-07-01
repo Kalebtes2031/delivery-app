@@ -9,7 +9,7 @@ export default {
   orderNumber: "Order #{{id}}",
   customer: "Customer",
   deliverySummary: "Delivery Summary",
-  seeAll: "See All",
+  seeAll: "View All",
   searchingForOrders: "Searching for new orders...",
   noActiveDeliveries: "No active deliveries right now",
   newOrdersWillAppear: "New orders will appear here when assigned",

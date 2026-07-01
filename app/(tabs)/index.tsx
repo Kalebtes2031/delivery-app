@@ -78,6 +78,22 @@ export default function HomeScreen() {
   }, []);
 
 
+  // Helper to check if a delivery is failed (checks both delivery.status and order status)
+  const isDeliveryFailed = useCallback((delivery: any): boolean => {
+    if (!delivery) return false;
+    // Check if delivery status is 'failed'
+    if (delivery.status === 'failed') return true;
+    // Check if order status is cancelled/rejected
+    const orderStatus = delivery?.vendor_order_detail?.status?.toLowerCase?.() || '';
+    return ['cancelled', 'rejected'].includes(orderStatus);
+  }, []);
+
+  // Helper to get display status for a delivery
+  const getDisplayStatus = useCallback((delivery: any): string => {
+    if (!delivery) return 'pending';
+    return isDeliveryFailed(delivery) ? 'failed' : delivery.status;
+  }, [isDeliveryFailed]);
+
   // Find the latest delivery that is currently "Out for Delivery"
   const activeDelivery = deliveries
     .filter(d => d.status === 'out_for_delivery')
@@ -267,7 +283,10 @@ export default function HomeScreen() {
               <View style={styles.sectionAccentBar} />
               <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/orders')}>
+            <TouchableOpacity onPress={() => router.push({
+              pathname: '/orders',
+              params: { filter: 'out_for_delivery' }
+            })}>
               <Text style={styles.seeAllText}>{t('viewAll')}</Text>
             </TouchableOpacity>
           </View>
@@ -288,14 +307,21 @@ export default function HomeScreen() {
                     {t('orderNumber', { id: activeDelivery.vendor_order || 'Customer' })}
                   </Text>
                 </View>
-                <View style={[styles.heroStatusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
-                  <View style={[styles.heroStatusDot, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]} />
-                  <Text style={[styles.heroStatusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
-                    {activeDelivery.status === 'pending' ? 'ASSIGNED' :
-                      activeDelivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                        t(`status.${activeDelivery.status.toLowerCase()}`).toUpperCase()}
-                  </Text>
-                </View>
+                {(() => {
+                  const displayStatus = getDisplayStatus(activeDelivery);
+                  const config = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
+                  return (
+                    <View style={[styles.heroStatusBadge, { backgroundColor: config.bg }]}>
+                      <View style={[styles.heroStatusDot, { backgroundColor: config.text }]} />
+                      <Text style={[styles.heroStatusText, { color: config.text }]}>
+                        {displayStatus === 'pending' ? 'ASSIGNED' :
+                         displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
+                         displayStatus === 'failed' ? 'FAILED' :
+                         t(`status.${displayStatus}`).toUpperCase()}
+                      </Text>
+                    </View>
+                  );
+                })()}
               </View>
 
               {/* Customer Info */}
@@ -373,14 +399,26 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ) : loading ? (
             <View style={styles.emptyHeroCard}>
-              <MaterialCommunityIcons name="radar" size={40} color="#6750A4" style={{ opacity: 0.5 }} />
-              <Text style={styles.emptyHeroText}>{t('searchingForOrders')}</Text>
+              <View style={styles.emptyIconWrap}>
+                <MaterialCommunityIcons name="radar" size={32} color="#6750A4" />
+                <View style={styles.emptyPulseDot} />
+              </View>
+              <Text style={styles.emptyTitle}>{t('searchingForOrders')}</Text>
+              <Text style={styles.emptySub}>Looking for deliveries...</Text>
             </View>
           ) : (
             <View style={styles.emptyHeroCard}>
-              <MaterialCommunityIcons name="package-variant-closed-remove" size={40} color="#94A3B8" style={{ opacity: 0.6 }} />
-              <Text style={styles.emptyHeroText}>{t('noActiveDeliveries')}</Text>
-              <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>{t('newOrdersWillAppear')}</Text>
+              <View style={styles.emptyIconWrap}>
+                <View style={styles.emptyIconBg}>
+                  <MaterialCommunityIcons name="package-variant-closed" size={32} color="#6750A4" />
+                </View>
+              </View>
+              <Text style={styles.emptyTitle}>No Active Delivery</Text>
+              <Text style={styles.emptySub}>New orders will appear here</Text>
+              <TouchableOpacity style={styles.emptyRefreshBtn} onPress={onRefresh} activeOpacity={0.8}>
+                <Ionicons name="refresh-outline" size={16} color="#6750A4" />
+                <Text style={styles.emptyRefreshText}>Check</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -420,14 +458,21 @@ export default function HomeScreen() {
                         <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                       </View>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
-                      <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
-                      <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
-                        {delivery.status === 'pending' ? 'ASSIGNED' :
-                          delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                            t(`status.${delivery.status.toLowerCase()}`).toUpperCase()}
-                      </Text>
-                    </View>
+                    {(() => {
+                      const displayStatus = getDisplayStatus(delivery);
+                      const config = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
+                      return (
+                        <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
+                          <MaterialCommunityIcons name={config.icon} size={14} color={config.text} />
+                          <Text style={[styles.statusText, { color: config.text }]}>
+                            {displayStatus === 'pending' ? 'ASSIGNED' :
+                             displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
+                             displayStatus === 'failed' ? 'FAILED' :
+                             t(`status.${displayStatus}`).toUpperCase()}
+                          </Text>
+                        </View>
+                      );
+                    })()}
                   </View>
                 </TouchableOpacity>
               ))
@@ -835,19 +880,76 @@ const styles = StyleSheet.create({
   progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3 },
   progressBarFill: { height: '100%', backgroundColor: '#fff', borderRadius: 3 },
 
-  // Empty Hero State
+  // Empty Hero State - Compact
   emptyHeroCard: {
     backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 30,
+    borderRadius: 20,
+    padding: 20,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#F1F5F9',
-    borderStyle: 'dashed',
-    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: '#F0EAF8',
+    marginBottom: 20,
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  emptyHeroText: { fontSize: 16, fontWeight: '700', color: '#1E293B', marginTop: 10 },
-  emptyHeroSubtext: { fontSize: 12, color: '#94A3B8', textAlign: 'center', marginTop: 5 },
+  emptyIconWrap: {
+    position: 'relative',
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emptyIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F5F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyPulseDot: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    borderColor: '#6750A4',
+    opacity: 0.2,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#6750A4',
+    marginBottom: 2,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#9B8BB5',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyRefreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#F5F0FF',
+    borderWidth: 1,
+    borderColor: '#E8DFF5',
+  },
+  emptyRefreshText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6750A4',
+  },
 
   // Quick Action Grid
   actionGrid: {

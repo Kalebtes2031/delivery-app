@@ -177,8 +177,11 @@ export default function DriverTrackingScreen() {
     try {
       // Update status from 'pending' to 'accepted'
       await updateDeliveryStatus(delivery.id, 'accepted' as any);
-      // Redirect to detail page after accepting
-      router.push(`/delivery/${id}`);
+      // Go back to orders page to refresh context, then navigate to detail
+      router.back();
+      setTimeout(() => {
+        router.push(`/delivery/${id}`);
+      }, 300);
     } catch (error: any) {
       Alert.alert(t('errorTitle'), t('updateFailed'));
     } finally {

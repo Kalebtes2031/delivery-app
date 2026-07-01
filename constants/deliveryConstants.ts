@@ -7,7 +7,7 @@ export const STATUS_ORDER: DeliveryStatus[] = [
   'accepted',
   'picked_up',
   'out_for_delivery',
-  'delivered',
+  'delivered', 
 ];
 
 export const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; icon: string }> = {
@@ -33,6 +33,7 @@ export const STATUS_TABS: { label: string; value: DeliveryStatus | 'all' }[] = [
   { label: 'Picked Up',  value: 'picked_up' },
   { label: 'In Transit', value: 'out_for_delivery' },
   { label: 'Completed',  value: 'delivered' },
+  { label: 'Failed',     value: 'failed' },
 ];
 
 export interface DriverStats {
