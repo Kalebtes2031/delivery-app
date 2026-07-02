@@ -242,8 +242,9 @@ return (
                     ]}
                   >
                     {status === 'out_for_delivery' ? 'In Transit' : 
-                     status === 'pending' ? 'Assigned' : 
+                     status === 'pending' ? 'Assigned' :
                      showAsFailed ? 'Failed' :
+                     status === 'delivered' ? 'Completed' :
                      t(`status.${status}`)}
                   </Text>
                 </View>

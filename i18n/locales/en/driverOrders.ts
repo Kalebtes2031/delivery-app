@@ -7,7 +7,7 @@ export default {
     accepted: "Accepted",
     picked_up: "Picked Up",
     out_for_delivery: "In Transit",
-    delivered: "Delivered",
+    delivered: "Completed",
     failed: "Failed",
   },
   orderNumber: "Order #{{id}}",

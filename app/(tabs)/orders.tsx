@@ -371,19 +371,24 @@ export default function OrdersScreen() {
               <View style={[styles.dot, { backgroundColor: "#6750A4" }]} />
               <View style={styles.line} />
               {/* Location Icon - Now inside the border area */}
-              {(item.customer_lat && item.customer_lon) ? (
+              {(() => {
+                const hasCoords = !!(item.customer_lat && item.customer_lon);
+                const isDelivered = normalizedStatus === 'delivered';
+              
+                const iconColor = isDelivered 
+                  ? '#6750A4' 
+                  : '#EF4444';  // All non-delivered show red (including failed)
+                
+                return (
                 <View style={styles.locationIconWrapper}>
                   <Ionicons 
                     name="location" 
-                    size={28} 
-                    color={normalizedStatus === 'delivered' ? '#6750A4' : '#EF4444'} 
-                  />
-                </View>
-              ) : (
-                <View style={styles.locationIconWrapper}>
-                  <Ionicons name="location" size={22} color="#CBD5E1" />
-                </View>
-              )}
+                      size={hasCoords ? 28 : 22} 
+                      color={iconColor} 
+                    />
+                  </View>
+                );
+              })()}
             </View>
 
             <View style={styles.addressContainer}>
