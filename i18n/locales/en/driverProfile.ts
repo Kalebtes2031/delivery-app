@@ -7,7 +7,7 @@ export default {
   signOut: "Sign Out",
   activeDeliveryApp: "Active Delivery App",
   signOutConfirmTitle: "Sign Out",
-  signOutConfirmDescription: "Are you sure you want to sign out from the Active Delivery App?",
+  signOutConfirmDescription: "Are you sure you want to sign out from the Elilita Delivery App?",
   yes: "Yes",
   no: "No",
   yourRating: "Your Rating",

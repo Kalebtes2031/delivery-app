@@ -67,7 +67,7 @@ export default function LoginScreen() {
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
             <View>
               <Image
-                source={require('@/assets/images/delivery.jpg')}
+                source={require('@/assets/images/qinemartethio.jpeg')}
                 style={{ width: 400, height: 300, }}
                 resizeMode="cover"
               />

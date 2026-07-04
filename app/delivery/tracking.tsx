@@ -31,9 +31,9 @@ export default function DriverTrackingScreen() {
   const [zoomImageUri, setZoomImageUri] = useState<string | null>(null);
 
   const locationSubscription = useRef<Location.LocationObjectSubscription | null>(null);
-  const hasFetchedRoute = useRef(false);
+  const lastFetchedCoords = useRef<[number, number] | null>(null);
 
-  const { t, i18n } = useTranslation('driverOrders'); 
+  const { t, i18n } = useTranslation('driverOrders');
   const isAmharic = i18n.language?.startsWith('am');
   const insets = useSafeAreaInsets();
 
@@ -52,11 +52,35 @@ export default function DriverTrackingScreen() {
       const response = await fetch(url);
       const data = await response.json();
       if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
         setRouteGeoJSON({
           type: 'Feature',
           properties: {},
-          geometry: data.routes[0].geometry,
+          geometry: route.geometry,
         });
+
+        // Use OSRM road distance (metres) and duration (seconds)
+        if (route.distance != null) {
+          setDistance(
+            route.distance >= 1000
+              ? `${(route.distance / 1000).toFixed(1)} km`
+              : `${Math.round(route.distance)} m`
+          );
+        }
+        if (route.duration != null) {
+          const mins = Math.round(route.duration / 60);
+          if (mins < 1) {
+            setEstimatedTime('< 1 min');
+          } else if (mins < 60) {
+            setEstimatedTime(`~${mins} min`);
+          } else {
+            const hours = Math.floor(mins / 60);
+            const m = mins % 60;
+            setEstimatedTime(`~${hours}h ${m}m`);
+          }
+        }
+
+        lastFetchedCoords.current = start;
       }
     } catch (err) {
       console.warn('Failed to fetch route:', err);
@@ -86,9 +110,14 @@ export default function DriverTrackingScreen() {
           setCurrentLocation(location);
           const driverCoords: [number, number] = [location.coords.longitude, location.coords.latitude];
 
-          if (!hasFetchedRoute.current) {
+          // Re-fetch route when driver moves significantly (~500m)
+          const prev = lastFetchedCoords.current;
+          const moved = !prev ||
+            Math.abs(driverCoords[0] - prev[0]) > 0.005 ||
+            Math.abs(driverCoords[1] - prev[1]) > 0.005;
+
+          if (moved && data.status !== 'delivered' && data.status !== 'completed') {
             fetchRoute(driverCoords, destCoords);
-            hasFetchedRoute.current = true;
           }
 
           if (data.tracking_id) {
@@ -98,46 +127,6 @@ export default function DriverTrackingScreen() {
               location.coords.longitude,
               location.coords.heading
             );
-          }
-
-          //  Calculate distance and estimated time (only if not delivered) ---
-          if (data.status !== 'delivered' && data.status !== 'completed') {
-            const customerLat = Number(data.customer_lat);
-            const customerLon = Number(data.customer_lon);
-            if (customerLat && customerLon) {
-              // Haversine formula to calculate distance
-              const R = 6371;
-              const dLat = (customerLat - location.coords.latitude) * Math.PI / 180;
-              const dLon = (customerLon - location.coords.longitude) * Math.PI / 180;
-              const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(location.coords.latitude * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              const dist = R * c;
-              
-              // Format distance
-              if (dist < 1) {
-                setDistance(`${Math.round(dist * 1000)}m`);
-              } else {
-                setDistance(`${dist.toFixed(1)}km`);
-              }
-              
-              // Estimate time
-              const avgSpeed = 30;
-              const timeHours = dist / avgSpeed;
-              const timeMinutes = Math.round(timeHours * 60);
-              
-              if (timeMinutes < 1) {
-                setEstimatedTime('< 1 min');
-              } else if (timeMinutes < 60) {
-                setEstimatedTime(`~${timeMinutes} min`);
-              } else {
-                const hours = Math.floor(timeMinutes / 60);
-                const mins = timeMinutes % 60;
-                setEstimatedTime(`~${hours}h ${mins}m`);
-              }
-            }
           }
         }
       );
@@ -231,9 +220,9 @@ export default function DriverTrackingScreen() {
             bounds={{
               ne: [Math.max(driverCoords[0], destCoords[0]) + 0.005, Math.max(driverCoords[1], destCoords[1]) + 0.005],
               sw: [Math.min(driverCoords[0], destCoords[0]) - 0.005, Math.min(driverCoords[1], destCoords[1]) - 0.005],
-              paddingLeft: 40, 
-              paddingRight: 40, 
-              paddingTop: 40, 
+              paddingLeft: 40,
+              paddingRight: 40,
+              paddingTop: 40,
               paddingBottom: 150 + insets.bottom
             }}
             animationMode="flyTo"
@@ -271,13 +260,13 @@ export default function DriverTrackingScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.bottomSheet, { 
+      <View style={[styles.bottomSheet, {
         paddingBottom: 16 + insets.bottom,
         paddingTop: 8,
         paddingHorizontal: 16,
         backgroundColor: '#fff',
       }]}>
-        
+
         {/* ===== VIEW-ONLY MODE:  */}
         {isViewOnly ? (
           <View style={styles.viewOnlyContainer}>
@@ -299,9 +288,9 @@ export default function DriverTrackingScreen() {
                 <View style={[styles.premiumStatusDot, { backgroundColor: config.text }]} />
                 <MaterialCommunityIcons name={config.icon} size={11} color={config.text} />
                 <Text style={[styles.premiumStatusText, { color: config.text }]}>
-                  {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
-                   delivery.status === 'pending' ? 'ASSIGNED' : 
-                   t(`status.${delivery.status}`)}
+                  {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
+                    delivery.status === 'pending' ? 'ASSIGNED' :
+                      t(`status.${delivery.status}`)}
                 </Text>
               </View>
             </View>
@@ -328,7 +317,7 @@ export default function DriverTrackingScreen() {
             {/* Row 3: Customer Name + Call  */}
             <View style={styles.cleanCustomerRow}>
               {/* Customer Name - Dynamic width (fits the name) */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cleanCustomerNameCard}
                 onPress={() => {
                   if (delivery?.customer_image) {
@@ -339,13 +328,13 @@ export default function DriverTrackingScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.customerImageWrapper}>
-                {delivery?.customer_image ? (
-                  <Image source={{ uri: delivery.customer_image }} style={styles.cleanCustomerImage} />
-                ) : (
-                  <View style={styles.cleanCustomerPlaceholder}>
-                    <Ionicons name="person" size={12} color="#6750A4" />
-                  </View>
-                )}
+                  {delivery?.customer_image ? (
+                    <Image source={{ uri: delivery.customer_image }} style={styles.cleanCustomerImage} />
+                  ) : (
+                    <View style={styles.cleanCustomerPlaceholder}>
+                      <Ionicons name="person" size={12} color="#6750A4" />
+                    </View>
+                  )}
 
                   {delivery?.customer_image && (
                     <View style={styles.zoomIndicatorBelow}>
@@ -355,7 +344,7 @@ export default function DriverTrackingScreen() {
                 </View>
                 <Text style={styles.cleanCustomerName} numberOfLines={1}>{customerName}</Text>
               </TouchableOpacity>
-              
+
               {/* Call Button - Icon Only (Matches Normal Mode) */}
               <TouchableOpacity
                 style={styles.cleanCallCard}
@@ -381,16 +370,16 @@ export default function DriverTrackingScreen() {
         ) : (
           /* ===== NORMAL MODE:  */
           <>
-        <View style={styles.orderInfo}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
-            <View style={{ gap: 10 }}>
-              <Text style={{
-                fontWeight: "bold",
-                fontSize: 16,
-                color: "#6750A4"
-              }}>
-                {t('orderNumber', { id: order_id })}
-              </Text>
+            <View style={styles.orderInfo}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>
+                <View style={{ gap: 10 }}>
+                  <Text style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#6750A4"
+                  }}>
+                    {t('orderNumber', { id: order_id })}
+                  </Text>
                   {(distance || estimatedTime) && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                       {delivery?.status === 'delivered' || delivery?.status === 'completed' ? (
@@ -421,9 +410,9 @@ export default function DriverTrackingScreen() {
                   <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: config.text }} />
                   <MaterialCommunityIcons name={config.icon} size={12} color={config.text} />
                   <Text style={{ color: config.text, fontSize: 8, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 }}>
-                    {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' : 
-                     delivery.status === 'pending' ? 'ASSIGNED' : 
-                     t(`status.${delivery.status}`)}
+                    {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
+                      delivery.status === 'pending' ? 'ASSIGNED' :
+                        t(`status.${delivery.status}`)}
                   </Text>
                 </View>
               </View>
@@ -442,7 +431,7 @@ export default function DriverTrackingScreen() {
                       <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
                         <Image source={{ uri: delivery.customer_image }} style={{ height: 50, width: 50, borderRadius: 125, resizeMode: "cover" }} />
                       </View>
-                    :
+                      :
                       <View style={{ height: 50, width: 50, backgroundColor: "#F1F5F9", borderRadius: 125, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#aeb1b8ff" }}>
                         <Ionicons name="person" size={24} color="#64748B" />
                       </View>
@@ -450,16 +439,16 @@ export default function DriverTrackingScreen() {
                   </TouchableOpacity>
                   <Text style={styles.customerName}>{customerName}</Text>
                 </View>
-            <View>
-              <TouchableOpacity
-                style={styles.callButton}
-                onPress={() => delivery?.customer_phone && Linking.openURL(`tel:${delivery.customer_phone}`)}
-              >
-                <Ionicons name="call" size={18} color="#fff" />
-              </TouchableOpacity>
+                <View>
+                  <TouchableOpacity
+                    style={styles.callButton}
+                    onPress={() => delivery?.customer_phone && Linking.openURL(`tel:${delivery.customer_phone}`)}
+                  >
+                    <Ionicons name="call" size={18} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
             {!isViewOnly && (
               <View style={styles.actionButtons}>
                 <SlideToConfirm
@@ -499,20 +488,20 @@ export default function DriverTrackingScreen() {
         animationType="fade"
         onRequestClose={() => setIsImageZoomVisible(false)}
       >
-        <TouchableOpacity 
-          style={styles.zoomOverlay} 
+        <TouchableOpacity
+          style={styles.zoomOverlay}
           activeOpacity={1}
           onPress={() => setIsImageZoomVisible(false)}
         >
           <View style={styles.zoomContainer}>
             {zoomImageUri && (
-              <Image 
-                source={{ uri: zoomImageUri }} 
+              <Image
+                source={{ uri: zoomImageUri }}
                 style={styles.zoomImage}
                 resizeMode="contain"
               />
             )}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.zoomCloseButton}
               onPress={() => setIsImageZoomVisible(false)}
             >
@@ -531,7 +520,7 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingText: { marginTop: 12, color: '#6750A4', fontWeight: '600' },
-    backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
+  backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4 },
   // NEW: Header Cancel Button (Top Right)
   headerCancelButton: {
     position: 'absolute',
@@ -547,15 +536,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FEE2E2',
   },
-  bottomSheet: { 
-    position: 'absolute', 
-    bottom: 0, 
-    left: 0, 
-    right: 0, 
-    backgroundColor: '#fff', 
-    borderTopLeftRadius: 32, 
-    borderTopRightRadius: 32, 
-    padding: 24, 
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
     paddingBottom: 24,
     elevation: 20,
   },
@@ -852,14 +841,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     gap: 3,
   },
-    // NEW: Container for Status + Cancel
+  // NEW: Container for Status + Cancel
   cleanStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
 
-    // NEW: Status Row (Below Cancel)
+  // NEW: Status Row (Below Cancel)
   cleanStatusRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -983,7 +972,7 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: '#6750A4',
   },
-    // Wrapper for customer image with zoom indicator below
+  // Wrapper for customer image with zoom indicator below
   customerImageWrapper: {
     position: 'relative',
     alignItems: 'center',

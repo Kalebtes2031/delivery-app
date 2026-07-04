@@ -4,7 +4,7 @@
     "slug": "qine_deliveryapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/qinemartreallogo.png",
+    "icon": "./assets/images/qinemartethio.jpeg",
     "scheme": "qinedeliveryapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -28,9 +28,9 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/images/qinemartreallogo.png",
-        "backgroundImage": "./assets/images/qinemartreallogo.png",
-        "monochromeImage": "./assets/images/qinemartreallogo.png"
+        "foregroundImage": "./assets/images/qinemartethio.jpeg",
+        "backgroundImage": "./assets/images/qinemartethio.jpeg",
+        "monochromeImage": "./assets/images/qinemartethio.jpeg"
       },
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false
@@ -44,7 +44,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/qinemartreallogo.png",
+          "image": "./assets/images/qinemartethio.jpeg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
