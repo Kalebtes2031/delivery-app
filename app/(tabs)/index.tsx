@@ -467,6 +467,7 @@ export default function HomeScreen() {
                           <Text style={[styles.statusText, { color: config.text }]}>
                             {displayStatus === 'pending' ? 'ASSIGNED' :
                              displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
+                                displayStatus === 'delivered' ? 'COMPLETED' :
                              displayStatus === 'failed' ? 'FAILED' :
                              t(`status.${displayStatus}`).toUpperCase()}
                           </Text>

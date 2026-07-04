@@ -133,8 +133,11 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>
             {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
           </Text>
-          {/* <Text style={styles.userHandle}>{user?.email}</Text> */}
+          <Text style={styles.userHandle}>
+            {user?.email || t('deliveryDriver')}
+          </Text>
         </View>
+        
 
         {/* --- RATING CARD --- */}
         <TouchableOpacity
@@ -218,19 +221,19 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FBFBFF' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 40 },
-  header: { alignItems: 'center', marginTop: 3, marginBottom: 10 },
-  avatarWrapper: { marginBottom: 5 },
+  header: { alignItems: 'center', marginTop: 8, marginBottom: 16 },
+  avatarWrapper: { marginBottom: 8 },
   avatarPlaceholder: {
-    width: 110, height: 110, borderRadius: 55, backgroundColor: '#6750A4',
+    width: 80, height: 80, borderRadius: 40, backgroundColor: '#6750A4',
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#6750A4', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 15, elevation: 10,
+    shadowColor: '#6750A4', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6,
   },
-  avatarImage: { width: 110, height: 110, borderRadius: 55 },
-  avatarInitial: { fontSize: 44, color: '#fff', fontWeight: '900' },
-  userName: { fontSize: 26, fontWeight: '800', color: '#1E293B' },
-  userHandle: { fontSize: 15, color: '#94A3B8', fontWeight: '600' },
+  avatarImage: { width: 80, height: 80, borderRadius: 40 },
+  avatarInitial: { fontSize: 32, color: '#fff', fontWeight: '800' },
+  userName: { fontSize: 22, fontWeight: '700', color: '#6750A4', letterSpacing: -0.3 },
+  userHandle: { fontSize: 14, color: '#9B8BB5', fontWeight: '500' },
   ratingCard: {
     flexDirection: 'row',
     alignItems: 'center',
