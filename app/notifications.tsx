@@ -17,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getNotifications, markNotificationsRead } from '@/services/api';
 import { useDelivery } from '@/context/DeliveryContext';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
+import { useTranslation } from 'react-i18next';
 
 interface Notif {
   id: number;
@@ -47,19 +48,20 @@ function meta(event: string) {
   return META[event] ?? { icon: 'notifications-outline' as const, color: '#64748B', bg: '#f1f5f9' };
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t?: (key: string) => string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return 'just now';
+  if (s < 60) return t ? t('justNow') : 'just now';
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return t ? `${m} ${t('minutesAgo')}` : `${m}m ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return t ? `${h} ${t('hoursAgo')}` : `${h}h ago`;
   const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d ago`;
+  if (d < 7) return t ? `${d} ${t('daysAgo')}` : `${d}d ago`;
   return new Date(iso).toLocaleDateString();
 }
 
 export default function NotificationsScreen() {
+const { t } = useTranslation('notification');
   const router = useRouter();
   const { deliveries, refreshDeliveries } = useDelivery();
   const { refetch: refetchUnread } = useUnreadNotifications();
@@ -121,10 +123,9 @@ export default function NotificationsScreen() {
     const vendorOrderId = n.data?.vendor_order_id;
     
     if (!vendorOrderId) {
-      Alert.alert('Info', 'No linked delivery found for this notification');
+      Alert.alert(t('info'), t('noLinkedDelivery'));
       return;
     }
-
     // Get deliveries from context (already available)
     const deliveryList = deliveries || [];
     
@@ -148,7 +149,7 @@ export default function NotificationsScreen() {
       router.push(`/delivery/${matchedDelivery.id}`);
     } else {
       // If not found, show alert instead of trying fallback
-      Alert.alert('Info', 'Delivery not found for this notification');
+      Alert.alert(t('info'), t('deliveryNotFound'));
     }
   };
 
@@ -161,15 +162,15 @@ export default function NotificationsScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 8 }}>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          <Text style={styles.headerSub}>
-            {unread > 0 ? `${unread} unread` : "You're all caught up"}
-          </Text>
+        <Text style={styles.headerTitle}>{t('notifications')}</Text>
+<Text style={styles.headerSub}>
+  {unread > 0 ? `${unread} ${t('unread')}` : t('allCaughtUp')}
+</Text>
         </View>
         {unread > 0 && (
           <TouchableOpacity onPress={markAll} style={styles.markAll}>
             <Ionicons name="checkmark-done" size={14} color="#fff" />
-            <Text style={styles.markAllText}>Mark all</Text>
+<Text style={styles.markAllText}>{t('markAll')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -191,8 +192,8 @@ export default function NotificationsScreen() {
               <View style={styles.emptyIcon}>
                 <Ionicons name="notifications-outline" size={28} color="#cbd5e1" />
               </View>
-              <Text style={styles.emptyTitle}>No notifications yet</Text>
-              <Text style={styles.emptySub}>New delivery assignments will appear here.</Text>
+<Text style={styles.emptyTitle}>{t('noNotifications')}</Text>
+<Text style={styles.emptySub}>{t('newAssignmentsHere')}</Text>
             </View>
           }
           renderItem={({ item }) => {
@@ -214,7 +215,7 @@ export default function NotificationsScreen() {
                     {!item.is_read && <View style={styles.dot} />}
                   </View>
                   <Text style={styles.body}>{item.body}</Text>
-                  <Text style={styles.time}>{timeAgo(item.created_at)}</Text>
+                 <Text style={styles.time}>{timeAgo(item.created_at, t)}</Text>
                 </View>
               </TouchableOpacity>
             );

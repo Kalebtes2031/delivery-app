@@ -24,11 +24,25 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+const [passwordError, setPasswordError] = useState('');
 
 
-  const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      Alert.alert(t('login.errors.loginFailed'), t('login.errors.emptyFields'));
+const handleLogin = async () => {
+  setUsernameError('');
+  setPasswordError('');
+
+  let hasError = false;
+  if (!username.trim()) {
+    setUsernameError(t('login.errors.usernameRequired') || 'Username is required');
+    hasError = true;
+  }
+  if (!password.trim()) {
+    setPasswordError(t('login.errors.passwordRequired') || 'Password is required');
+    hasError = true;
+  }
+
+  if (hasError) {
       return;
     }
 
@@ -109,9 +123,12 @@ export default function LoginScreen() {
               >
                 {t('login.username')}
               </Text>
-              <TextInput
-                value={username}
-                onChangeText={setUsername}
+<TextInput
+  value={username}
+  onChangeText={(text) => {
+    setUsername(text);
+    if (usernameError) setUsernameError('');
+  }}
                 placeholder={t('login.usernamePlaceholder')}
                 placeholderTextColor="#6750A4"
                 autoCapitalize="none"
@@ -124,10 +141,22 @@ export default function LoginScreen() {
                   color: '#6750A4',
                   fontSize: 14,
                   borderWidth: 1,
-                  borderColor: '#6750A4',
-                }}
-              />
-            </View>
+  borderColor: usernameError ? '#DC2626' : '#6750A4',
+}}
+/>
+{usernameError ? (
+  <Text
+    style={{
+      color: '#DC2626',
+      fontSize: 12,
+      marginTop: 6,
+      marginLeft: 4,
+    }}
+  >
+    {usernameError}
+  </Text>
+) : null}
+</View>
 
             <View>
               <Text
@@ -146,7 +175,10 @@ export default function LoginScreen() {
               <View>
                 <TextInput
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+  setPassword(text);
+  if (passwordError) setPasswordError('');
+}}
                   placeholder={t('login.passwordPlaceholder')}
                   placeholderTextColor="#6750A4"
                   secureTextEntry={!showPassword}
@@ -158,8 +190,8 @@ export default function LoginScreen() {
                     color: '#6750A4',
                     fontSize: 14,
                     borderWidth: 1,
-                    borderColor: '#6750A4',
-                  }}
+  borderColor: passwordError ? '#DC2626' : '#6750A4',
+}}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -176,6 +208,18 @@ export default function LoginScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
+{passwordError ? (
+  <Text
+    style={{
+      color: '#DC2626',
+      fontSize: 12,
+      marginTop: 6,
+      marginLeft: 4,
+    }}
+  >
+    {passwordError}
+  </Text>
+) : null}
             </View>
           </View>
 

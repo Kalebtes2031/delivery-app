@@ -239,16 +239,16 @@ export default function OrdersScreen() {
       const detail = (item as any)?.vendor_order_detail;
 
       // 1. Try API result FIRST (from latitude/longitude - MOST ACCURATE)
-      if (locationNames[item.id] && locationNames[item.id] !== '📍 Location available') {
-        return locationNames[item.id];
-      }
+if (locationNames[item.id] && locationNames[item.id] !== t('locationAvailable')) {
+  return locationNames[item.id];
+}
 
       // 2. If coordinates exist but API failed or loading, show formatted coordinates
       if (item.customer_lat && item.customer_lon) {
         // If loading, show loading message
-        if (loadingLocations[item.id]) {
-          return "Loading location...";
-        }
+if (loadingLocations[item.id]) {
+  return t('loadingLocation');
+}
         // Otherwise show formatted coordinates
         const lat = parseFloat(item.customer_lat).toFixed(4);
         const lon = parseFloat(item.customer_lon).toFixed(4);
@@ -301,11 +301,11 @@ export default function OrdersScreen() {
                 size={14}
                 color={config.text}
               />
-              <Text style={[styles.statusText, { color: config.text }]}>
-                {item.status === 'out_for_delivery' ? 'In Transit' :
-                  item.status === 'pending' ? 'Assigned' :
-                    t(`status.${item.status}`)}
-              </Text>
+<Text style={[styles.statusText, { color: config.text }]}>
+  {item.status === 'out_for_delivery' ? t('status.inTransit') :
+    item.status === 'pending' ? t('status.assigned') :
+      t(`status.${item.status}`)}
+</Text>
             </View>
           </View>
 
@@ -350,7 +350,7 @@ export default function OrdersScreen() {
                       <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
                       <View style={styles.locationIndicator}>
                         <Ionicons name="location-outline" size={10} color="#EF4444" />
-                        <Text style={styles.locationIndicatorText}>Tap to track</Text>
+                 <Text style={styles.locationIndicatorText}>{t('tapToTrack')}</Text>
                       </View>
                     </View>
                     <Text style={styles.customerName} numberOfLines={1}>
@@ -358,7 +358,7 @@ export default function OrdersScreen() {
                     </Text>
                     <Text style={styles.addressText} numberOfLines={2}>
                       {loadingLocations[item.id]
-                        ? 'Loading location...'
+                        ? t('loadingLocation')
                         : getDeliveryAddress()}
                     </Text>
                   </View>

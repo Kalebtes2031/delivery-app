@@ -6,4 +6,7 @@ export default {
   language: {
     title: "ቋንቋ",
   },
+// Notification translations
+  notifications: "ማሳወቂያዎች",
+
 };

@@ -1,0 +1,15 @@
+export default {
+  notifications: "ማሳወቂያዎች",
+  unread: "ያልተነበቡ",
+  allCaughtUp: "ሁሉም ተነብቧል",
+  markAll: "ሁሉንም ያንብቡ",
+  noNotifications: "ምንም ማሳወቂያዎች የሉም",
+  newAssignmentsHere: "አዳዲስ የማቅረብ ስራዎች እዚህ ይታያሉ",
+  info: "መረጃ",
+  noLinkedDelivery: "ለዚህ ማሳወቂያ የተገናኘ ማቅረብ አልተገኘም",
+  deliveryNotFound: "ለዚህ ማሳወቂያ ማቅረብ አልተገኘም",
+  justNow: "አሁን",
+  minutesAgo: "ደቂቃ በፊት",
+  hoursAgo: "ሰዓት በፊት",
+  daysAgo: "ቀን በፊት",
+};

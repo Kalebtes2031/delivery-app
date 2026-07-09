@@ -290,11 +290,11 @@ export default function HomeScreen() {
                 </View>
                 <View style={[styles.heroStatusBadge, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.bg }]}>
                   <View style={[styles.heroStatusDot, { backgroundColor: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]} />
-                  <Text style={[styles.heroStatusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
-                    {activeDelivery.status === 'pending' ? 'ASSIGNED' :
-                      activeDelivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                        t(`status.${activeDelivery.status.toLowerCase()}`).toUpperCase()}
-                  </Text>
+<Text style={[styles.heroStatusText, { color: STATUS_CONFIG[activeDelivery.status.toLowerCase()]?.text }]}>
+  {activeDelivery.status === 'pending' ? t('status.assigned').toUpperCase() :
+    activeDelivery.status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
+      t(`status.${activeDelivery.status.toLowerCase()}`).toUpperCase()}
+</Text>
                 </View>
               </View>
 
@@ -356,16 +356,16 @@ export default function HomeScreen() {
                           {isCurrent && <View style={styles.heroPulseRing} />}
                         </View>
                       </View>
-                      <Text style={[
-                        styles.heroStepLabel,
-                        isCompleted && styles.heroStepCompleted,
-                        isCurrent && styles.heroStepCurrent,
-                        isFuture && styles.heroStepFuture
-                      ]}>
-                        {status === 'pending' ? 'ASSIGNED' :
-                          status === 'out_for_delivery' ? 'IN TRANSIT' :
-                            t(`status.${status}`).toUpperCase()}
-                      </Text>
+<Text style={[
+  styles.heroStepLabel,
+  isCompleted && styles.heroStepCompleted,
+  isCurrent && styles.heroStepCurrent,
+  isFuture && styles.heroStepFuture
+]}>
+  {status === 'pending' ? t('status.assigned').toUpperCase() :
+    status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
+      t(`status.${status}`).toUpperCase()}
+</Text>
                     </View>
                   );
                 })}
@@ -422,11 +422,11 @@ export default function HomeScreen() {
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[delivery.status.toLowerCase()]?.bg }]}>
                       <MaterialCommunityIcons name={STATUS_CONFIG[delivery.status.toLowerCase()]?.icon} size={14} color={STATUS_CONFIG[delivery.status.toLowerCase()]?.text} />
-                      <Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
-                        {delivery.status === 'pending' ? 'ASSIGNED' :
-                          delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                            t(`status.${delivery.status.toLowerCase()}`).toUpperCase()}
-                      </Text>
+<Text style={[styles.statusText, { color: STATUS_CONFIG[delivery.status.toLowerCase()]?.text }]}>
+  {delivery.status === 'pending' ? t('status.assigned').toUpperCase() :
+    delivery.status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
+      t(`status.${delivery.status.toLowerCase()}`).toUpperCase()}
+</Text>
                     </View>
                   </View>
                 </TouchableOpacity>

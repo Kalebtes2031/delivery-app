@@ -9,9 +9,11 @@ export default {
     footer: "Contact your company admin if you don't have credentials",
     errors: {
       emptyFields: "Please enter your username and password.",
+      usernameRequired: "Username is required",
+      passwordRequired: "Password is required",
       invalidCredentials: "Invalid username or password.",
       somethingWrong: "Something went wrong. Please try again.",
       loginFailed: "Login Failed",
     },
   },
-};
+}; 
