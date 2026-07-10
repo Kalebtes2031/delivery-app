@@ -204,19 +204,19 @@ export default function OrdersScreen() {
   const getEffectiveStatus = (delivery: DeliveryAssignment): DeliveryStatus => {
     const deliveryStatus = delivery.status?.toLowerCase?.() || 'pending';
     const orderStatus = (delivery as any)?.vendor_order_detail?.status?.toLowerCase?.() || '';
-    
+
     // Check if the order is in a failed state
     const isOrderFailed = ['cancelled', 'rejected', 'failed'].includes(orderStatus);
-    const hasFailureReason = !!(delivery as any)?.failure_reason || 
-                            !!(delivery as any)?.cancellation_reason ||
-                            !!(delivery as any)?.vendor_order_detail?.failure_reason ||
-                            !!(delivery as any)?.vendor_order_detail?.cancellation_reason;
-    
+    const hasFailureReason = !!(delivery as any)?.failure_reason ||
+      !!(delivery as any)?.cancellation_reason ||
+      !!(delivery as any)?.vendor_order_detail?.failure_reason ||
+      !!(delivery as any)?.vendor_order_detail?.cancellation_reason;
+
     // If order is failed or has failure reason, show as failed
     if (isOrderFailed || hasFailureReason) {
       return 'failed';
     }
-    
+
     // Otherwise return the actual delivery status
     return deliveryStatus as DeliveryStatus;
   };
@@ -271,7 +271,7 @@ export default function OrdersScreen() {
   const renderDeliveryCard = ({ item }: { item: DeliveryAssignment }) => {
     // Get the effective display status using the centralized helper
     const normalizedStatus = getEffectiveStatus(item);
-    
+
     const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.pending;
 
     const timeAssigned = new Date(item.assigned_at).toLocaleTimeString([], {
@@ -297,7 +297,7 @@ export default function OrdersScreen() {
       const detail = (item as any)?.vendor_order_detail;
 
       // 1. Try API result FIRST (from latitude/longitude - MOST ACCURATE)
-      if (locationNames[item.id] && locationNames[item.id] !== '📍 Location available') {
+      if (locationNames[item.id] && locationNames[item.id] !== t('locationAvailable')) {
         return locationNames[item.id];
       }
 
@@ -305,7 +305,7 @@ export default function OrdersScreen() {
       if (item.customer_lat && item.customer_lon) {
         // If loading, show loading message
         if (loadingLocations[item.id]) {
-          return "Loading location...";
+          return t('loadingLocation');
         }
         // Otherwise show formatted coordinates
         const lat = parseFloat(item.customer_lat).toFixed(4);
@@ -359,8 +359,11 @@ export default function OrdersScreen() {
                 size={14}
                 color={config.text}
               />
+
               <Text style={[styles.statusText, { color: config.text }]}>
-                {getStatusLabel(normalizedStatus)}
+                {item.status === 'out_for_delivery' ? t('status.inTransit') :
+                  item.status === 'pending' ? t('status.assigned') :
+                    t(`status.${item.status}`)}
               </Text>
             </View>
           </View>
@@ -374,17 +377,17 @@ export default function OrdersScreen() {
               {(() => {
                 const hasCoords = !!(item.customer_lat && item.customer_lon);
                 const isDelivered = normalizedStatus === 'delivered';
-              
-                const iconColor = isDelivered 
-                  ? '#6750A4' 
+
+                const iconColor = isDelivered
+                  ? '#6750A4'
                   : '#EF4444';  // All non-delivered show red (including failed)
-                
+
                 return (
-                <View style={styles.locationIconWrapper}>
-                  <Ionicons 
-                    name="location" 
-                      size={hasCoords ? 28 : 22} 
-                      color={iconColor} 
+                  <View style={styles.locationIconWrapper}>
+                    <Ionicons
+                      name="location"
+                      size={hasCoords ? 28 : 22}
+                      color={iconColor}
                     />
                   </View>
                 );
@@ -415,7 +418,7 @@ export default function OrdersScreen() {
                       <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
                       <View style={styles.locationIndicator}>
                         <Ionicons name="location-outline" size={10} color="#EF4444" />
-                        <Text style={styles.locationIndicatorText}>Tap to track</Text>
+                        <Text style={styles.locationIndicatorText}>{t('tapToTrack')}</Text>
                       </View>
                     </View>
                     <Text style={styles.customerName} numberOfLines={1}>
@@ -423,7 +426,7 @@ export default function OrdersScreen() {
                     </Text>
                     <Text style={styles.addressText} numberOfLines={2}>
                       {loadingLocations[item.id]
-                        ? 'Loading location...'
+                        ? t('loadingLocation')
                         : getDeliveryAddress()}
                     </Text>
                   </View>

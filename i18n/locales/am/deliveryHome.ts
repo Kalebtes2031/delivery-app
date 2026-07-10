@@ -25,6 +25,8 @@ export default {
   deliveredOn: "የደረሰው {{date}}",
   retry: "እንደገና ሞክር",
   status: {
+    assigned: "ተመድቧል",
+inTransit: "በመጓዝ ላይ",
     pending: "በመጠባበቅ ላይ",
     accepted: "ተቀባይነት ያገኘ",
     picked_up: "ተረክቧል",

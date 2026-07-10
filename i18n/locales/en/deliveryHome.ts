@@ -31,6 +31,8 @@ export default {
     out_for_delivery: "Out for Delivery",
     delivered: "Delivered",
     failed: "Failed",
+    assigned: "Assigned",
+inTransit: "In Transit",
     },
   home: "Home",
   orders: "Orders",

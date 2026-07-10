@@ -315,13 +315,14 @@ export default function HomeScreen() {
                       <View style={[styles.heroStatusDot, { backgroundColor: config.text }]} />
                       <Text style={[styles.heroStatusText, { color: config.text }]}>
                         {displayStatus === 'pending' ? 'ASSIGNED' :
-                         displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
-                         displayStatus === 'failed' ? 'FAILED' :
-                         t(`status.${displayStatus}`).toUpperCase()}
+                          displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
+                            displayStatus === 'failed' ? 'FAILED' :
+                              t(`status.${displayStatus}`).toUpperCase()}
                       </Text>
                     </View>
                   );
                 })()}
+
               </View>
 
               {/* Customer Info */}
@@ -388,8 +389,8 @@ export default function HomeScreen() {
                         isCurrent && styles.heroStepCurrent,
                         isFuture && styles.heroStepFuture
                       ]}>
-                        {status === 'pending' ? 'ASSIGNED' :
-                          status === 'out_for_delivery' ? 'IN TRANSIT' :
+                        {status === 'pending' ? t('status.assigned').toUpperCase() :
+                          status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
                             t(`status.${status}`).toUpperCase()}
                       </Text>
                     </View>
@@ -458,34 +459,38 @@ export default function HomeScreen() {
                         <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                       </View>
                     </View>
-                    {(() => {
-                      const displayStatus = getDisplayStatus(delivery);
-                      const config = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
-                      return (
-                        <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-                          <MaterialCommunityIcons name={config.icon} size={14} color={config.text} />
-                          <Text style={[styles.statusText, { color: config.text }]}>
-                            {displayStatus === 'pending' ? 'ASSIGNED' :
-                             displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
-                                displayStatus === 'delivered' ? 'COMPLETED' :
-                             displayStatus === 'failed' ? 'FAILED' :
-                             t(`status.${displayStatus}`).toUpperCase()}
-                          </Text>
-                        </View>
-                      );
-                    })()}
-                  </View>
-                </TouchableOpacity>
+                    {
+                      (() => {
+                        const displayStatus = getDisplayStatus(delivery);
+                        const config = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
+                        return (
+                          <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
+                            <MaterialCommunityIcons name={config.icon} size={14} color={config.text} />
+                            <Text style={[styles.statusText, { color: config.text }]}>
+                              {displayStatus === 'pending' ? 'ASSIGNED' :
+                                displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
+                                  displayStatus === 'delivered' ? 'COMPLETED' :
+                                    displayStatus === 'failed' ? 'FAILED' :
+                                      t(`status.${displayStatus}`).toUpperCase()}
+                            </Text>
+                          </View>
+                        );
+                      })()
+                    }
+
+                  </View >
+                </TouchableOpacity >
               ))
             ) : (
               <View style={styles.emptySummary}>
                 <Text style={styles.emptySummaryText}>{t('noRecentActivities')}</Text>
               </View>
-            )}
-          </View>
-        </ScrollView>
-      </Animated.View>
-    </SafeAreaView>
+            )
+            }
+          </View >
+        </ScrollView >
+      </Animated.View >
+    </SafeAreaView >
   );
 }
 

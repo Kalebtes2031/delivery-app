@@ -1,0 +1,15 @@
+export default {
+  notifications: "Notifications",
+  unread: "unread",
+  allCaughtUp: "You're all caught up",
+  markAll: "Mark all",
+  noNotifications: "No notifications yet",
+  newAssignmentsHere: "New delivery assignments will appear here.",
+  info: "Info",
+  noLinkedDelivery: "No linked delivery found for this notification",
+  deliveryNotFound: "Delivery not found for this notification",
+  justNow: "just now",
+  minutesAgo: "minutes ago",
+  hoursAgo: "hours ago",
+  daysAgo: "days ago",
+};

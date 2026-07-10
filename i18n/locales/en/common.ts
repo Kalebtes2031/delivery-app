@@ -6,4 +6,7 @@ export default {
   language: {
     title: "Language",
   },
+   // Notification translations
+  notifications: "Notifications",
+ 
 };
