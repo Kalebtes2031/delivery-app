@@ -1,6 +1,6 @@
 export default {
   login: {
-    title: "Active DELIVERY APP",
+    title: "ACTIVE DELIVERY APP",
     username: "Username",
     usernamePlaceholder: "Enter your username",
     password: "Password",
