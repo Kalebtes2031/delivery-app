@@ -31,6 +31,7 @@ interface Notif {
     event?: string;
     tracking_id?: string;
     vendor_order_id?: number;
+      company_name_am?: string;
   };
 }
 
@@ -47,6 +48,59 @@ const META: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string
 function meta(event: string) {
   return META[event] ?? { icon: 'notifications-outline' as const, color: '#64748B', bg: '#f1f5f9' };
 }
+// ── Extract context from fallback body ──
+function extractContextFromBody(event: string, body: string): Record<string, string | number> {
+  const data: Record<string, string | number> = {};
+  if (!body) return data;
+  try {
+    // Delivery assigned: "Order #123 from Company Name."
+    const assignedMatch = body.match(/Order #(\d+) from (.+?)\./i);
+    if (assignedMatch && event === 'delivery.assigned') {
+      data.vendor_order_id = Number(assignedMatch[1]);
+      data.company = assignedMatch[2];
+    }
+    // Out for delivery: "Order from Company Name is out for delivery"
+    const outMatch = body.match(/Order from (.+?) is out for delivery/i);
+    if (outMatch && event === 'delivery.out_for_delivery') {
+      data.company = outMatch[1];
+    }
+    // Delivered: "Order from Company Name has been delivered"
+    const deliveredMatch = body.match(/Order from (.+?) has been delivered/i);
+    if (deliveredMatch && event === 'delivery.delivered') {
+      data.company = deliveredMatch[1];
+    }
+    // Vendor order new: "New order #123 for Company — 100.00 ETB"
+    const newOrderMatch = body.match(/New order #(\d+) for (.+?) — ([\d.]+) (\w+)/i);
+    if (newOrderMatch && event === 'vendororder.new') {
+      data.vendor_order_id = Number(newOrderMatch[1]);
+      data.company = newOrderMatch[2];
+      data.amount = newOrderMatch[3];
+      data.currency = newOrderMatch[4];
+    }
+    // Preparing: "Company is now preparing your order #123"
+    const preparingMatch = body.match(/(.+?) is now preparing your order #(\d+)/i);
+    if (preparingMatch && event === 'vendororder.preparing') {
+      data.company = preparingMatch[1];
+      data.vendor_order_id = Number(preparingMatch[2]);
+    }
+    // Paid: "Order #123 paid 100.00 ETB"
+    const paidMatch = body.match(/Order #(\d+) paid ([\d.]+) (\w+)/i);
+    if (paidMatch && event === 'order.paid') {
+      data.order_id = Number(paidMatch[1]);
+      data.amount = paidMatch[2];
+      data.currency = paidMatch[3];
+    }
+    // Payment failed: "Payment for order #123 failed"
+    const failedMatch = body.match(/Payment for order #(\d+) failed/i);
+    if (failedMatch && event === 'order.payment_failed') {
+      data.order_id = Number(failedMatch[1]);
+    }
+  } catch (err) {
+    // ignore
+  }
+  return data;
+}
+
 
 function timeAgo(iso: string, t?: (key: string) => string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -61,7 +115,7 @@ function timeAgo(iso: string, t?: (key: string) => string): string {
 }
 
 export default function NotificationsScreen() {
-const { t } = useTranslation('notification');
+const { t, i18n } = useTranslation('notification');
   const router = useRouter();
   const { deliveries, refreshDeliveries } = useDelivery();
   const { refetch: refetchUnread } = useUnreadNotifications();
@@ -183,6 +237,18 @@ const { t } = useTranslation('notification');
   };
 
   const unread = items.filter((n) => !n.is_read).length;
+    // ── Translation helper ──
+  const getTranslatedString = (key: string, data: any, fallback: string): string => {
+    try {
+      const val = t(key, { ...data, defaultValue: fallback });
+      if (val.includes('{{') || val.includes('}}')) {
+        return fallback;
+      }
+      return val;
+    } catch {
+      return fallback;
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -235,8 +301,34 @@ const { t } = useTranslation('notification');
 <Text style={styles.emptySub}>{t('newAssignmentsHere')}</Text>
             </View>
           }
-          renderItem={({ item }) => {
-            const m = meta(item.event);
+renderItem={({ item }) => {
+  const m = meta(item.event);
+  const isAmharic = i18n.language?.startsWith('am');
+  
+  // Extract context from body for interpolation
+  const contextData = extractContextFromBody(item.event, item.body);
+  const cleanData = Object.fromEntries(
+    Object.entries(item.data ?? {}).filter(([_, v]) => v != null)
+  );
+  const mergedData = { ...contextData, ...cleanData };
+
+  // Override company name with Amharic version if language is Amharic and available
+  if (isAmharic && item.data?.company_name_am) {
+    mergedData.company = item.data.company_name_am;
+  }
+
+  // Get translated title and body using translation keys
+  const title = getTranslatedString(
+    `events.${item.event}.title`,
+    mergedData,
+    item.title
+  );
+  const body = getTranslatedString(
+    `events.${item.event}.body`,
+    mergedData,
+    item.body
+  );
+
             return (
               <TouchableOpacity
                 onPress={() => onPressItem(item)}
@@ -249,11 +341,11 @@ const { t } = useTranslation('notification');
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <View style={styles.titleRow}>
                     <Text style={styles.title} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                    {!item.is_read && <View style={styles.dot} />}
-                  </View>
-                  <Text style={styles.body}>{item.body}</Text>
+            {title}
+          </Text>
+          {!item.is_read && <View style={styles.dot} />}
+        </View>
+        <Text style={styles.body}>{body}</Text>
                  <Text style={styles.time}>{timeAgo(item.created_at, t)}</Text>
                 </View>
               </TouchableOpacity>

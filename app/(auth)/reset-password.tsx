@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,6 +22,7 @@ const BRAND_COLOR = "#6750A4";
 export default function ResetPassword() {
   const router = useRouter();
   const { t } = useTranslation("auth");
+  const insets = useSafeAreaInsets();
   const { email, otp } = useLocalSearchParams<{ email: string; otp: string }>();
 
   const [newPassword, setNewPassword] = useState("");
@@ -81,9 +83,9 @@ export default function ResetPassword() {
     router.replace("/(auth)/login");
   };
 
-  if (showSuccess) {
+   if (showSuccess) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+      <View style={{ flex: 1, backgroundColor: '#ffffff', justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <View style={{ alignItems: 'center', width: '100%' }}>
           <View style={{
             width: 80,
@@ -135,20 +137,20 @@ export default function ResetPassword() {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: insets.top }}>
       <StatusBar barStyle="dark-content" />
       
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -100}
       >
-        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 32 }}>
+        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 32, paddingBottom: insets.bottom + 20 }}>
           {/* Back Button - Fixed Position */}
           <TouchableOpacity
             onPress={() => router.back()}
@@ -375,6 +377,6 @@ export default function ResetPassword() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

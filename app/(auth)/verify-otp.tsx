@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,6 +22,7 @@ const BRAND_COLOR = "#6750A4";
 export default function VerifyOtp() {
   const router = useRouter();
   const { t } = useTranslation("auth");
+  const insets = useSafeAreaInsets();
   const { email } = useLocalSearchParams<{ email: string }>();
 
   const [otp, setOtp] = useState("");
@@ -64,15 +66,15 @@ export default function VerifyOtp() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: insets.top }}>
       <StatusBar barStyle="dark-content" />
       
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
-        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 32 }}>
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -100}
+      > 
+        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 32, paddingBottom: insets.bottom + 20 }}>
           {/* Back Button - Fixed Position */}
           <TouchableOpacity
             onPress={() => router.back()}
@@ -221,6 +223,6 @@ export default function VerifyOtp() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

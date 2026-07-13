@@ -271,7 +271,7 @@ return (
             >
               {/* <Feather name="map-pin" size={12} color="#6750A4" /> */}
               <Text style={styles.miniActionText}>
-                {delivery.vendor_order_detail.company.business_type}
+                {isAmharic ? t('store') : delivery.vendor_order_detail.company.business_type}
               </Text>
             </TouchableOpacity>
           </View>

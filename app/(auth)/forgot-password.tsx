@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -22,6 +23,7 @@ const BRAND_COLOR = "#6750A4";
 export default function ForgotPassword() {
   const router = useRouter();
   const { t } = useTranslation("auth");
+  const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<{
@@ -64,12 +66,13 @@ export default function ForgotPassword() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: insets.top }}>
       <StatusBar barStyle="dark-content" />
       
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -100}
       >
         <ScrollView
           contentContainerStyle={{
@@ -77,6 +80,7 @@ export default function ForgotPassword() {
             justifyContent: 'center',
             paddingHorizontal: 32,
             paddingVertical: 24,
+            paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -244,6 +248,6 @@ export default function ForgotPassword() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

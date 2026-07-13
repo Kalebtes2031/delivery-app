@@ -37,6 +37,7 @@ export default {
   orderItems: "የትዕዛዝ ዕቃዎች ({{count}})",
   sku: "የዕቃ መለያ (SKU)",
   qty: "ብዛት",
+  store: "መደብር",
   subtotal: "ንዑስ ድምር",
   totalAmount: "አጠቃላይ ድምር",
   trackOrder: "ትዕዛዙን ይከታተሉ",

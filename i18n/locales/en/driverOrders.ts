@@ -37,6 +37,7 @@ export default {
   orderItems: "ORDER ITEMS ({{count}})",
   sku: "SKU",
   qty: "Qty",
+  store: "Store",
   subtotal: "Subtotal",
   totalAmount: "Total Amount",
   trackOrder: "Track Order",

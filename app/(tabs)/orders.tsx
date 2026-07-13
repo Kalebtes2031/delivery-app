@@ -51,6 +51,19 @@ export default function OrdersScreen() {
 
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
+    // ── Get count for each status tab ──
+  const getStatusCount = useCallback((status: string | "all") => {
+    if (status === "all") {
+      return allDeliveries.length;
+    }
+    if (status === 'failed') {
+      return allDeliveries.filter((d) => isFailedDelivery(d)).length;
+    }
+    if (status === 'delivered') {
+      return allDeliveries.filter((d) => d.status === 'delivered' && !isFailedDelivery(d)).length;
+    }
+    return allDeliveries.filter((d) => d.status === status).length;
+  }, [allDeliveries]);
 
   // State to store location names
   const [locationNames, setLocationNames] = useState<Record<number, string>>({});
@@ -498,22 +511,39 @@ export default function OrdersScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabsContainer}
           >
-            {STATUS_TABS.map((tab) => (
-              <TouchableOpacity
-                key={tab.value}
-                onPress={() => setActiveTab(tab.value)}
-                style={[styles.tab, activeTab === tab.value && styles.activeTab]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.value && styles.activeTabText,
-                  ]}
+            {STATUS_TABS.map((tab) => {
+              const count = getStatusCount(tab.value);
+              const isActive = activeTab === tab.value;
+              return (
+                <TouchableOpacity
+                  key={tab.value}
+                  onPress={() => setActiveTab(tab.value)}
+                  style={[styles.tab, isActive && styles.activeTab]}
                 >
-                  {t(`tabs.${tab.value}`)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.tabText,
+                      isActive && styles.activeTabText,
+                    ]}
+                  >
+                    {t(`tabs.${tab.value}`)}
+                  </Text>
+                  {count > 0 && (
+                    <View style={[
+                      styles.badge,
+                      isActive && styles.badgeActive
+                    ]}>
+                      <Text style={[
+                        styles.badgeText,
+                        isActive && styles.badgeTextActive
+                      ]}>
+                        {count}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </Animated.View>
 
@@ -569,17 +599,40 @@ const styles = StyleSheet.create({
   titleText: { color: "#6750A4", fontSize: 24, fontWeight: "800" },
   tabsContainer: { paddingHorizontal: 24, paddingTop: 5 },
   tab: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: "#fff",
     marginRight: 10,
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   activeTab: { backgroundColor: "#6750A4", borderColor: "#6750A4" },
   tabText: { color: "#64748B", fontWeight: "600" },
   activeTabText: { color: "#fff" },
+  badge: {
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    minWidth: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeActive: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  badgeText: {
+    color: "#64748B",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  badgeTextActive: {
+    color: "#fff",
+  },
   listContent: { paddingHorizontal: 20, paddingBottom: 40, paddingTop: 10 },
   card: {
     backgroundColor: "#fff",
