@@ -37,4 +37,12 @@ inTransit: "In Transit",
   home: "Home",
   orders: "Orders",
   profile: "Profile",
+  
+deliveryFallback: "Delivery",
+  lookingForDeliveries: "Looking for deliveries...",
+  noActiveDelivery: "No Active Delivery",
+  check: "Check",
+  assigned: "ASSIGNED",
+  inTransit: "IN TRANSIT",
+  completed: "COMPLETED",
 };

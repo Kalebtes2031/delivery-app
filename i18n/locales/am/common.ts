@@ -8,5 +8,9 @@ export default {
   },
 // Notification translations
   notifications: "ማሳወቂያዎች",
+   modal: {
+    title: "ይህ ሞዳል ነው",
+    goHome: "ወደ መነሻ ገፅ ይሂዱ",
+  },
 
 };

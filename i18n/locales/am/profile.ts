@@ -22,4 +22,5 @@ export default {
   profile_update_failed: "መገለጫ ማዘመን አልተሳካም።",
   password_changed: "የይለፍ ቃል በተሳካ ሁኔታ ተለውጧል!",
   password_change_failed: "የይለፍ ቃል መቀየር አልተሳካም።",
+    gotIt: "ገባኝ",
 };

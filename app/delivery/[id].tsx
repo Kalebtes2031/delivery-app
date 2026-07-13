@@ -241,12 +241,12 @@ return (
                       },
                     ]}
                   >
-                    {status === 'out_for_delivery' ? 'In Transit' : 
-                     status === 'pending' ? 'Assigned' :
-                     showAsFailed ? 'Failed' :
-                     status === 'delivered' ? 'Completed' :
-                     t(`status.${status}`)}
-                  </Text>
+  {status === 'out_for_delivery' ? t('status.inTransit') : 
+   status === 'pending' ? t('status.assigned') :
+   showAsFailed ? t('status.failed') :
+   status === 'delivered' ? t('status.completed') :
+   t(`status.${status}`)}
+</Text>
                 </View>
               );
             })}
@@ -408,9 +408,9 @@ return (
           style={[styles.trackingFloatingBtn, { bottom: 120 + insets.bottom }]}
         >
           <FontAwesome6 name="route" size={18} color="#fff" />
-          <Text style={styles.trackingFloatingText}>
-            {delivery.status === 'pending' ? 'View Direction' : t('trackOrder')}
-          </Text>
+<Text style={styles.trackingFloatingText}>
+  {delivery.status === 'pending' ? t('viewDirection') : t('trackOrder')}
+</Text>
         </TouchableOpacity>
       )}
 

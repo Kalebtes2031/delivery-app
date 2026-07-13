@@ -30,9 +30,10 @@ interface SuccessModalProps {
   message: string;
   subtitle?: string;
   onClose: () => void;
+  t?: (key: string) => string;
 }
 
-const SuccessModal = ({ visible, message, subtitle, onClose }: SuccessModalProps) => {
+const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalProps) => {
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -89,7 +90,7 @@ const SuccessModal = ({ visible, message, subtitle, onClose }: SuccessModalProps
           {/* Action Button */}
           <TouchableOpacity onPress={onClose} style={styles.modalButton}>
 <View style={[styles.modalButtonGradient, { backgroundColor: '#6750A4' }]}>
-  <Text style={styles.modalButtonText}>Got it</Text>
+<Text style={styles.modalButtonText}>{t ? t('gotIt') : 'Got it'}</Text>
 </View>
           </TouchableOpacity>
         </Animated.View>
@@ -278,7 +279,7 @@ showSuccess(
             </View>
             {isUpdating && <View style={styles.overlay}><ActivityIndicator color="#fff" /></View>}
           </TouchableOpacity>
-          {errors.profile_image && <Text style={styles.errorTextCenter}>{errors.profile_image}</Text>}
+          {errors.profile_image && <Text  style={styles.errorTextCenter}>{errors.profile_image}</Text>}
 
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{t('personal_information')}</Text>
@@ -375,12 +376,13 @@ showSuccess(
         </ScrollView>
       </KeyboardAvoidingView>
             {/* Success Modal */}
-      <SuccessModal
-        visible={showSuccessModal}
-        message={successMessage}
-        subtitle={successSubtitle}
-        onClose={() => setShowSuccessModal(false)}
-      />
+<SuccessModal
+  visible={showSuccessModal}
+  message={successMessage}
+  subtitle={successSubtitle}
+  onClose={() => setShowSuccessModal(false)}
+  t={t}
+/>
     </SafeAreaView>
   );
 }

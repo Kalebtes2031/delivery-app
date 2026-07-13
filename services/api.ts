@@ -130,6 +130,26 @@ export const changePassword = async (currentPassword: string, newPassword: strin
     new_password: newPassword,
   });
 };
+// ── Password Reset (OTP Flow) ──
+
+export const requestPasswordResetOtp = async (email: string) => {
+  return api.post('/users/auth/password-reset-otp/request/', { email });
+};
+
+export const validatePasswordResetOtp = async (data: {
+  email: string;
+  otp: string;
+}) => {
+  return api.post('/users/auth/password-reset-otp/validate/', data);
+};
+
+export const confirmPasswordResetOtp = async (data: {
+  email: string;
+  otp: string;
+  new_password: string;
+}) => {
+  return api.post('/users/auth/password-reset-otp/confirm/', data);
+};
 
 // ── Notifications (FCM) ──
 export const registerDevice = (

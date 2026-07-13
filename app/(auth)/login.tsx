@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -13,11 +13,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 export default function LoginScreen() {
+    const router = useRouter();
   const { t } = useTranslation(['auth', 'common']);
   const { login } = useAuth();
   const [username, setUsername] = useState('');
@@ -25,7 +27,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [usernameError, setUsernameError] = useState('');
-const [passwordError, setPasswordError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
 
 const handleLogin = async () => {
@@ -54,7 +56,8 @@ const handleLogin = async () => {
         error.response?.status === 401
           ? t('login.errors.invalidCredentials')
           : t('login.errors.somethingWrong');
-      Alert.alert(t('login.errors.loginFailed'), message);
+      // Show error as inline below username field instead of alert
+      setUsernameError(message);
     } finally {
       setLoading(false);
     }
@@ -246,13 +249,29 @@ const handleLogin = async () => {
             )}
           </TouchableOpacity>
 
+          {/* Forgot Password Link */}
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password')}
+            style={{ marginTop: 16, alignItems: 'center' }}
+          >
+            <Text
+              style={{
+                color: '#6750A4',
+                fontSize: 14,
+                fontWeight: '600',
+              }}
+            >
+              {t('login.forgotPassword')}
+            </Text>
+          </TouchableOpacity>
+
           {/* Footer */}
           <Text
             style={{
               textAlign: 'center',
               color: '#475569',
               fontSize: 12,
-              marginTop: 32,
+              marginTop: 16,
             }}
           >
             {t('login.footer')}
