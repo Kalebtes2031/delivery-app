@@ -8,5 +8,9 @@ export default {
   },
    // Notification translations
   notifications: "Notifications",
+    modal: {
+    title: "This is a modal",
+    goHome: "Go to home screen",
+  },
  
 };

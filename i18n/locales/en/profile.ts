@@ -19,4 +19,5 @@ export default {
   password_changed: "Password changed successfully.",
   profile_update_failed: "Profile update failed.",
   password_change_failed: "Failed to change password.",
+   gotIt: "Got it",
 };

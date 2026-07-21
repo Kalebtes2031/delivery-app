@@ -31,7 +31,7 @@ export default function CashOnHandScreen() {
       const list = Array.isArray(data) ? data : (data as any)?.results || [];
       setOrders(list);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || "error");
+      setError(err?.response?.data?.detail || err?.message || t("cashErrorMessage"));
     } finally {
       setLoading(false);
       setRefreshing(false);

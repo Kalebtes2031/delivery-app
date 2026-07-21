@@ -157,7 +157,7 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                   <View style={styles.headerTextContainer}>
                     <Text style={styles.greetingText}>
-                      {t('helloUser', { name: user?.first_name || 'Delivery' })}
+                     {t('helloUser', { name: user?.first_name || t('deliveryFallback') })}
                     </Text>
                     <Text style={styles.userName}>{t('goodAfternoon')}</Text>
                   </View>
@@ -313,12 +313,12 @@ export default function HomeScreen() {
                   return (
                     <View style={[styles.heroStatusBadge, { backgroundColor: config.bg }]}>
                       <View style={[styles.heroStatusDot, { backgroundColor: config.text }]} />
-                      <Text style={[styles.heroStatusText, { color: config.text }]}>
-                        {displayStatus === 'pending' ? 'ASSIGNED' :
-                          displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
-                            displayStatus === 'failed' ? 'FAILED' :
-                              t(`status.${displayStatus}`).toUpperCase()}
-                      </Text>
+<Text style={[styles.heroStatusText, { color: config.text }]}>
+  {displayStatus === 'pending' ? t('assigned') :
+    displayStatus === 'out_for_delivery' ? t('inTransit') :
+      displayStatus === 'failed' ? t('failed') :
+        t(`status.${displayStatus}`).toUpperCase()}
+</Text>
                     </View>
                   );
                 })()}
@@ -405,7 +405,7 @@ export default function HomeScreen() {
                 <View style={styles.emptyPulseDot} />
               </View>
               <Text style={styles.emptyTitle}>{t('searchingForOrders')}</Text>
-              <Text style={styles.emptySub}>Looking for deliveries...</Text>
+             <Text style={styles.emptySub}>{t('lookingForDeliveries')}</Text>
             </View>
           ) : (
             <View style={styles.emptyHeroCard}>
@@ -414,11 +414,11 @@ export default function HomeScreen() {
                   <MaterialCommunityIcons name="package-variant-closed" size={32} color="#6750A4" />
                 </View>
               </View>
-              <Text style={styles.emptyTitle}>No Active Delivery</Text>
-              <Text style={styles.emptySub}>New orders will appear here</Text>
+             <Text style={styles.emptyTitle}>{t('noActiveDelivery')}</Text>
+          <Text style={styles.emptySub}>{t('newOrdersWillAppear')}</Text>
               <TouchableOpacity style={styles.emptyRefreshBtn} onPress={onRefresh} activeOpacity={0.8}>
                 <Ionicons name="refresh-outline" size={16} color="#6750A4" />
-                <Text style={styles.emptyRefreshText}>Check</Text>
+               <Text style={styles.emptyRefreshText}>{t('check')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -466,13 +466,13 @@ export default function HomeScreen() {
                         return (
                           <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
                             <MaterialCommunityIcons name={config.icon} size={14} color={config.text} />
-                            <Text style={[styles.statusText, { color: config.text }]}>
-                              {displayStatus === 'pending' ? 'ASSIGNED' :
-                                displayStatus === 'out_for_delivery' ? 'IN TRANSIT' :
-                                  displayStatus === 'delivered' ? 'COMPLETED' :
-                                    displayStatus === 'failed' ? 'FAILED' :
-                                      t(`status.${displayStatus}`).toUpperCase()}
-                            </Text>
+<Text style={[styles.statusText, { color: config.text }]}>
+  {displayStatus === 'pending' ? t('assigned') :
+    displayStatus === 'out_for_delivery' ? t('inTransit') :
+      displayStatus === 'delivered' ? t('completed') :
+        displayStatus === 'failed' ? t('failed') :
+          t(`status.${displayStatus}`).toUpperCase()}
+</Text>
                           </View>
                         );
                       })()

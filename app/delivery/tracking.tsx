@@ -281,17 +281,17 @@ export default function DriverTrackingScreen() {
             {/* Row 1: Order + Status (In One Row) - Premium Status */}
             <View style={styles.cleanRow}>
               <View style={styles.cleanOrder}>
-                <Text style={styles.cleanOrderLabel}>Order</Text>
+                <Text style={styles.cleanOrderLabel}>{t('orderLabel')}</Text>
                 <Text style={styles.cleanOrderNumber}>#{order_id}</Text>
               </View>
               <View style={[styles.premiumStatusBadge, { backgroundColor: config.bg }]}>
                 <View style={[styles.premiumStatusDot, { backgroundColor: config.text }]} />
                 <MaterialCommunityIcons name={config.icon} size={11} color={config.text} />
-                <Text style={[styles.premiumStatusText, { color: config.text }]}>
-                  {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                    delivery.status === 'pending' ? 'ASSIGNED' :
-                      t(`status.${delivery.status}`)}
-                </Text>
+<Text style={[styles.premiumStatusText, { color: config.text }]}>
+  {delivery.status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
+    delivery.status === 'pending' ? t('status.assigned').toUpperCase() :
+      t(`status.${delivery.status}`).toUpperCase()}
+</Text>
               </View>
             </View>
 
@@ -302,7 +302,7 @@ export default function DriverTrackingScreen() {
                   <Ionicons name="location-outline" size={18} color="#6750A4" />
                 </View>
                 <Text style={[styles.cleanStatValue, { color: '#6750A4' }]}>{distance || '--'}</Text>
-                <Text style={styles.cleanStatLabel}>Distance</Text>
+               <Text style={styles.cleanStatLabel}>{t('distance')}</Text>
               </View>
               <View style={styles.cleanDivider} />
               <View style={styles.cleanStat}>
@@ -310,7 +310,7 @@ export default function DriverTrackingScreen() {
                   <Ionicons name="time-outline" size={18} color="#D97706" />
                 </View>
                 <Text style={[styles.cleanStatValue, { color: '#D97706' }]}>{estimatedTime || '--'}</Text>
-                <Text style={styles.cleanStatLabel}>Est. Time</Text>
+               <Text style={styles.cleanStatLabel}>{t('estimatedTime')}</Text>
               </View>
             </View>
 
@@ -357,13 +357,13 @@ export default function DriverTrackingScreen() {
             {/* Row 4: Accept Slide - Only for pending status */}
             {delivery?.status === 'pending' && (
               <View style={styles.acceptSlideContainer}>
-                <SlideToConfirm
-                  label="Accept"
-                  color="#2D5BD0"
-                  icon="check-circle"
-                  onConfirm={handleAccept}
-                  isLoading={slideLoading}
-                />
+<SlideToConfirm
+  label={t('accept')}
+  color="#2D5BD0"
+  icon="check-circle"
+  onConfirm={handleAccept}
+  isLoading={slideLoading}
+/>
               </View>
             )}
           </View>
@@ -385,7 +385,7 @@ export default function DriverTrackingScreen() {
                       {delivery?.status === 'delivered' || delivery?.status === 'completed' ? (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
-                          <Text style={{ fontSize: 12, color: "#16A34A", fontWeight: "600" }}>✅ Completed</Text>
+                          <Text style={{ fontSize: 12, color: "#16A34A", fontWeight: "600" }}>✅ {t('status.completed')}</Text>
                         </View>
                       ) : (
                         <>
@@ -409,11 +409,11 @@ export default function DriverTrackingScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: config.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: config.text + '30' }}>
                   <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: config.text }} />
                   <MaterialCommunityIcons name={config.icon} size={12} color={config.text} />
-                  <Text style={{ color: config.text, fontSize: 8, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 }}>
-                    {delivery.status === 'out_for_delivery' ? 'IN TRANSIT' :
-                      delivery.status === 'pending' ? 'ASSIGNED' :
-                        t(`status.${delivery.status}`)}
-                  </Text>
+<Text style={{ color: config.text, fontSize: 8, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 }}>
+  {delivery.status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
+    delivery.status === 'pending' ? t('status.assigned').toUpperCase() :
+      t(`status.${delivery.status}`).toUpperCase()}
+</Text>
                 </View>
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", paddingHorizontal: 4 }}>

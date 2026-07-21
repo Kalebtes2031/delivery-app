@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -13,11 +13,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 export default function LoginScreen() {
+    const router = useRouter();
   const { t } = useTranslation(['auth', 'common']);
   const { login } = useAuth();
   const [username, setUsername] = useState('');
@@ -25,12 +27,15 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [usernameError, setUsernameError] = useState('');
-const [passwordError, setPasswordError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState('');
 
 
 const handleLogin = async () => {
+  // Clear all errors
   setUsernameError('');
   setPasswordError('');
+  setGeneralError('');
 
   let hasError = false;
   if (!username.trim()) {
@@ -43,22 +48,32 @@ const handleLogin = async () => {
   }
 
   if (hasError) {
-      return;
-    }
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await login(username.trim(), password);
-    } catch (error: any) {
-      const message =
-        error.response?.status === 401
-          ? t('login.errors.invalidCredentials')
-          : t('login.errors.somethingWrong');
-      Alert.alert(t('login.errors.loginFailed'), message);
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    await login(username.trim(), password);
+  } catch (error: any) {
+    
+    // Clear field errors on login failure
+    setUsernameError('');
+    setPasswordError('');
+    
+    // Determine the error message
+    let errorMessage = '';
+    // Check for 401 status OR SESSION_EXPIRED error
+    if (error.response?.status === 401 || error.message === 'SESSION_EXPIRED') {
+      errorMessage = t('login.errors.invalidCredentials');
+    } else {
+      errorMessage = t('login.errors.somethingWrong');
     }
-  };
+    // Show error as general error banner
+    setGeneralError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
@@ -107,6 +122,35 @@ const handleLogin = async () => {
             </Text> */}
           </View>
 
+          {/* General Error Banner */}
+          {generalError ? (
+            <View style={{
+              backgroundColor: '#FEF2F2',
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              marginBottom: 12,
+              borderWidth: 1,
+              borderColor: '#FCA5A5',
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text style={{
+                color: '#DC2626',
+                fontSize: 13,
+                fontWeight: '400',
+                flex: 1,
+                marginLeft: 8,
+              }}>
+                {generalError}
+              </Text>
+              <TouchableOpacity onPress={() => setGeneralError('')}>
+                <Ionicons name="close" size={16} color="#DC2626" />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           {/* Form */}
           <View style={{ gap: 16 }}>
             <View>
@@ -128,6 +172,7 @@ const handleLogin = async () => {
   onChangeText={(text) => {
     setUsername(text);
     if (usernameError) setUsernameError('');
+    if (generalError) setGeneralError('');
   }}
                 placeholder={t('login.usernamePlaceholder')}
                 placeholderTextColor="#6750A4"
@@ -173,12 +218,13 @@ const handleLogin = async () => {
                 {t('login.password')}
               </Text>
               <View>
-                <TextInput
-                  value={password}
-                  onChangeText={(text) => {
-  setPassword(text);
-  if (passwordError) setPasswordError('');
-}}
+<TextInput
+  value={password}
+  onChangeText={(text) => {
+    setPassword(text);
+    if (passwordError) setPasswordError('');
+    if (generalError) setGeneralError('');
+  }}
                   placeholder={t('login.passwordPlaceholder')}
                   placeholderTextColor="#6750A4"
                   secureTextEntry={!showPassword}
@@ -246,13 +292,29 @@ const handleLogin = async () => {
             )}
           </TouchableOpacity>
 
+          {/* Forgot Password Link */}
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password')}
+            style={{ marginTop: 16, alignItems: 'center' }}
+          >
+            <Text
+              style={{
+                color: '#6750A4',
+                fontSize: 14,
+                fontWeight: '600',
+              }}
+            >
+              {t('login.forgotPassword')}
+            </Text>
+          </TouchableOpacity>
+
           {/* Footer */}
           <Text
             style={{
               textAlign: 'center',
               color: '#475569',
               fontSize: 12,
-              marginTop: 32,
+              marginTop: 16,
             }}
           >
             {t('login.footer')}
