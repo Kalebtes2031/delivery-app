@@ -1,5 +1,5 @@
 export default {
-  edit_profile: "መገለጫ አስተካክል",
+  edit_profile: "መገለጫዎን ያስተካክሉ",
   personal_information: "የግል መረጃ",
   first_name: "ስም",
   first_name_required: "ስም ያስፈልጋል",

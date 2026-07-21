@@ -44,7 +44,7 @@ locationAvailable: "📍 አድራሻ ይገኛል",
   updateFailed: "ማዘመን አልተሳካም",
   actions: {
     pending: "ትዕዛዝ ተቀበል",
-    accepted: "ዕቃ ተረከብ",
+    accepted: "ተቀብሏል",
     picked_up: "ማድረስ ጀምር",
     out_for_delivery: "ማድረሱን አጠናቅቅ",
   },
