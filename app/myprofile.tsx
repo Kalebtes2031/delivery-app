@@ -258,7 +258,7 @@ showSuccess(
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      <BackButton title={t('edit_profile')} color='gray' />
+      <BackButton title={t('edit_profile')} color='white' />
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -422,7 +422,7 @@ const InputGroup = ({ label, secureTextEntry, error, ...props }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#fff' },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
   scrollContent: { paddingHorizontal: 24, paddingTop: 4 },
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   cameraBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#6750A4', width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderWidth: 2.5, borderColor: '#F8FAFC' },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 60, justifyContent: 'center', alignItems: 'center' },
   section: { marginBottom: 24 },
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, marginLeft: 4 },
+  sectionLabel: { fontSize: 13, fontWeight: '800', color: '#6750A4', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, marginLeft: 4 },
   card: { backgroundColor: '#fff', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
   inputBox: { marginBottom: 16 },
   inputLabel: { fontSize: 12, fontWeight: '700', color: '#6750A4', marginBottom: 6, marginLeft: 4 },

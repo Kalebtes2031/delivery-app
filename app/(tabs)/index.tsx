@@ -157,7 +157,7 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                   <View style={styles.headerTextContainer}>
                     <Text style={styles.greetingText}>
-                     {t('helloUser', { name: user?.first_name || t('deliveryFallback') })}
+                      {t('helloUser', { name: user?.first_name || t('deliveryFallback') })}
                     </Text>
                     <Text style={styles.userName}>{t('goodAfternoon')}</Text>
                   </View>
@@ -211,7 +211,7 @@ export default function HomeScreen() {
             {[
               {
                 label: t('cashOnHand'),
-                value: `${driverStats.cash_on_hand || '0.00'} ETB`,
+                value: `${driverStats.cash_on_hand || '0.00'} ${t('etb')}`,
                 icon: 'wallet-outline',
                 color: '#10B981',
                 type: 'ion',
@@ -258,6 +258,7 @@ export default function HomeScreen() {
                   {
                     borderColor: stat.color + '20',
                     shadowColor: stat.color,
+                    zIndex: 10
                   }
                 ]}
                 onPress={stat.onPress}
@@ -271,7 +272,7 @@ export default function HomeScreen() {
                     <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
                   )}
                 </View>
-                <Text style={[styles.statValue, { textAlign: "center", fontSize: 14 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
+                <Text style={[styles.statValue, { textAlign: "center", fontSize: 15 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
                 <Text style={[styles.statLabel, { textAlign: "center" }]}>{stat.label}</Text>
               </TouchableOpacity>
             ))}
@@ -283,11 +284,19 @@ export default function HomeScreen() {
               <View style={styles.sectionAccentBar} />
               <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push({
-              pathname: '/orders',
-              params: { filter: 'out_for_delivery' }
-            })}>
-              <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+            <TouchableOpacity
+              onPress={() => router.push({
+                pathname: '/orders',
+                params: { filter: 'out_for_delivery' },
+              })}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 3,
+                backgroundColor: "#FAF5FF",
+                borderRadius: 70
+              }}
+            >
+              <Text style={[styles.seeAllText, { color: "#6750A4" }]}>{t('viewAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -304,7 +313,7 @@ export default function HomeScreen() {
                     <MaterialCommunityIcons name="receipt-text-outline" size={16} color="#fff" />
                   </View>
                   <Text style={styles.heroOrderText}>
-                    {t('orderNumber', { id: activeDelivery.vendor_order || 'Customer' })}
+                    {t('orderNumber', { id: `${activeDelivery.vendor_order_detail.master_order_id}-${activeDelivery.vendor_order}` || 'Customer' })}
                   </Text>
                 </View>
                 {(() => {
@@ -313,12 +322,12 @@ export default function HomeScreen() {
                   return (
                     <View style={[styles.heroStatusBadge, { backgroundColor: config.bg }]}>
                       <View style={[styles.heroStatusDot, { backgroundColor: config.text }]} />
-<Text style={[styles.heroStatusText, { color: config.text }]}>
-  {displayStatus === 'pending' ? t('assigned') :
-    displayStatus === 'out_for_delivery' ? t('inTransit') :
-      displayStatus === 'failed' ? t('failed') :
-        t(`status.${displayStatus}`).toUpperCase()}
-</Text>
+                      <Text style={[styles.heroStatusText, { color: config.text }]}>
+                        {displayStatus === 'pending' ? t('assigned') :
+                          displayStatus === 'out_for_delivery' ? t('inTransit') :
+                            displayStatus === 'failed' ? t('failed') :
+                              t(`status.${displayStatus}`).toUpperCase()}
+                      </Text>
                     </View>
                   );
                 })()}
@@ -405,7 +414,7 @@ export default function HomeScreen() {
                 <View style={styles.emptyPulseDot} />
               </View>
               <Text style={styles.emptyTitle}>{t('searchingForOrders')}</Text>
-             <Text style={styles.emptySub}>{t('lookingForDeliveries')}</Text>
+              <Text style={styles.emptySub}>{t('lookingForDeliveries')}</Text>
             </View>
           ) : (
             <View style={styles.emptyHeroCard}>
@@ -414,11 +423,11 @@ export default function HomeScreen() {
                   <MaterialCommunityIcons name="package-variant-closed" size={32} color="#6750A4" />
                 </View>
               </View>
-             <Text style={styles.emptyTitle}>{t('noActiveDelivery')}</Text>
-          <Text style={styles.emptySub}>{t('newOrdersWillAppear')}</Text>
+              <Text style={styles.emptyTitle}>{t('noActiveDelivery')}</Text>
+              <Text style={styles.emptySub}>{t('newOrdersWillAppear')}</Text>
               <TouchableOpacity style={styles.emptyRefreshBtn} onPress={onRefresh} activeOpacity={0.8}>
                 <Ionicons name="refresh-outline" size={16} color="#6750A4" />
-               <Text style={styles.emptyRefreshText}>{t('check')}</Text>
+                <Text style={styles.emptyRefreshText}>{t('check')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -429,8 +438,15 @@ export default function HomeScreen() {
               <View style={styles.sectionAccentBar} />
               <Text style={styles.sectionTitle}>{t('deliverySummary')}</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/orders')}>
-              <Text style={styles.seeAllText}>{t('seeAll')}</Text>
+            <TouchableOpacity
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 3,
+                backgroundColor: "#FAF5FF",
+                borderRadius: 70
+              }}
+              onPress={() => router.push('/orders')}>
+              <Text style={[styles.seeAllText, { color: "#6750A4" }]}>{t('seeAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -466,13 +482,13 @@ export default function HomeScreen() {
                         return (
                           <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
                             <MaterialCommunityIcons name={config.icon} size={14} color={config.text} />
-<Text style={[styles.statusText, { color: config.text }]}>
-  {displayStatus === 'pending' ? t('assigned') :
-    displayStatus === 'out_for_delivery' ? t('inTransit') :
-      displayStatus === 'delivered' ? t('completed') :
-        displayStatus === 'failed' ? t('failed') :
-          t(`status.${displayStatus}`).toUpperCase()}
-</Text>
+                            <Text style={[styles.statusText, { color: config.text }]}>
+                              {displayStatus === 'pending' ? t('assigned') :
+                                displayStatus === 'out_for_delivery' ? t('inTransit') :
+                                  displayStatus === 'delivered' ? t('completed') :
+                                    displayStatus === 'failed' ? t('failed') :
+                                      t(`status.${displayStatus}`).toUpperCase()}
+                            </Text>
                           </View>
                         );
                       })()
@@ -644,7 +660,7 @@ const styles = StyleSheet.create({
   statCard: {
     backgroundColor: '#fff',
     width: (width - 60) / 3,
-    padding: 15,
+    padding: 10,
     borderRadius: 20,
     alignItems: 'center',
     borderWidth: 1.5,
@@ -681,7 +697,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: '#6750A4', marginBottom: 0 },
-  seeAllText: { color: '#6750A4', fontWeight: '700' },
+  seeAllText: { color: '#6750A4', fontWeight: '600', fontSize: 10 },
 
   // Hero Card - Professional Style
   heroCard: {

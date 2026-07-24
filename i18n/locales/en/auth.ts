@@ -1,6 +1,6 @@
 export default {
   login: {
-    title: "ACTIVE DELIVERY APP",
+    title: "ELILITA DELIVERY APP",
     username: "Username",
     usernamePlaceholder: "Enter your username",
     password: "Password",
@@ -12,8 +12,8 @@ export default {
       emptyFields: "Please enter your username and password.",
       usernameRequired: "Username is required",
       passwordRequired: "Password is required",
-invalidCredentials: "The username or password you entered is incorrect. Please try again.",
-somethingWrong: "Unable to sign in. Please check your internet connection and try again.",
+      invalidCredentials: "The username or password you entered is incorrect. Please try again.",
+      somethingWrong: "Unable to sign in. Please check your internet connection and try again.",
       loginFailed: "Login Failed",
     },
   },

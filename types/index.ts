@@ -42,6 +42,9 @@ export interface DeliveryAssignment {
   id: number;
   tracking_id: string;
   vendor_order: number;
+  vendor_order_detail: {
+    master_order_id: number;
+  }
   delivery_person: number;
   status: DeliveryStatus;
   last_lat: string | null;

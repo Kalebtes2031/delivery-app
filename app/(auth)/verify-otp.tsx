@@ -54,6 +54,9 @@ export default function VerifyOtp() {
         params: { email, otp }
       });
     } catch (err: any) {
+      // if the error is like No valid verification code found. Please request a new code.
+      // we need to make it multilanguage with amharic. as the err is always in english we need to translate it to amharic
+      
       const msg =
         err?.response?.data?.detail ||
         err?.response?.data?.otp?.[0] ||
@@ -66,7 +69,7 @@ export default function VerifyOtp() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: '#ffffff'}}>
       <StatusBar barStyle="dark-content" />
       
       <KeyboardAvoidingView
@@ -86,24 +89,26 @@ export default function VerifyOtp() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              backgroundColor: 'rgba(103, 80, 164, 0.1)',
-              paddingHorizontal: 16,
+              backgroundColor: '#ffffff',
+              borderWidth: 1,
+              borderColor: "#6750A4",
+              paddingHorizontal: 8,
               paddingVertical: 8,
               borderRadius: 20,
             }}
             activeOpacity={0.8}
           >
             <Ionicons name="arrow-back" size={20} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: '600', fontSize: 14 }}>
+            {/* <Text style={{ color: BRAND_COLOR, fontWeight: '600', fontSize: 14 }}>
               {t("verifyOtp.back")}
-            </Text>
+            </Text> */}
           </TouchableOpacity>
 
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 32, marginTop: 60 }}>
             <Image
-              source={require('@/assets/images/qinemartethio.jpeg')}
-              style={{ width: 150, height: 100 }}
+              source={require('@/assets/images/elilita-delivery.jpg')}
+              style={{ width: 200, height: 150 }}
               resizeMode="contain"
             />
             <Text

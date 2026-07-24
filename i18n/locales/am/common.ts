@@ -1,7 +1,7 @@
 export default {
-  welcome: "ወደ አቅርቦት መተግበሪያ እንኳን በደህና መጡ",
+  welcome: "ወደ አስረካቢ መተግበሪያ እንኳን በደህና መጡ",
   app: {
-    name: "አክቲቭ አቅርቦት "
+    name: "እልልታ አስረካቢ "
   },
   language: {
     title: "ቋንቋ",

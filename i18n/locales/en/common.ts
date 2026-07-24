@@ -1,7 +1,7 @@
 export default {
   welcome: "Welcome to Delivery App",
   app: {
-    name: "Active Delivery"
+    name: "Elilita Delivery"
   },
   language: {
     title: "Language",

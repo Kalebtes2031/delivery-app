@@ -66,9 +66,9 @@ export default function ForgotPassword() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: '#ffffff', }}>
       <StatusBar barStyle="dark-content" />
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "padding"}
         style={{ flex: 1 }}
@@ -79,7 +79,7 @@ export default function ForgotPassword() {
             flexGrow: 1,
             justifyContent: 'center',
             paddingHorizontal: 32,
-            paddingVertical: 24,
+            // paddingVertical: 24,
             paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
@@ -96,24 +96,26 @@ export default function ForgotPassword() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              backgroundColor: 'rgba(103, 80, 164, 0.1)',
-              paddingHorizontal: 16,
+              backgroundColor: '#ffffff',
+              borderWidth: 1,
+              borderColor: "#6750A4",
+              paddingHorizontal: 8,
               paddingVertical: 8,
               borderRadius: 20,
             }}
             activeOpacity={0.8}
           >
             <Ionicons name="arrow-back" size={20} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: '600', fontSize: 14 }}>
+            {/* <Text style={{ color: BRAND_COLOR, fontWeight: '600', fontSize: 14 }}>
               {t("forgotPassword.back")}
-            </Text>
+            </Text> */}
           </TouchableOpacity>
 
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 40, marginTop: 40 }}>
             <View>
               <Image
-                source={require('@/assets/images/qinemartethio.jpeg')}
+                source={require('@/assets/images/elilita-delivery.jpg')}
                 style={{ width: 200, height: 150 }}
                 resizeMode="contain"
               />

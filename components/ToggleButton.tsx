@@ -25,7 +25,7 @@ export default function ToggleSwitch({ isOn, onToggle, isLoading }: ToggleSwitch
 
   const backgroundColor = translateX.interpolate({
     inputRange: [0, 1],
-    outputRange: ["#CBD5E1", "#10B981"], 
+    outputRange: ["#CBD5E1", "#16A34A"], 
   });
 
   return (

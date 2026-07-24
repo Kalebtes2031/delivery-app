@@ -15,7 +15,7 @@ export default {
   },
   status: {
     soon: "በቅርቡ",
-    active: "ንቁ"
+    active: "የተተገበረ"
   },
   footer: "የሚመርጡትን ቋንቋ ይምረጡ"
 };

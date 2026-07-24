@@ -30,27 +30,30 @@ export default function LanguageScreen() {
             </TouchableOpacity>
 
             {/* Title and Image Container - PUSHED TO RIGHT */}
-            <View style={styles.headerRight}>
-              {/* Title Text - Left side of this container */}
-              <View style={styles.headerTextContainer}>
-                <Text style={styles.headerTitle}>
-                  {t("common:app.name") || "Active Mart"}
-                </Text>
-                <Text style={styles.headerSubtitle}>
-                  {t("language:chooseYourLanguage") || "Choose your language"}
-                </Text>
-              </View>
+            <View style={{ flexDirection: "row", gap: 10, alignItems:"center" }}>
+
               {/* Image - Pushed to far right */}
               <View style={styles.logoWrapper}>
                 <View style={styles.logoContainer}>
                   <Image
-                    source={require("@/assets/images/active mart.png")}
+                    source={require("@/assets/images/elilita-delivery.jpg")}
                     style={styles.logoImage}
                     resizeMode="contain"
                   />
                 </View>
               </View>
+              {/* Title Text - Left side of this container */}
+
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.headerTitle}>
+                  {t("common:app.name")}
+                </Text>
+                <Text style={styles.headerSubtitle}>
+                  {t("language:chooseYourLanguage")}
+                </Text>
+              </View>
             </View>
+            <View />
           </View>
         </View>
       </View>
@@ -63,9 +66,9 @@ export default function LanguageScreen() {
             <View style={styles.cardIcon}>
               <Ionicons name="globe" size={20} color={BRAND_COLOR} />
             </View>
-<Text style={styles.cardTitleSecondary}>
-  {t("language:selectLanguage") || "Select Language"}
-</Text>
+            <Text style={styles.cardTitleSecondary}>
+              {t("language:selectLanguage") || "Select Language"}
+            </Text>
           </View>
 
           <View style={styles.switcherWrapper}>
@@ -83,7 +86,7 @@ export default function LanguageScreen() {
               🚧 {t("language:comingSoon.title") || "More Languages Coming Soon"}
             </Text>
             <Text style={styles.comingSoonMessage}>
-              {t("language:comingSoon.message") || 
+              {t("language:comingSoon.message") ||
                 "We're working on adding more languages to serve you better."}
             </Text>
           </View>
@@ -210,8 +213,8 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   headerTextContainer: {
-    alignItems: 'flex-end',
-    flex: 1,
+    alignItems: 'flex-start',
+    // flex: 1,
   },
   headerTitle: {
     color: '#FFFFFF',
@@ -228,8 +231,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   logoWrapper: {
-    width: 56,
-    height: 56,
+    width: 36,
+    height: 36,
     borderRadius: 28,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
@@ -238,8 +241,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   logoContainer: {
-    width: 48,
-    height: 48,
+    width: 28,
+    height: 28,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
@@ -251,8 +254,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   logoImage: {
-    width: 32,
-    height: 32,
+    width: 35,
+    height: 35,
+    borderRadius: 44,
   },
   content: {
     flex: 1,
@@ -287,13 +291,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-    cardTitleSecondary: {
+  cardTitleSecondary: {
     color: '#6750A4',
     fontSize: 16,
     fontWeight: '600',
   },
   switcherWrapper: {
-    marginTop: 8,
+    marginTop: 2,
   },
   comingSoonCard: {
     marginTop: 24,

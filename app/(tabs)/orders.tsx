@@ -51,7 +51,7 @@ export default function OrdersScreen() {
 
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
-    // ── Get count for each status tab ──
+  // ── Get count for each status tab ──
   const getStatusCount = useCallback((status: string | "all") => {
     if (status === "all") {
       return allDeliveries.length;
@@ -360,7 +360,7 @@ export default function OrdersScreen() {
           <View style={styles.cardHeader}>
             <View>
               <Text style={styles.orderIdText}>
-                {t("orderNumber", { id: item.vendor_order })}
+                {t("orderNumber", { id: `${item?.vendor_order_detail?.master_order_id}-${item?.vendor_order}` })}
               </Text>
               <Text style={styles.timeText}>
                 {t("assignedAt", { time: timeAssigned })}
@@ -588,7 +588,7 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   header: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 5,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -596,11 +596,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   welcomeText: { color: "#94A3B8", fontSize: 14, fontWeight: "500" },
-  titleText: { color: "#6750A4", fontSize: 24, fontWeight: "800" },
-  tabsContainer: { paddingHorizontal: 24, paddingTop: 5 },
+  titleText: { color: "#6750A4", fontSize: 20, fontWeight: "800" },
+  tabsContainer: { paddingHorizontal: 20, paddingTop: 3 },
   tab: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: "#fff",
     marginRight: 10,
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   badgeTextActive: {
     color: "#fff",
   },
-  listContent: { paddingHorizontal: 20, paddingBottom: 40, paddingTop: 10 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 20, paddingTop: 5 },
   card: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -646,7 +646,9 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10
   },
   verticalLine: {
     width: 3.5,
@@ -669,7 +671,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 40,
     gap: 6,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.04)",
@@ -745,7 +747,7 @@ const styles = StyleSheet.create({
   cardFooter: {
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
-    paddingTop: 14,
+    paddingTop: 10,
     marginTop: 4,
     flexDirection: "row",
     justifyContent: "flex-end",

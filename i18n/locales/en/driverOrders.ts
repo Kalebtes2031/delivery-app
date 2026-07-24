@@ -22,6 +22,12 @@ export default {
     inTransit: "In Transit",
     completed: "Completed",
   },
+  orderStatus: {
+    processing: "Prepared",
+    shipped: "In Transit",
+    fulfilled: "Delivered",
+    cancelled: "Cancelled"
+  },
   loadingLocation: "Loading location...",
   tapToTrack: "Tap to track",
   locationAvailable: "📍 Location available",

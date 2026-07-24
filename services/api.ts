@@ -87,9 +87,10 @@ export const getDriverStats = async () => {
   return api.get<{ earnings: string; cash_on_hand: string; assigned_orders: number; pending_orders: number; total_orders: number }>('/deliveries/stats/');
 };
 
-// COD orders the driver has delivered but not yet remitted to admin (cash on hand)
-export const getCashOnHandOrders = async () => {
-  return api.get<DeliveryAssignment[]>('/deliveries/cash-on-hand/');
+// COD orders the driver has delivered (supports filter: 'pending' | 'settled' | 'all')
+export const getCashOnHandOrders = async (status?: string) => {
+  const params = status ? { status } : {};
+  return api.get<DeliveryAssignment[]>('/deliveries/cash-on-hand/', { params });
 };
 
 export const getDeliveryDetail = async (id: number) => {

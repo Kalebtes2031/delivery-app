@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "ACTIVE DELIVERY",
+    "name": "Elilita Delivery",
     "slug": "qine_deliveryapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/qinemartethio.jpeg",
+    "icon": "./assets/images/playstore.png",
     "scheme": "qinedeliveryapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -20,6 +20,7 @@
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION",
@@ -28,9 +29,9 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/images/qinemartethio.jpeg",
-        "backgroundImage": "./assets/images/qinemartethio.jpeg",
-        "monochromeImage": "./assets/images/qinemartethio.jpeg"
+        "foregroundImage": "./assets/images/playstore.png",
+        "backgroundImage": "./assets/images/playstore.png",
+        "monochromeImage": "./assets/images/playstore.png"
       },
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false
@@ -44,7 +45,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/qinemartethio.jpeg",
+          "image": "./assets/images/playstore.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

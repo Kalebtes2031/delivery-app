@@ -43,7 +43,18 @@ export default function DeliveryDetailScreen() {
 
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
-    const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
+
+  const vendorStatusColors: Record<string, { bg: string; text: string }> = {
+    pending: { bg: "#FFF7ED", text: "#EA580C" },
+    contacted: { bg: "#EFF6FF", text: "#2563EB" },
+    confirmed: { bg: "#EFF6FF", text: "#2563EB" },
+    processing: { bg: "#FAF5FF", text: "#6750A4" },
+    shipped: { bg: "#F0FDF4", text: "#16A34A" },
+    fulfilled: { bg: "#16A34A", text: "#FFFFFF" },
+    cancelled: { bg: "#FEF2F2", text: "#DC2626" },
+    failed: { bg: "#FEF2F2", text: "#DC2626" },
+  };
 
   // Helper for localized names (same as OrdersScreen)
   const getLocalName = (
@@ -101,25 +112,25 @@ export default function DeliveryDetailScreen() {
 
   if (!delivery) return null;
   const action = NEXT_ACTION[delivery.status];
-  
+
   // 🔥 FIX: Calculate currentIndex based on effective status
   // If delivery is failed, treat it as "delivered" for the progress bar
-  const isFailed = delivery?.status === 'failed' || 
-                   delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
-                   delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
-  
+  const isFailed = delivery?.status === 'failed' ||
+    delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
+    delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
+
   const effectiveStatus = isFailed ? 'delivered' : delivery.status;
   const currentIndex = STATUS_ORDER.indexOf(effectiveStatus.toLowerCase());
   const hasBottomActions = delivery.status !== "delivered" && Boolean(action);
   const orderDetail = delivery.vendor_order_detail;
 
- 
+
   // console.log(delivery);
-const companyName =
-  isAmharic
-    ? orderDetail?.company?.name_am || delivery?.company_name || t("vendor")
-    : delivery?.company_name || orderDetail?.company?.name || t("vendor");
-  
+  const companyName =
+    isAmharic
+      ? orderDetail?.company?.name_am || delivery?.company_name || t("vendor")
+      : delivery?.company_name || orderDetail?.company?.name || t("vendor");
+
   const customerDefault = delivery.customer_name || t('customer');
   const customerAmField = (delivery as any).customer_name_am;
   const customerNested = (delivery as any).customer;
@@ -130,12 +141,14 @@ const companyName =
   const subCategoryAm = (orderDetail?.company as any)?.sub_category_name_am;
   const subCategoryName = isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
 
-return (
-  <View style={[styles.container, { paddingTop: insets.top }]}>
+  return (
+    <View style={[styles.container,
+      // { paddingTop: insets.top }
+    ]}>
       <StatusBar barStyle="light-content" />
 
       {/* --- HERO HEADER --- */}
-      <View style={[styles.heroSection, {height: hasBottomActions ? 200 : 300,}]}>
+      <View style={[styles.heroSection, { height: hasBottomActions ? 250 : 300, }]}>
         <Image
           source={require("@/assets/images/order.jpg")}
           style={styles.heroBg}
@@ -151,13 +164,31 @@ return (
             </TouchableOpacity>
             <View style={styles.headerInfo}>
               <Text style={styles.heroOrderTitle}>
-                {t('orderNumber', { id: delivery.vendor_order })}
+                {t('orderNumber', { id: `${delivery?.vendor_order_detail?.master_order_id}-${delivery?.vendor_order}` })}
               </Text>
               {/* <Text style={styles.heroInvoiceTitle}>{orderDetail?.tax_invoice?.invoice_number}</Text> */}
             </View>
             <View></View>
           </View>
+
         </SafeAreaView>
+        <View style={[styles.headerInfo, {
+          position: "absolute", bottom: 50, left: 20,
+          backgroundColor: vendorStatusColors[orderDetail.status].bg,
+          borderRadius: 20,
+          paddingHorizontal: 8, paddingVertical: 2,
+          flexDirection: "row",
+          justifyContent: "center",
+          zIndex: 1000
+        }]}>
+          <Text style={{
+            color: vendorStatusColors[orderDetail.status].text,
+            fontSize: 12, fontFamily: "",
+            fontWeight: "bold", textTransform: "uppercase"
+          }}>
+            {t(`orderStatus.${orderDetail.status}`)}
+          </Text>
+        </View>
       </View>
 
       <ScrollView
@@ -165,11 +196,12 @@ return (
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: 20,
-    paddingBottom: hasBottomActions 
-      ? 140 + insets.bottom 
-      : 20 + insets.bottom,
-  }}
->
+          paddingBottom: hasBottomActions
+            ? 140 + insets.bottom
+            : 20 + insets.bottom,
+        }}
+      >
+
         {/* --- STATUS PIPELINE --- */}
         <View style={styles.card}>
           <View style={styles.progressContainer}>
@@ -179,13 +211,13 @@ return (
               const isFuture = index > currentIndex;
               const isDeliveredCurrent =
                 isCurrent && status === "delivered";
-              
+
               // Check if this delivery should show as "Failed"
-              const isFailed = delivery?.status === 'failed' || 
-                               delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
-                               delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
+              const isFailed = delivery?.status === 'failed' ||
+                delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
+                delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
               const showAsFailed = isFailed && isDeliveredCurrent;
-              
+
               return (
                 <View key={status} style={styles.stepWrapper}>
                   <View style={styles.nodeZone}>
@@ -207,9 +239,9 @@ return (
                         styles.stepIndicator,
                         isCompleted && styles.indicatorCompleted,
                         isCurrent &&
-                          (isDeliveredCurrent
-                            ? showAsFailed ? styles.indicatorFailed : styles.indicatorCompleted
-                            : styles.indicatorCurrent),
+                        (isDeliveredCurrent
+                          ? showAsFailed ? styles.indicatorFailed : styles.indicatorCompleted
+                          : styles.indicatorCurrent),
                         isFuture && styles.indicatorFuture,
                       ]}
                     >
@@ -241,12 +273,12 @@ return (
                       },
                     ]}
                   >
-  {status === 'out_for_delivery' ? t('status.inTransit') : 
-   status === 'pending' ? t('status.assigned') :
-   showAsFailed ? t('status.failed') :
-   status === 'delivered' ? t('status.completed') :
-   t(`status.${status}`)}
-</Text>
+                    {status === 'out_for_delivery' ? t('status.inTransit') :
+                      status === 'pending' ? t('status.assigned') :
+                        showAsFailed ? t('status.failed') :
+                          status === 'delivered' ? t('status.completed') :
+                            t(`status.${status}`)}
+                  </Text>
                 </View>
               );
             })}
@@ -267,7 +299,7 @@ return (
             </Text>
             <TouchableOpacity
               style={styles.miniAction}
-              // onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${delivery.company_address}`)}
+            // onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${delivery.company_address}`)}
             >
               {/* <Feather name="map-pin" size={12} color="#6750A4" /> */}
               <Text style={styles.miniActionText}>
@@ -313,7 +345,7 @@ return (
                 style={[
                   styles.miniAction,
                   {
-                    backgroundColor: "#10B98115",
+                    backgroundColor: "#13a132ff",
                     paddingVertical: 8,
                     paddingHorizontal: 8,
                     borderRadius: 144,
@@ -323,7 +355,7 @@ return (
                   Linking.openURL(`tel:${delivery.customer_phone}`)
                 }
               >
-                <Feather name="phone" size={14} color="#10B981" />
+                <Ionicons name="call" size={14} color="#ffffff" />
                 {/* <Text style={[styles.miniActionText, { color: '#10B981'}]}></Text> */}
               </TouchableOpacity>
             </View>
@@ -390,7 +422,7 @@ return (
             </View>
           </View>
         </View>
-        
+
         {/* Add extra bottom padding when no bottom actions */}
         {!hasBottomActions && <View style={{ height: insets.bottom + 20 }} />}
       </ScrollView>
@@ -400,7 +432,7 @@ return (
         <TouchableOpacity
           onPress={() => {
             const isPending = delivery.status === 'pending';
-            const url = isPending 
+            const url = isPending
               ? `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}&viewOnly=true`
               : `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}`;
             router.push(url);
@@ -408,29 +440,29 @@ return (
           style={[styles.trackingFloatingBtn, { bottom: 120 + insets.bottom }]}
         >
           <FontAwesome6 name="route" size={18} color="#fff" />
-<Text style={styles.trackingFloatingText}>
-  {delivery.status === 'pending' ? t('viewDirection') : t('trackOrder')}
-</Text>
+          <Text style={styles.trackingFloatingText}>
+            {delivery.status === 'pending' ? t('viewDirection') : t('trackOrder')}
+          </Text>
         </TouchableOpacity>
       )}
 
       {/* --- BOTTOM ACTION HUB --- */}
       {hasBottomActions && (
-        <View style={[styles.bottomHub, { 
+        <View style={[styles.bottomHub, {
           paddingBottom: 20 + insets.bottom,
           paddingTop: 20
         }]}>
 
-        {action && (
-          <SlideToConfirm
-            label={t(`actions.${delivery.status}`)} // translated action label
-            color={action.color}
-            icon={action.icon}
-            onConfirm={handleStatusUpdate}
-            isLoading={updating}
-          />
-        )}
-        {/* {delivery.status === 'delivered' && (
+          {action && (
+            <SlideToConfirm
+              label={t(`actions.${delivery.status}`)} // translated action label
+              color={action.color}
+              icon={action.icon}
+              onConfirm={handleStatusUpdate}
+              isLoading={updating}
+            />
+          )}
+          {/* {delivery.status === 'delivered' && (
           <TouchableOpacity
             onPress={() => router.push(`/delivery/tracking?id=${delivery.id}`)}
             style={{
@@ -459,10 +491,10 @@ return (
 }
 
 const styles = StyleSheet.create({
-container: { 
-  flex: 1, 
-  backgroundColor: "#F8FAFC" 
-},
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC"
+  },
   loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   // Hero Section
@@ -477,7 +509,7 @@ container: {
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 10,
+    // paddingTop: 10,
   },
   glassCircle: {
     width: 40,
@@ -504,6 +536,7 @@ container: {
     borderTopRightRadius: 35,
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 16,
+    position: "relative"
   },
 
   // Card System
@@ -618,13 +651,13 @@ container: {
   pulseRingFailed: {
     borderColor: "#DC2626",
   },
-stepLabel: { 
-  fontSize: 8, 
-  color: "#94A3B8", 
-  marginTop: 4, 
-  fontWeight: "600",
-  textAlign: "center" 
-},
+  stepLabel: {
+    fontSize: 8,
+    color: "#94A3B8",
+    marginTop: 4,
+    fontWeight: "600",
+    textAlign: "center"
+  },
 
   // Item List
   itemRow: {

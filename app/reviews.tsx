@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   distFill: { height: "100%", borderRadius: 4, backgroundColor: "#FBBF24" },
   distCount: { fontSize: 12, fontWeight: "700", color: "#94A3B8", width: 24, textAlign: "right" },
 
-  sectionLabel: { fontSize: 16, fontWeight: "800", color: "#1E293B", marginBottom: 12 },
+  sectionLabel: { fontSize: 16, fontWeight: "800", color: "#6750A4", marginBottom: 12 },
 
   // Review card
   reviewCard: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   avatarInitial: { fontSize: 18, fontWeight: "800", color: "#6750A4" },
-  reviewerName: { fontSize: 15, fontWeight: "700", color: "#1E293B" },
+  reviewerName: { fontSize: 15, fontWeight: "700", color: "#6750A4" },
   reviewMetaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 3 },
   reviewDate: { fontSize: 11, color: "#94A3B8" },
   reviewComment: { fontSize: 14, color: "#475569", lineHeight: 20, marginTop: 12 },

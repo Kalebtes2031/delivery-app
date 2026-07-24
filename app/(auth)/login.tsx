@@ -96,7 +96,7 @@ const handleLogin = async () => {
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
             <View>
               <Image
-                source={require('@/assets/images/qinemartethio.jpeg')}
+                source={require('@/assets/images/elilita-delivery.jpg')}
                 style={{ width: 400, height: 300, }}
                 resizeMode="cover"
               />
