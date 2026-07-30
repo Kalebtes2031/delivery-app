@@ -395,7 +395,7 @@ export default function DeliveryDetailScreen() {
               />
               <View style={styles.itemInfo}>
                 <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemSku}>{t('sku')}: {item.sku}</Text>
+                {/* <Text style={styles.itemSku}>{t('sku')}: {item.sku}</Text> */}
                 <View style={styles.itemPriceRow}>
                   <Text style={styles.itemQty}>{t('qty')}: {item.qty}</Text>
                   <Text style={styles.itemPrice}>

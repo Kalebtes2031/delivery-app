@@ -247,7 +247,10 @@ showSuccess(
   t('password_changed')
 );
     } catch (error: any) {
-      const detail = error.response?.data?.detail || error.response?.data?.current_password?.[0] || error.response?.data?.non_field_errors?.[0] || t('password_change_failed');
+      let detail = error.response?.data?.detail || error.response?.data?.current_password?.[0] || error.response?.data?.non_field_errors?.[0] || t('password_change_failed');
+      if (typeof detail === 'string' && /invalid password/i.test(detail)) {
+        detail = t('invalid_password');
+      }
       setErrors({ currentPassword: detail });
     } finally {
       setIsUpdating(false);

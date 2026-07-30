@@ -54,6 +54,12 @@
           }
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/playstore-deliveryicon.png"
+        }
+      ],
       "@react-native-firebase/app",
       "@maplibre/maplibre-react-native",
       "expo-secure-store",
@@ -79,7 +85,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "49016321-b790-4898-b693-af7e18e2346a"
+        "projectId": "34686927-dc04-43a1-8396-0c9fe97ec39e"
       }
     }
   }

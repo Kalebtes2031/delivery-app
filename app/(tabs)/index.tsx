@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useDelivery } from '@/context/DeliveryContext';
-import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons, FontAwesome6, Feather } from '@expo/vector-icons';
 import ToggleSwitch from '@/components/ToggleButton';
 import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
 import { useTranslation } from 'react-i18next'; // 👈 added
@@ -290,13 +290,24 @@ export default function HomeScreen() {
                 params: { filter: 'out_for_delivery' },
               })}
               style={{
-                paddingHorizontal: 14,
+                paddingLeft: 14,
+                paddingRight: 8,
                 paddingVertical: 3,
                 backgroundColor: "#FAF5FF",
-                borderRadius: 70
+                borderRadius: 70,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4
               }}
             >
               <Text style={[styles.seeAllText, { color: "#6750A4" }]}>{t('viewAll')}</Text>
+              <Feather
+                name="chevron-right"
+                size={14}
+                color="#6750A4"
+              // style={{ marginLeft: 2 }}
+              />
             </TouchableOpacity>
           </View>
 
@@ -440,13 +451,24 @@ export default function HomeScreen() {
             </View>
             <TouchableOpacity
               style={{
-                paddingHorizontal: 14,
+                paddingLeft: 14,
+                paddingRight: 8,
                 paddingVertical: 3,
                 backgroundColor: "#FAF5FF",
-                borderRadius: 70
+                borderRadius: 70,
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 4
               }}
               onPress={() => router.push('/orders')}>
               <Text style={[styles.seeAllText, { color: "#6750A4" }]}>{t('seeAll')}</Text>
+              <Feather
+                name="chevron-right"
+                size={14}
+                color="#6750A4"
+              // style={{ marginLeft: 2 }}
+              />
             </TouchableOpacity>
           </View>
 

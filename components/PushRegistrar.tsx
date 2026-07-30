@@ -1,11 +1,12 @@
 // components/PushRegistrar.tsx
-// Registers for push when the driver is authenticated and surfaces foreground
-// notifications via an Alert. Renders nothing.
+// Requests notification permission on app start and registers the FCM device
+// with the backend once the driver is authenticated.
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import {
   registerForPush,
+  requestNotificationPermission,
   unregisterForPush,
   setupForegroundHandler,
   setupTokenRefresh,
@@ -13,6 +14,11 @@ import {
 
 export default function PushRegistrar() {
   const { isAuthenticated } = useAuth();
+
+  // Ask for notification permission as soon as the app opens.
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {

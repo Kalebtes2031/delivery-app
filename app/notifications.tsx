@@ -31,7 +31,8 @@ interface Notif {
     event?: string;
     tracking_id?: string;
     vendor_order_id?: number;
-      company_name_am?: string;
+    company_name_am?: string;
+    company?: string;
   };
 }
 
@@ -53,47 +54,66 @@ function extractContextFromBody(event: string, body: string): Record<string, str
   const data: Record<string, string | number> = {};
   if (!body) return data;
   try {
-    // Delivery assigned: "Order #123 from Company Name."
-    const assignedMatch = body.match(/Order #(\d+) from (.+?)\./i);
-    if (assignedMatch && event === 'delivery.assigned') {
-      data.vendor_order_id = Number(assignedMatch[1]);
-      data.company = assignedMatch[2];
-    }
-    // Out for delivery: "Order from Company Name is out for delivery"
-    const outMatch = body.match(/Order from (.+?) is out for delivery/i);
-    if (outMatch && event === 'delivery.out_for_delivery') {
-      data.company = outMatch[1];
-    }
-    // Delivered: "Order from Company Name has been delivered"
-    const deliveredMatch = body.match(/Order from (.+?) has been delivered/i);
-    if (deliveredMatch && event === 'delivery.delivered') {
-      data.company = deliveredMatch[1];
-    }
-    // Vendor order new: "New order #123 for Company — 100.00 ETB"
-    const newOrderMatch = body.match(/New order #(\d+) for (.+?) — ([\d.]+) (\w+)/i);
-    if (newOrderMatch && event === 'vendororder.new') {
-      data.vendor_order_id = Number(newOrderMatch[1]);
-      data.company = newOrderMatch[2];
-      data.amount = newOrderMatch[3];
-      data.currency = newOrderMatch[4];
-    }
-    // Preparing: "Company is now preparing your order #123"
-    const preparingMatch = body.match(/(.+?) is now preparing your order #(\d+)/i);
-    if (preparingMatch && event === 'vendororder.preparing') {
-      data.company = preparingMatch[1];
-      data.vendor_order_id = Number(preparingMatch[2]);
-    }
-    // Paid: "Order #123 paid 100.00 ETB"
-    const paidMatch = body.match(/Order #(\d+) paid ([\d.]+) (\w+)/i);
-    if (paidMatch && event === 'order.paid') {
-      data.order_id = Number(paidMatch[1]);
-      data.amount = paidMatch[2];
-      data.currency = paidMatch[3];
-    }
-    // Payment failed: "Payment for order #123 failed"
-    const failedMatch = body.match(/Payment for order #(\d+) failed/i);
-    if (failedMatch && event === 'order.payment_failed') {
-      data.order_id = Number(failedMatch[1]);
+    if (event === "order.paid") {
+      const enMatch = body.match(/order #(\d+)\s*\(([\d.,]+)\s*(\w+)\)/i) || body.match(/order #(\d+) paid ([\d.]+) (\w+)/i);
+      const amMatch = body.match(/ትዕዛዝ\s*#(\d+)\s*\(([\d.,]+)\s*(\w+)\)/) || body.match(/ትዕዛዝ #(\d+) ክፍያ ([\d.]+) (\w+) ተከፍሏል/);
+      const match = enMatch || amMatch;
+      if (match) {
+        data.order_id = Number(match[1]);
+        data.total = match[2];
+        data.amount = match[2];
+        data.currency = match[3];
+      }
+    } else if (event === "order.payment_failed") {
+      const match =
+        body.match(/order #(\d+)/i) || body.match(/ትዕዛዝ #(\d+)/) || body.match(/Payment for order #(\d+) failed/i) || body.match(/ለትዕዛዝ #(\d+) ክፍያ አልተሳካም/);
+      if (match) data.order_id = Number(match[1]);
+    } else if (event === "vendororder.preparing") {
+      const enMatch = body.match(/(.+?)\s+is\s+now\s+preparing\s+your\s+order\s+#(\d+)/i) || body.match(/(.+?) is now preparing your order #(\d+)/i);
+      const amMatch = body.match(/(.+?)\s+ትዕዛዝዎን\s+#(\d+)\s+እያዘጋጀ/) || body.match(/(.+?) ትዕዛዝዎን #(\d+) እያዘጋጀ ነው/);
+      if (enMatch) {
+        data.company = enMatch[1];
+        data.vendor_order_id = Number(enMatch[2]);
+      } else if (amMatch) {
+        data.company = amMatch[1].replace("ከ", "");
+        data.vendor_order_id = Number(amMatch[2]);
+      }
+    } else if (event === "delivery.out_for_delivery") {
+      const enMatch = body.match(/order\s+from\s+(.+?)\s+is\s+out\s+for/i) || body.match(/order from (.+?) is out for delivery/i);
+      const amMatch = body.match(/ከ(.+?)\s+የመጣው\s+ትዕዛዝዎ\s+ለማድረስ/) || body.match(/ከ(.+?) የመጣው ትዕዛዝ ለማድረስ ወጥቷል/);
+      if (enMatch) data.company = enMatch[1];
+      else if (amMatch) data.company = amMatch[1];
+    } else if (event === "delivery.delivered") {
+      const enMatch = body.match(/order\s+from\s+(.+?)\s+has\s+been\s+delivered/i) || body.match(/order from (.+?) has been delivered/i);
+      const amMatch = body.match(/ከ(.+?)\s+የመጣው\s+ትዕዛዝዎ\s+ደርሷል/) || body.match(/ከ(.+?) የመጣው ትዕዛዝ ተደርሷል/);
+      if (enMatch) data.company = enMatch[1];
+      else if (amMatch) data.company = amMatch[1];
+    } else if (event === "vendororder.new") {
+      const enMatch = body.match(/order\s+#(\d+)\s+for\s+(.+?)\s+—\s+([\d.,]+)\s+(\w+)/i) || body.match(/New order #(\d+) for (.+?) — ([\d.]+) (\w+)/i);
+      const amMatch = body.match(/ለ(.+?)\s+አዲስ\s+ትዕዛዝ\s+#(\d+)\s+—\s+([\d.,]+)\s+(\w+)/) || body.match(/አዲስ ትዕዛዝ #(\d+) ለ(.+?) — ([\d.]+) (\w+)/);
+      if (enMatch) {
+        data.vendor_order_id = Number(enMatch[1]);
+        data.company = enMatch[2];
+        data.amount = enMatch[3];
+        data.total = enMatch[3];
+        data.currency = enMatch[4];
+      } else if (amMatch) {
+        data.company = amMatch[1];
+        data.vendor_order_id = Number(amMatch[2]);
+        data.amount = amMatch[3];
+        data.total = amMatch[3];
+        data.currency = amMatch[4];
+      }
+    } else if (event === "delivery.assigned") {
+      const enMatch = body.match(/order\s+#(\d+)\s+from\s+(.+?)\./i) || body.match(/Order #(\d+) from (.+?)\./i);
+      const amMatch = body.match(/ከ(.+?)\s+የትዕዛዝ\s+#(\d+)\s+ማድረስ/) || body.match(/ከ(.+?) የትዕዛዝ #(\d+) ማድረስ ተመድቦልዎታል።/);
+      if (enMatch) {
+        data.vendor_order_id = Number(enMatch[1]);
+        data.company = enMatch[2];
+      } else if (amMatch) {
+        data.company = amMatch[1];
+        data.vendor_order_id = Number(amMatch[2]);
+      }
     }
   } catch (err) {
     // ignore
@@ -241,10 +261,13 @@ const { t, i18n } = useTranslation('notification');
   const getTranslatedString = (key: string, data: any, fallback: string): string => {
     try {
       const val = t(key, { ...data, defaultValue: fallback });
-      if (val.includes('{{') || val.includes('}}')) {
-        return fallback;
+      if (typeof val === 'string') {
+        if (val.includes('{{') || val.includes('}}')) {
+          return fallback;
+        }
+        return val;
       }
-      return val;
+      return fallback;
     } catch {
       return fallback;
     }

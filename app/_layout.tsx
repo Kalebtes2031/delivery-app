@@ -7,7 +7,6 @@ import { DeliveryProvider } from '@/context/DeliveryContext';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initI18n } from '@/i18n';
-import '@/services/pushBackground';
 import PushRegistrar from '@/components/PushRegistrar';
 
 function RootLayoutNav() {
