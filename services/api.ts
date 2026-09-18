@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Config from '@/constants/Config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { DeliveryAssignment, DeliveryStatus, LoginResponse, User, DeliveryReviewsResponse } from '@/types';
+import type { DeliveryAssignment, DeliveryStatus, LoginResponse, User, DeliveryReviewsResponse, DriverEarningItem, DriverEarningsSummary } from '@/types';
 
 // ── Axios Instance ──
 
@@ -85,6 +85,16 @@ export const getDeliveries = async (status?: DeliveryStatus) => {
 
 export const getDriverStats = async () => {
   return api.get<{ earnings: string; cash_on_hand: string; assigned_orders: number; pending_orders: number; total_orders: number }>('/deliveries/stats/');
+};
+
+// Driver Earnings (Per-order delivery fee tracking with period and payment method filters)
+export const getDriverEarnings = async (params?: { period?: string; payment_method?: string }) => {
+  return api.get<DriverEarningItem[]>('/deliveries/earnings/', { params });
+};
+
+// Driver Earnings Summary (Aggregated totals, payment breakdown, net COD settlement)
+export const getDriverEarningsSummary = async () => {
+  return api.get<DriverEarningsSummary>('/deliveries/earnings/summary/');
 };
 
 // COD orders the driver has delivered (supports filter: 'pending' | 'settled' | 'all')

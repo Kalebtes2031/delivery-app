@@ -55,4 +55,48 @@ export const firebaseTracking = {
     });
     return () => ref.off();
   },
+
+  /**
+   * Updates driver's idle presence location in Firebase Realtime Database.
+   * Path: drivers/{driverId}
+   */
+  async updateDriverLocation(driverId: number, latitude: number, longitude: number, heading?: number | null) {
+    try {
+      const ref = database().ref(`drivers/${driverId}`);
+      
+      const payload = {
+        latitude,
+        longitude,
+        heading: heading ?? 0,
+        is_online: true,
+        updated_at: database.ServerValue.TIMESTAMP,
+      };
+
+      // Set up onDisconnect to automatically mark driver offline if connection is lost
+      await ref.onDisconnect().update({
+        is_online: false,
+        updated_at: database.ServerValue.TIMESTAMP,
+      });
+
+      await ref.update(payload);
+    } catch (error: any) {
+      console.error('[Firebase] Failed to update driver presence:', error?.message || error);
+    }
+  },
+
+  /**
+   * Marks driver as offline in Firebase.
+   */
+  async setDriverOffline(driverId: number) {
+    try {
+      const ref = database().ref(`drivers/${driverId}`);
+      await ref.update({
+        is_online: false,
+        updated_at: database.ServerValue.TIMESTAMP,
+      });
+    } catch (error: any) {
+      console.error('[Firebase] Failed to set driver offline:', error?.message || error);
+    }
+  },
 };
+

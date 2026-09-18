@@ -38,15 +38,56 @@ export interface UserMembership {
   is_active: boolean;
 }
 
+export interface VendorOrderDetail {
+  master_order_id: number;
+  id?: number;
+  amount?: string;
+  subtotal?: string;
+  tax_amount?: string;
+  delivery_fee?: string;
+  status?: string;
+  delivery_status?: string;
+  delivery_notes?: string;
+  payment_method?: string;
+  payment_status?: string;
+  fulfillment_type?: string;
+  table_number?: string | null;
+  created_at?: string;
+  company?: {
+    id: number;
+    name: string;
+    name_am?: string;
+    slug: string;
+    logo?: string | null;
+    business_type?: string;
+    address?: string;
+  };
+  tax_invoice?: {
+    currency?: string;
+    invoice_number?: string;
+  };
+  items?: Array<{
+    id: number;
+    title: string;
+    qty: number;
+    unit_price: string;
+  }>;
+}
+
 export interface DeliveryAssignment {
   id: number;
   tracking_id: string;
   vendor_order: number;
-  vendor_order_detail: {
-    master_order_id: number;
-  }
+  vendor_order_detail: VendorOrderDetail;
   delivery_person: number;
   status: DeliveryStatus;
+  driver_earning?: string;
+  order_number?: string;
+  payment_method?: string;
+  payment_method_display?: string;
+  payment_status?: string;
+  company_logo?: string | null;
+  company_slug?: string;
   last_lat: string | null;
   last_lon: string | null;
   assigned_at: string;
@@ -61,7 +102,6 @@ export interface DeliveryAssignment {
   company_name: string | null;
   company_name_am: string | null;
   company_address: string | null;
-
 }
 
 export type DeliveryStatus =
@@ -72,7 +112,54 @@ export type DeliveryStatus =
   | 'delivered'
   | 'failed';
 
+export interface DriverEarningItem {
+  id: number;
+  tracking_id: string;
+  master_order_id: number;
+  vendor_order_id: number;
+  order_number: string;
+  driver_earning: string;
+  delivery_fee: string;
+  order_total: string;
+  payment_method: 'bank_transfer' | 'cod' | 'chapa' | 'telebirr' | string;
+  payment_method_display: string;
+  payment_status: string;
+  company_name: string;
+  company_name_am?: string | null;
+  company_slug: string;
+  company_logo?: string | null;
+  company_address?: string | null;
+  customer_name: string;
+  customer_phone?: string | null;
+  shipping_address?: string | null;
+  status: DeliveryStatus;
+  assigned_at: string;
+  completed_at: string | null;
+}
+
+export interface DriverEarningsSummary {
+  today_earnings: string;
+  today_completed_trips?: number;
+  today_average_per_order?: string;
+  week_earnings: string;
+  week_completed_trips?: number;
+  week_average_per_order?: string;
+  month_earnings: string;
+  month_completed_trips?: number;
+  month_average_per_order?: string;
+  total_lifetime_earnings: string;
+  total_completed_trips: number;
+  average_per_order: string;
+  payment_breakdown: {
+    bank_transfer: string;
+    cod: string;
+    chapa: string;
+    telebirr: string;
+  };
+}
+
 export interface LoginResponse {
   access: string;
   refresh: string;
 }
+

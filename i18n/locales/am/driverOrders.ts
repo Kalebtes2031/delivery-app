@@ -45,6 +45,7 @@ export default {
   qty: "ብዛት",
   store: "መደብር",
   subtotal: "ንዑስ ድምር",
+  deliveryFee: "የማድረሻ ክፍያ",
   totalAmount: "አጠቃላይ ድምር",
   trackOrder: "ትዕዛዙን ይከታተሉ",
   viewDirection: "አቅጣጫ ይመልከቱ",

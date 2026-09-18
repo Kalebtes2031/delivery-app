@@ -45,6 +45,7 @@ export default {
   qty: "Qty",
   store: "Store",
   subtotal: "Subtotal",
+  deliveryFee: "Delivery Fee",
   totalAmount: "Total Amount",
   trackOrder: "Track Order",
   viewDirection: "View Direction",

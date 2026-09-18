@@ -19,6 +19,7 @@ import ToggleSwitch from '@/components/ToggleButton';
 import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
 import { useTranslation } from 'react-i18next'; // 👈 added
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
+import { driverLocationService } from '@/services/driverLocationService';
 
 const { width } = Dimensions.get('window');
 
@@ -69,6 +70,17 @@ export default function HomeScreen() {
 
   const isOnline = user?.memberships?.some(m => m.role === 'delivery' && m.is_active);
 
+  // Sync presence tracking with driver's online state
+  useEffect(() => {
+    if (user?.id) {
+      if (isOnline) {
+        driverLocationService.startPresenceTracking(user.id);
+      } else {
+        driverLocationService.stopPresenceTracking(user.id);
+      }
+    }
+  }, [isOnline, user?.id]);
+
   const onRefresh = () => {
     refreshAll();
   };
@@ -76,6 +88,7 @@ export default function HomeScreen() {
   useEffect(() => {
     refreshAll();
   }, []);
+
 
 
   // Helper to check if a delivery is failed (checks both delivery.status and order status)
@@ -210,6 +223,16 @@ export default function HomeScreen() {
           <View style={styles.statsGrid}>
             {[
               {
+                label: t('earnings', 'Earnings'),
+                value: `${driverStats.earnings || '0.00'} ${t('etb')}`,
+                icon: 'wallet-outline',
+                color: '#6750A4',
+                type: 'ion',
+                onPress: () => {
+                  router.push('/(tabs)/earnings');
+                }
+              },
+              {
                 label: t('cashOnHand'),
                 value: `${driverStats.cash_on_hand || '0.00'} ${t('etb')}`,
                 icon: 'wallet-outline',
@@ -231,21 +254,6 @@ export default function HomeScreen() {
                     router.push({
                       pathname: '/orders',
                       params: { filter: 'pending' }
-                    });
-                  }, 100);
-                }
-              },
-              {
-                label: t('totalOrders'),
-                value: driverStats.total_orders.toString(),
-                icon: 'package-variant-closed', color: '#6366F1',
-                type: 'material',
-                onPress: () => {
-                  // Force navigation with a unique key to trigger animation
-                  setTimeout(() => {
-                    router.push({
-                      pathname: '/orders',
-                      params: { filter: 'all', t: Date.now() }
                     });
                   }, 100);
                 }

@@ -414,6 +414,12 @@ export default function DeliveryDetailScreen() {
                 {orderDetail?.subtotal} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
+            <View style={styles.billingRow}>
+              <Text style={styles.billingText}>{t('deliveryFee')}</Text>
+              <Text style={styles.billingValue}>
+                {orderDetail?.delivery_fee ?? delivery?.delivery_fee ?? "0.00"} {orderDetail?.tax_invoice?.currency}
+              </Text>
+            </View>
             <View style={[styles.billingRow, styles.totalRow]}>
               <Text style={styles.totalText}>{t('totalAmount')}</Text>
               <Text style={styles.totalValue}>
