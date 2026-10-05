@@ -336,7 +336,11 @@ export default function EarningsScreen() {
                     onPress={() => setPeriod(p.key as PeriodType)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.periodTabText, active && styles.periodTabTextActive]}>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                      style={[styles.periodTabText, active && styles.periodTabTextActive]}>
                       {p.label}
                     </Text>
                   </TouchableOpacity>
@@ -358,14 +362,22 @@ export default function EarningsScreen() {
               <View style={styles.heroMetricsRow}>
                 <View style={styles.heroMetricItem}>
                   <Text style={styles.heroMetricVal}>{getPeriodCompletedTrips()}</Text>
-                  <Text style={styles.heroMetricLbl}>{t('completedTrips', 'Completed Deliveries')}</Text>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.heroMetricLbl}>{t('completedTrips', 'Completed Deliveries')}</Text>
                 </View>
                 <View style={styles.heroMetricDivider} />
                 <View style={styles.heroMetricItem}>
                   <Text style={styles.heroMetricVal}>
                     {getPeriodAvgPerDelivery()} {t('etb', 'ETB')}
                   </Text>
-                  <Text style={styles.heroMetricLbl}>{t('avgPerDelivery', 'Avg / Delivery')}</Text>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.heroMetricLbl}>{t('avgPerDelivery', 'Avg / Delivery')}</Text>
                 </View>
               </View>
             </View>

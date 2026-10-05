@@ -8,8 +8,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   StyleSheet,
-  Alert,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -226,7 +226,11 @@ const { t, i18n } = useTranslation('notification');
     const vendorOrderId = n.data?.vendor_order_id;
     
     if (!vendorOrderId) {
-      Alert.alert(t('info'), t('noLinkedDelivery'));
+      Toast.show({
+        type: 'info',
+        text1: t('info'),
+        text2: t('noLinkedDelivery'),
+      });
       return;
     }
     // Get deliveries from context (already available)
@@ -251,8 +255,12 @@ const { t, i18n } = useTranslation('notification');
       // Navigate to delivery detail using the delivery assignment ID
       router.push(`/delivery/${matchedDelivery.id}`);
     } else {
-      // If not found, show alert instead of trying fallback
-      Alert.alert(t('info'), t('deliveryNotFound'));
+      // If not found, show toast instead of trying fallback
+      Toast.show({
+        type: 'info',
+        text1: t('info'),
+        text2: t('deliveryNotFound'),
+      });
     }
   };
 

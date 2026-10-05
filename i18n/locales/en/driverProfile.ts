@@ -5,7 +5,7 @@ export default {
   privacyPolicy: "Privacy Policy",
   helpAndSupport: "Help & Support",
   signOut: "Sign Out",
-  activeDeliveryApp: "Elilita Delivery App",
+  activeDeliveryApp: "Elilita Delivery App v1.0.0",
   signOutConfirmTitle: "Sign Out",
   signOutConfirmDescription: "Are you sure you want to sign out from the Elilita Delivery App?",
   yes: "Yes",
@@ -20,4 +20,7 @@ export default {
   reviewsError: "Couldn't load your reviews. Pull down to retry.",
   retry: "Retry",
   customerLabel: "Customer",
+  app: {
+    poweredBy: "Powered by",
+  }
 };

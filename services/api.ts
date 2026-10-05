@@ -107,8 +107,8 @@ export const getDeliveryDetail = async (id: number) => {
   return api.get<DeliveryAssignment>(`/deliveries/${id}/`);
 };
 
-export const updateDeliveryStatus = async (id: number, status: DeliveryStatus) => {
-  return api.patch<DeliveryAssignment>(`/deliveries/${id}/status/`, { status });
+export const updateDeliveryStatus = async (id: number, status: DeliveryStatus, decline_reason?: string, action?: string) => {
+  return api.patch<DeliveryAssignment>(`/deliveries/${id}/status/`, { status, decline_reason, action });
 };
 
 export const toggleDeliveryStatus = async () => {

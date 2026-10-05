@@ -21,6 +21,8 @@ export default {
     assigned: "ተመድቧል",
     inTransit: "በመጓዝ ላይ",
     completed: "ተጠናቋል",
+    declined: "የተሰረዘ",
+    expired: "ጊዜው ያለፈበት",
   },
   orderStatus: {
     processing: "የተዘጋጀ",

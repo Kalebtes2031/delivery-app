@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   RefreshControl,
   Animated,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -20,6 +21,8 @@ import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
 import { useTranslation } from 'react-i18next'; // 👈 added
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { driverLocationService } from '@/services/driverLocationService';
+import IncomingOrderModal from '@/components/IncomingOrderModal';
+import { updateDeliveryStatus } from '@/services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -30,14 +33,18 @@ export default function HomeScreen() {
   const { user, toggleOnlineStatus } = useAuth();
   const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
-  const { t } = useTranslation('deliveryHome');
+  const { t, i18n } = useTranslation('deliveryHome');
+  const isAmharic = i18n.language?.startsWith('am');
 
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
+  // Re-fetch deliveries and stats on screen focus
   useFocusEffect(
     useCallback(() => {
+      refreshAll();
+
       // Reset to initial values before animating
       fadeAnim.setValue(0);
       slideAnim.setValue(20);
@@ -54,8 +61,18 @@ export default function HomeScreen() {
           useNativeDriver: true,
         }),
       ]).start();
-    }, [fadeAnim, slideAnim])
+    }, [refreshAll, fadeAnim, slideAnim])
   );
+
+  // Auto-refresh when app comes to foreground from background or lockscreen
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        refreshAll();
+      }
+    });
+    return () => subscription.remove();
+  }, [refreshAll]);
 
   const handleToggleOnline = async () => {
     setIsToggling(true);
@@ -81,7 +98,10 @@ export default function HomeScreen() {
     }
   }, [isOnline, user?.id]);
 
+  const [dismissedOfferId, setDismissedOfferId] = useState<number | null>(null);
+
   const onRefresh = () => {
+    setDismissedOfferId(null);
     refreshAll();
   };
 
@@ -107,10 +127,67 @@ export default function HomeScreen() {
     return isDeliveryFailed(delivery) ? 'failed' : delivery.status;
   }, [isDeliveryFailed]);
 
-  // Find the latest delivery that is currently "Out for Delivery"
-  const activeDelivery = deliveries
-    .filter(d => d.status === 'out_for_delivery')
-    .sort((a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime())[0];
+  // Active deliveries currently out for delivery
+  const inTransitDeliveries = deliveries.filter(d => d.status === 'out_for_delivery');
+  // Pending assignment offer awaiting driver accept/decline
+  const pendingOffer = deliveries.find(d => d.status === 'pending');
+  // Groups of orders ready to batch pick up at the SAME store (only stores with >= 2 orders)
+  const storeBatchGroups = useMemo(() => {
+    const candidates = deliveries.filter(d => ['accepted', 'picked_up'].includes(d.status));
+    const map = new Map<string, { storeName: string; orders: typeof deliveries }>();
+
+    for (const d of candidates) {
+      const storeId = String(
+        d.vendor_order_detail?.company?.id ||
+        d.company_slug ||
+        d.company_name ||
+        'unknown'
+      );
+      const storeName =
+        (isAmharic && (d.company_name_am || d.vendor_order_detail?.company?.name_am)) ||
+        d.company_name ||
+        d.vendor_order_detail?.company?.name ||
+        t('store', 'Store');
+
+      if (!map.has(storeId)) {
+        map.set(storeId, { storeName, orders: [] });
+      }
+      map.get(storeId)!.orders.push(d);
+    }
+
+    // Only stores that have MULTIPLE orders (>= 2) ready to batch pick up
+    return Array.from(map.values()).filter(group => group.orders.length > 1);
+  }, [deliveries, isAmharic, t]);
+  // Hero delivery to highlight: ONLY orders actively in transit (out_for_delivery)
+  const activeDelivery = inTransitDeliveries[0];
+
+  // The 45-second auto-expiring modal is ONLY shown when the driver is actively en route
+  // and receives an on-the-way offer with an expiration timer.
+  const latestPendingAttempt = pendingOffer?.attempts?.[0];
+  const isEnRouteOffer = inTransitDeliveries.length > 0 && !!latestPendingAttempt?.expires_at;
+
+  const handleAcceptOffer = async (id: number) => {
+    try {
+      await updateDeliveryStatus(id, 'accepted');
+      refreshAll();
+    } catch (e) {
+      console.error('Failed to accept delivery', e);
+    }
+  };
+
+  const handleDeclineOffer = async (
+    id: number,
+    reason: string = 'Declined by driver',
+    action: 'declined' | 'expired' = 'declined'
+  ) => {
+    try {
+      const statusToSend = action === 'expired' ? 'expired' : 'declined';
+      await updateDeliveryStatus(id, statusToSend, reason, action);
+      refreshAll();
+    } catch (e) {
+      console.error('Failed to decline delivery', e);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -124,7 +201,7 @@ export default function HomeScreen() {
     }
   };
 
-  const currentIndex = STATUS_ORDER.indexOf(activeDelivery?.status.toLowerCase());
+  const currentIndex = STATUS_ORDER.indexOf(activeDelivery?.status.toLowerCase() as any);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -318,6 +395,53 @@ export default function HomeScreen() {
               />
             </TouchableOpacity>
           </View>
+
+          {/* Batch Pickup Notice when multiple orders are assigned at same store */}
+          {storeBatchGroups.map((group, index) => (
+            <View
+              key={`${group.storeName}-${index}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#F5F3FF',
+                borderWidth: 1,
+                borderColor: '#DDD6FE',
+                borderRadius: 14,
+                padding: 12,
+                marginBottom: 12,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <MaterialCommunityIcons name="layers-triple-outline" size={20} color="#6750A4" />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#4C1D95' }}>
+                    {t('ordersReadyToBatch', {
+                      count: group.orders.length,
+                      defaultValue: `${group.orders.length} Orders Ready to Batch`,
+                    })}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#6D28D9' }} numberOfLines={1}>
+                    {t('atStorePickUpTogether', {
+                      store: group.storeName,
+                      defaultValue: `At ${group.storeName} · Pick up together`,
+                    })}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: '/orders', params: { filter: 'accepted' } })}
+                style={{
+                  backgroundColor: '#6750A4',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{t('viewAll', 'View All')}</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
 
           {activeDelivery ? (
             <TouchableOpacity
@@ -517,7 +641,8 @@ export default function HomeScreen() {
                                 displayStatus === 'out_for_delivery' ? t('inTransit') :
                                   displayStatus === 'delivered' ? t('completed') :
                                     displayStatus === 'failed' ? t('failed') :
-                                      t(`status.${displayStatus}`).toUpperCase()}
+                                      displayStatus === 'declined' ? t('declined') :
+                                        t(`status.${displayStatus}`).toUpperCase()}
                             </Text>
                           </View>
                         );
@@ -536,6 +661,20 @@ export default function HomeScreen() {
           </View >
         </ScrollView >
       </Animated.View >
+
+      {/* Incoming order offer popup: auto-expiring 120s when en-route, regular for idle drivers */}
+      <IncomingOrderModal
+        delivery={pendingOffer || null}
+        visible={!!pendingOffer && pendingOffer.id !== dismissedOfferId}
+        hasActiveDeliveries={inTransitDeliveries.length > 0}
+        onAccept={handleAcceptOffer}
+        onDecline={handleDeclineOffer}
+        onClose={() => {
+          if (pendingOffer) {
+            setDismissedOfferId(pendingOffer.id);
+          }
+        }}
+      />
     </SafeAreaView >
   );
 }

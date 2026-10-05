@@ -99,14 +99,35 @@ export interface DeliveryAssignment {
   customer_phone: string | null;
   customer_email: string | null;
   customer_image: string | null;
+  customer_address?: string | null;
+  customer_sub_city?: string | null;
+  customer_city?: string | null;
+  customer_woreda?: string | null;
+  customer_neighborhood?: string | null;
   company_name: string | null;
   company_name_am: string | null;
   company_address: string | null;
+  company_lat?: string | null;
+  company_lon?: string | null;
+  attempts?: DeliveryDispatchAttempt[];
+}
+
+export interface DeliveryDispatchAttempt {
+  id: number;
+  driver: number;
+  driver_name?: string;
+  driver_phone?: string | null;
+  status: 'assigned' | 'accepted' | 'declined' | 'expired' | 'reassigned' | string;
+  decline_reason?: string;
+  assigned_at: string;
+  expires_at?: string | null;
+  responded_at?: string | null;
 }
 
 export type DeliveryStatus =
   | 'pending'
   | 'accepted'
+  | 'declined'
   | 'picked_up'
   | 'out_for_delivery'
   | 'delivered'

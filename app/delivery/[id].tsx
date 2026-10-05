@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   Linking,
@@ -12,6 +11,7 @@ import {
   Image,
   Dimensions,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import SlideToConfirm from "@/components/SlideToConfirm";
@@ -79,7 +79,11 @@ export default function DeliveryDetailScreen() {
       const data = await getDeliveryById(Number(id));
       setDelivery(data);
     } catch (error) {
-      Alert.alert(t("errorTitle"), t("couldNotLoadDelivery"));
+      Toast.show({
+        type: "error",
+        text1: t("errorTitle"),
+        text2: t("couldNotLoadDelivery"),
+      });
       router.back();
     } finally {
       setLoading(false);
@@ -97,7 +101,11 @@ export default function DeliveryDetailScreen() {
       setDelivery(updated);
       if (action.next === "delivered") router.back();
     } catch (error: any) {
-      Alert.alert(t("errorTitle"), error.response?.data?.error || t("updateFailed"));
+      Toast.show({
+        type: "error",
+        text1: t("errorTitle"),
+        text2: error.response?.data?.error || t("updateFailed"),
+      });
     } finally {
       setUpdating(false);
     }
@@ -113,15 +121,24 @@ export default function DeliveryDetailScreen() {
   if (!delivery) return null;
   const action = NEXT_ACTION[delivery.status];
 
-  // 🔥 FIX: Calculate currentIndex based on effective status
-  // If delivery is failed, treat it as "delivered" for the progress bar
-  const isFailed = delivery?.status === 'failed' ||
+  // Distinction between terminal non-success states
+  const isDeclined = delivery?.status === 'declined';
+  const isExpired = delivery?.status === 'expired';
+  const isOrderFailed = delivery?.status === 'failed' ||
     delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
     delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
 
-  const effectiveStatus = isFailed ? 'delivered' : delivery.status;
+  // Effective status for index calculation:
+  // - If declined or expired, the process terminated at step 0 (pending / dispatch offer)
+  // - If order failed during fulfillment, terminate at final step (delivered/failed)
+  const effectiveStatus = (isDeclined || isExpired)
+    ? 'pending'
+    : isOrderFailed
+      ? 'delivered'
+      : delivery.status;
+
   const currentIndex = STATUS_ORDER.indexOf(effectiveStatus.toLowerCase());
-  const hasBottomActions = delivery.status !== "delivered" && Boolean(action);
+  const hasBottomActions = delivery.status !== "delivered" && !isDeclined && !isExpired && !isOrderFailed && Boolean(action);
   const orderDetail = delivery.vendor_order_detail;
 
 
@@ -174,19 +191,27 @@ export default function DeliveryDetailScreen() {
         </SafeAreaView>
         <View style={[styles.headerInfo, {
           position: "absolute", bottom: 50, left: 20,
-          backgroundColor: vendorStatusColors[orderDetail.status].bg,
+          backgroundColor: isDeclined ? "#FEF2F2" : isExpired ? "#FFFBEB" : vendorStatusColors[orderDetail?.status]?.bg || "#FEF2F2",
           borderRadius: 20,
-          paddingHorizontal: 8, paddingVertical: 2,
+          paddingHorizontal: 10, paddingVertical: 4,
           flexDirection: "row",
-          justifyContent: "center",
-          zIndex: 1000
+          alignItems: "center",
+          gap: 6,
+          zIndex: 1000,
+          borderWidth: 1,
+          borderColor: isDeclined ? "#FECACA" : isExpired ? "#FDE68A" : "transparent"
         }]}>
           <Text style={{
-            color: vendorStatusColors[orderDetail.status].text,
-            fontSize: 12, fontFamily: "",
-            fontWeight: "bold", textTransform: "uppercase"
+            color: isDeclined ? "#DC2626" : isExpired ? "#D97706" : vendorStatusColors[orderDetail?.status]?.text || "#DC2626",
+            fontSize: 12,
+            fontWeight: "bold",
+            textTransform: "uppercase"
           }}>
-            {t(`orderStatus.${orderDetail.status}`)}
+            {isDeclined
+              ? t('status.declined', 'Declined')
+              : isExpired
+                ? t('status.expired', 'Expired')
+                : t(`orderStatus.${orderDetail?.status}`, orderDetail?.status || '')}
           </Text>
         </View>
       </View>
@@ -209,14 +234,12 @@ export default function DeliveryDetailScreen() {
               const isCompleted = index < currentIndex;
               const isCurrent = index === currentIndex;
               const isFuture = index > currentIndex;
-              const isDeliveredCurrent =
-                isCurrent && status === "delivered";
+              const isDeliveredCurrent = isCurrent && status === "delivered";
 
-              // Check if this delivery should show as "Failed"
-              const isFailed = delivery?.status === 'failed' ||
-                delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
-                delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
-              const showAsFailed = isFailed && isDeliveredCurrent;
+              // Distinct step flags for terminal non-success states
+              const isStepDeclined = isCurrent && index === 0 && isDeclined;
+              const isStepExpired = isCurrent && index === 0 && isExpired;
+              const isStepFailed = isDeliveredCurrent && isOrderFailed;
 
               return (
                 <View key={status} style={styles.stepWrapper}>
@@ -227,7 +250,7 @@ export default function DeliveryDetailScreen() {
                           styles.progressLine,
                           {
                             backgroundColor:
-                              isCompleted || isCurrent ? "#16A34A" : "#E5E7EB",
+                              isCompleted ? "#16A34A" : "#E5E7EB",
                             left: "-50%",
                             right: "50%",
                           },
@@ -239,9 +262,15 @@ export default function DeliveryDetailScreen() {
                         styles.stepIndicator,
                         isCompleted && styles.indicatorCompleted,
                         isCurrent &&
-                        (isDeliveredCurrent
-                          ? showAsFailed ? styles.indicatorFailed : styles.indicatorCompleted
-                          : styles.indicatorCurrent),
+                        (isStepDeclined
+                          ? styles.indicatorFailed
+                          : isStepExpired
+                            ? styles.indicatorExpired
+                            : isStepFailed
+                              ? styles.indicatorFailed
+                              : isDeliveredCurrent
+                                ? styles.indicatorCompleted
+                                : styles.indicatorCurrent),
                         isFuture && styles.indicatorFuture,
                       ]}
                     >
@@ -249,16 +278,36 @@ export default function DeliveryDetailScreen() {
                         name={
                           (isCompleted
                             ? "check-bold"
-                            : showAsFailed ? "close-circle" : STATUS_CONFIG[status].icon) as any
+                            : isStepDeclined
+                              ? "close-circle"
+                              : isStepExpired
+                                ? "clock-alert-outline"
+                                : isStepFailed
+                                  ? "close-circle"
+                                  : STATUS_CONFIG[status]?.icon || "circle-outline") as any
                         }
                         size={isCurrent ? 16 : 12}
-                        color={isFuture ? "#9CA3AF" : showAsFailed ? "#FFFFFF" : "#fff"}
+                        color={
+                          isFuture
+                            ? "#9CA3AF"
+                            : (isStepDeclined || isStepExpired || isStepFailed)
+                              ? "#FFFFFF"
+                              : "#fff"
+                        }
                       />
                       {isCurrent && (
                         <View
                           style={[
                             styles.pulseRing,
-                            isDeliveredCurrent && (showAsFailed ? styles.pulseRingFailed : styles.pulseRingCompleted),
+                            isStepDeclined
+                              ? styles.pulseRingFailed
+                              : isStepExpired
+                                ? styles.pulseRingExpired
+                                : isStepFailed
+                                  ? styles.pulseRingFailed
+                                  : isDeliveredCurrent
+                                    ? styles.pulseRingCompleted
+                                    : null,
                           ]}
                         />
                       )}
@@ -268,16 +317,32 @@ export default function DeliveryDetailScreen() {
                     style={[
                       styles.stepLabel,
                       isCurrent && {
-                        color: isDeliveredCurrent ? (showAsFailed ? "#DC2626" : "#16A34A") : "#F59E0B",
+                        color: isStepDeclined
+                          ? "#DC2626"
+                          : isStepExpired
+                            ? "#D97706"
+                            : isStepFailed
+                              ? "#DC2626"
+                              : isDeliveredCurrent
+                                ? "#16A34A"
+                                : "#F59E0B",
                         fontWeight: "900",
                       },
                     ]}
                   >
-                    {status === 'out_for_delivery' ? t('status.inTransit') :
-                      status === 'pending' ? t('status.assigned') :
-                        showAsFailed ? t('status.failed') :
-                          status === 'delivered' ? t('status.completed') :
-                            t(`status.${status}`)}
+                    {isStepDeclined
+                      ? t('status.declined', 'Declined')
+                      : isStepExpired
+                        ? t('status.expired', 'Expired')
+                        : isStepFailed
+                          ? t('status.failed', 'Failed')
+                          : status === 'out_for_delivery'
+                            ? t('status.inTransit')
+                            : status === 'pending'
+                              ? t('status.assigned')
+                              : status === 'delivered'
+                                ? t('status.completed')
+                                : t(`status.${status}`)}
                   </Text>
                 </View>
               );
@@ -641,6 +706,7 @@ const styles = StyleSheet.create({
   indicatorCompleted: { backgroundColor: "#16A34A", borderColor: "#16A34A" },
   indicatorCurrent: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
   indicatorFailed: { backgroundColor: "#DC2626", borderColor: "#DC2626" },
+  indicatorExpired: { backgroundColor: "#D97706", borderColor: "#D97706" },
   indicatorFuture: { borderColor: "#E5E7EB", backgroundColor: "#F9FAFB" },
   pulseRing: {
     position: "absolute",
@@ -656,6 +722,9 @@ const styles = StyleSheet.create({
   },
   pulseRingFailed: {
     borderColor: "#DC2626",
+  },
+  pulseRingExpired: {
+    borderColor: "#D97706",
   },
   stepLabel: {
     fontSize: 8,

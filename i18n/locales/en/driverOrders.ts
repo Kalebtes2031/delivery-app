@@ -21,6 +21,8 @@ export default {
     assigned: "Assigned",
     inTransit: "In Transit",
     completed: "Completed",
+    declined: "Declined",
+    expired: "Expired",
   },
   orderStatus: {
     processing: "Prepared",

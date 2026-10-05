@@ -6,7 +6,7 @@ export default {
   privacyPolicy: "የግላዊነት መመሪያ",
   helpAndSupport: "እገዛ እና ድጋፍ",
   signOut: "ይውጡ",
-  activeDeliveryApp: "እልልታ የማድረሻ መተግበሪያ",
+  activeDeliveryApp: "እልልታ የማድረሻ መተግበሪያ v1.0.0",
   signOutConfirmTitle: "መውጣት",
   signOutConfirmDescription: "ከእልልታ የማድረሻ መተግበሪያ መውጣት እርግጠኛ ነዎት?",
   yes: "አዎ",
@@ -64,4 +64,7 @@ export default {
     picked_up: "ማድረስ ይጀምሩ",
     out_for_delivery: "ማድረስ ጨርስ",
   },
+  app: {
+    poweredBy: "የተሰራው በ",
+  }
 };

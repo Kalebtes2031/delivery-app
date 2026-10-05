@@ -8,6 +8,8 @@ import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initI18n } from '@/i18n';
 import PushRegistrar from '@/components/PushRegistrar';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/components/toast/toastConfig';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -53,6 +55,7 @@ function RootLayoutNav() {
         <Stack.Screen name="terms" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
+      <Toast config={toastConfig} position="top" topOffset={60} visibilityTime={3500} />
     </>
   );
 }

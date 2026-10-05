@@ -12,7 +12,7 @@ export default {
   seeAll: "View All",
   searchingForOrders: "Searching for new orders...",
   noActiveDeliveries: "No active deliveries right now",
-  etb:"ETB",
+  etb: "ETB",
   newOrdersWillAppear: "New orders will appear here when assigned",
   noRecentActivities: "No recent activities",
   noEmailProvided: "No email provided",
@@ -25,7 +25,7 @@ export default {
   codTag: "Cash on Delivery",
   deliveredOn: "Delivered {{date}}",
   retry: "Retry",
-  
+
   // Cash on Hand Page Filter & Summary Translations
   tabAll: "All",
   tabCashOnHand: "Cash on Hand",
@@ -54,11 +54,13 @@ export default {
     failed: "Failed",
     assigned: "Assigned",
     inTransit: "In Transit",
+    declined: "Declined",
+    expired: "Expired",
   },
   home: "Home",
   orders: "Orders",
   profile: "Profile",
-  
+
   deliveryFallback: "Delivery",
   lookingForDeliveries: "Looking for deliveries...",
   noActiveDelivery: "No Active Delivery",
@@ -117,4 +119,7 @@ export default {
   periodWeek: "Week",
   periodMonth: "Month",
   periodAll: "All Time",
+  ordersReadyToBatch: "{{count}} Orders Ready to Batch",
+  atStorePickUpTogether: "At {{store}} · Pick up together",
+  store: "Store",
 };

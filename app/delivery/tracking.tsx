@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Modal,
   StatusBar,
   Linking,
@@ -13,6 +12,7 @@ import {
   ScrollView,
   RefreshControl,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -196,7 +196,11 @@ export default function DriverTrackingScreen() {
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(t("permissionDenied"), t("permissionDeniedMessage"));
+        Toast.show({
+          type: "error",
+          text1: t("permissionDenied"),
+          text2: t("permissionDeniedMessage"),
+        });
         router.back();
         return;
       }
@@ -248,7 +252,11 @@ export default function DriverTrackingScreen() {
       );
     } catch (error) {
       console.error("Tracking init error:", error);
-      Alert.alert(t("errorTitle"), t("couldNotInitializeTracking"));
+      Toast.show({
+        type: "error",
+        text1: t("errorTitle"),
+        text2: t("couldNotInitializeTracking"),
+      });
       router.back();
     } finally {
       setLoading(false);
@@ -303,7 +311,11 @@ export default function DriverTrackingScreen() {
         firebaseTracking.stopTracking(delivery.tracking_id);
       router.back();
     } catch (error: any) {
-      Alert.alert(t("errorTitle"), t("updateFailed"));
+      Toast.show({
+        type: "error",
+        text1: t("errorTitle"),
+        text2: t("updateFailed"),
+      });
     } finally {
       setSlideLoading(false);
       setIsConfirmModalVisible(false);
@@ -319,7 +331,11 @@ export default function DriverTrackingScreen() {
       router.back();
       setTimeout(() => router.push(`/delivery/${id}`), 300);
     } catch (error: any) {
-      Alert.alert(t("errorTitle"), t("updateFailed"));
+      Toast.show({
+        type: "error",
+        text1: t("errorTitle"),
+        text2: t("updateFailed"),
+      });
     } finally {
       setSlideLoading(false);
     }

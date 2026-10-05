@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-   Animated,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
 import StarRating from '@/components/StarRating';
 import { useTranslation } from 'react-i18next';
+import { Linking } from 'react-native';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -56,8 +57,8 @@ function MenuItem({
           {icon}
         </View>
         <Text style={{ fontWeight: '600', fontSize: 16, color: "#fff" }} numberOfLines={1}
-    adjustsFontSizeToFit
-    minimumFontScale={0.8} >{label}</Text>
+          adjustsFontSizeToFit
+          minimumFontScale={0.8} >{label}</Text>
       </View>
       {!danger && <Entypo name="chevron-right" size={20} color="#fff" />}
     </TouchableOpacity>
@@ -106,7 +107,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-            <Animated.View
+      <Animated.View
         style={{
           flex: 1,
           opacity: fadeAnim,
@@ -114,107 +115,129 @@ export default function ProfileScreen() {
         }}
       >
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* --- HEADER --- */}
-        <View style={styles.header}>
-          <View style={styles.avatarWrapper}>
-            {user?.profile_image ? (
-              <Image source={{ uri: user.profile_image }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitial}>
-                  {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </View>
+          {/* --- HEADER --- */}
+          <View style={styles.header}>
+            <View style={styles.avatarWrapper}>
+              {user?.profile_image ? (
+                <Image source={{ uri: user.profile_image }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitial}>
+                    {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-          <Text style={styles.userName}>
-            {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
-          </Text>
-          <Text style={styles.userHandle}>
-            {user?.email || t('deliveryDriver')}
-          </Text>
-        </View>
-        
-
-        {/* --- RATING CARD --- */}
-        <TouchableOpacity
-          style={styles.ratingCard}
-          activeOpacity={0.85}
-          onPress={() => router.push('/reviews')}
-        >
-          <View style={styles.ratingScoreBox}>
-            <Text style={styles.ratingScore}>{avgRating.toFixed(1)}</Text>
-            <Ionicons name="star" size={14} color="#FBBF24" />
-          </View>
-
-          <View style={styles.ratingMiddle}>
-            <Text style={styles.ratingTitle}>{t('yourRating')}</Text>
-            <StarRating rating={avgRating} size={16} />
-            <Text style={styles.ratingCount}>
-              {totalReviews > 0 ? t('reviewsCount', { count: totalReviews }) : t('noRatingYet')}
+            <Text style={styles.userName}>
+              {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
+            </Text>
+            <Text style={styles.userHandle}>
+              {user?.email || t('deliveryDriver')}
             </Text>
           </View>
 
-          <View style={styles.ratingChevron}>
-            <Entypo name="chevron-right" size={20} color="#6750A4" />
-          </View>
-        </TouchableOpacity>
 
-        {/* --- MENU OPTIONS --- */}
-        <View style={styles.menuContainer}>
-          <MenuItem
-            icon={<Ionicons name="person-outline" size={20} color="#fff" />}
-            label={t('editProfile')}
-            onPress={() => router.push("/myprofile")}
-          />
+          {/* --- RATING CARD --- */}
+          <TouchableOpacity
+            style={styles.ratingCard}
+            activeOpacity={0.85}
+            onPress={() => router.push('/reviews')}
+          >
+            <View style={styles.ratingScoreBox}>
+              <Text style={styles.ratingScore}>{avgRating.toFixed(1)}</Text>
+              <Ionicons name="star" size={14} color="#FBBF24" />
+            </View>
 
-          <MenuItem
-            icon={<Ionicons name="language-outline" size={20} color="#fff" />}
-            label={t('language')}
-            onPress={() => router.push("/language")}
-          />
+            <View style={styles.ratingMiddle}>
+              <Text style={styles.ratingTitle}>{t('yourRating')}</Text>
+              <StarRating rating={avgRating} size={16} />
+              <Text style={styles.ratingCount}>
+                {totalReviews > 0 ? t('reviewsCount', { count: totalReviews }) : t('noRatingYet')}
+              </Text>
+            </View>
 
-          <MenuItem
-            icon={<Ionicons name="document-text-outline" size={20} color="#fff" />}
-            label={t('termsAndConditions')}
+            <View style={styles.ratingChevron}>
+              <Entypo name="chevron-right" size={20} color="#6750A4" />
+            </View>
+          </TouchableOpacity>
+
+          {/* --- MENU OPTIONS --- */}
+          <View style={styles.menuContainer}>
+            <MenuItem
+              icon={<Ionicons name="person-outline" size={20} color="#fff" />}
+              label={t('editProfile')}
+              onPress={() => router.push("/myprofile")}
+            />
+
+            <MenuItem
+              icon={<Ionicons name="language-outline" size={20} color="#fff" />}
+              label={t('language')}
+              onPress={() => router.push("/language")}
+            />
+
+            <MenuItem
+              icon={<Ionicons name="document-text-outline" size={20} color="#fff" />}
+              label={t('termsAndConditions')}
             // onPress={() => router.push("/terms")}
-          />
+            />
 
-          <MenuItem
-            icon={<Ionicons name="shield-checkmark-outline" size={20} color="#fff" />}
-            label={t('privacyPolicy')}
+            <MenuItem
+              icon={<Ionicons name="shield-checkmark-outline" size={20} color="#fff" />}
+              label={t('privacyPolicy')}
             // onPress={() => router.push("/privacy-policy")}
-          />
+            />
 
-          <MenuItem
-            icon={<Ionicons name="help-circle-outline" size={20} color="#fff" />}
-            label={t('helpAndSupport')}
+            <MenuItem
+              icon={<Ionicons name="help-circle-outline" size={20} color="#fff" />}
+              label={t('helpAndSupport')}
             // onPress={() => router.push("/help")}
-          />
+            />
 
-          <MenuItem
-            icon={<MaterialIcons name="logout" size={20} color="#ff6b6b" />}
-            label={t('signOut')}
-            danger
-            onPress={() => setShowLogoutConfirm(true)}
-          />
-        </View>
+            <MenuItem
+              icon={<MaterialIcons name="logout" size={20} color="#ff6b6b" />}
+              label={t('signOut')}
+              danger
+              onPress={() => setShowLogoutConfirm(true)}
+            />
+          </View>
 
-        <Text style={styles.versionText}>{t('activeDeliveryApp')}</Text>
-      </ScrollView>
+          <Text style={styles.versionText}>{t('activeDeliveryApp')}</Text>
 
-      <ConfirmActionModal
-        visible={showLogoutConfirm}
-        title={t('signOutConfirmTitle')}
-        description={t('signOutConfirmDescription')}
-        confirmText={t('yes')}
-        cancelText={t('no')}
-        onConfirm={logout}
-        onClose={() => setShowLogoutConfirm(false)}
-      />
+          <View style={{ alignItems: "center", marginTop: 24 }}>
+            <Text
+              style={{
+                textAlign: "center",
+                fontSize: 10,
+                color: "#1f2937",
+              }}
+            >
+              {t("app.poweredBy")}{" "}
+            </Text>
+            <Text
+              style={{
+                fontWeight: "bold",
+                color: "#8F3C01",
+                fontSize: 10,
+              }}
+              onPress={() => Linking.openURL("https://activetechet.com")}
+            >
+              Active Technology PLC
+            </Text>
+          </View>
+        </ScrollView>
+
+        <ConfirmActionModal
+          visible={showLogoutConfirm}
+          title={t('signOutConfirmTitle')}
+          description={t('signOutConfirmDescription')}
+          confirmText={t('yes')}
+          cancelText={t('no')}
+          onConfirm={logout}
+          onClose={() => setShowLogoutConfirm(false)}
+        />
       </Animated.View>
     </SafeAreaView>
   );

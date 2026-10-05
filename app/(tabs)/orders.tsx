@@ -9,7 +9,6 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";

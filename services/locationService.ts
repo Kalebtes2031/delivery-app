@@ -1,10 +1,14 @@
 import * as Location from 'expo-location';
-import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 export async function requestLocationPermissions() {
   const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
   if (foregroundStatus !== 'granted') {
-    Alert.alert('Permission denied', 'Location access is required for delivery tracking.');
+    Toast.show({
+      type: 'error',
+      text1: 'Permission denied',
+      text2: 'Location access is required for delivery tracking.',
+    });
     return false;
   }
 

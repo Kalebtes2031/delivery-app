@@ -54,6 +54,8 @@ export default {
     out_for_delivery: "በማድረስ ላይ",
     delivered: "የደረሰ",
     failed: "ያልተሳካ",
+    declined: "የተሰረዘ",
+    expired: "ጊዜው ያለፈበት",
   },
   home: "መነሻ",
   orders: "ትዕዛዞች",
@@ -116,4 +118,8 @@ export default {
   periodWeek: "ሳምንት",
   periodMonth: "ወር",
   periodAll: "ሁሉንም",
+  declined: "የተሰረዘ",
+  ordersReadyToBatch: "{{count}} ትዕዛዞች በአንድ ላይ ለመውሰድ ዝግጁ ናቸው",
+  atStorePickUpTogether: "ከ{{store}} · በአንድ ላይ ይውሰዱ",
+  store: "መደብር",
 };
