@@ -156,6 +156,9 @@ export interface DriverEarningItem {
   status: DeliveryStatus;
   assigned_at: string;
   completed_at: string | null;
+  is_paid?: boolean;
+  payout_status?: string;
+  payout_number?: string | null;
 }
 
 export interface DriverEarningsSummary {
@@ -177,6 +180,60 @@ export interface DriverEarningsSummary {
     chapa: string;
     telebirr: string;
   };
+  unpaid_balance?: string;
+  pending_confirmation_amount?: string;
+  pending_confirmation_count?: number;
+  total_paid_out?: string;
+}
+
+export type DriverPayoutStatus = 'draft' | 'disbursed' | 'confirmed' | 'disputed' | 'cancelled';
+export type DriverPayoutType = 'instant' | 'weekly' | 'monthly' | 'manual';
+
+export interface DriverPayoutItem {
+  id: number;
+  assignment_id: number;
+  vendor_order_id: number;
+  master_order_id: number;
+  order_number: string;
+  delivery_fee: string;
+  cod_collected: string;
+  payment_method: string;
+  customer_name: string;
+  customer_phone?: string | null;
+  shipping_address?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+}
+
+export interface DriverPayout {
+  id: number;
+  payout_number: string;
+  driver: number;
+  driver_name: string;
+  driver_username: string;
+  driver_phone?: string | null;
+  company: number;
+  company_name: string;
+  company_name_am?: string;
+  company_slug: string;
+  created_by?: number | null;
+  created_by_name?: string;
+  payout_type: DriverPayoutType;
+  status: DriverPayoutStatus;
+  payment_method: string;
+  transaction_reference?: string;
+  gross_delivery_fees: string;
+  cod_cash_deducted: string;
+  net_payout_amount: string;
+  notes?: string;
+  dispute_reason?: string;
+  disbursed_at?: string | null;
+  confirmed_at?: string | null;
+  disputed_at?: string | null;
+  items_count: number;
+  items?: DriverPayoutItem[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LoginResponse {

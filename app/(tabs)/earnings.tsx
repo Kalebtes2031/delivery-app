@@ -15,43 +15,62 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { getDriverEarnings, getDriverEarningsSummary } from '@/services/api';
-import type { DriverEarningItem, DriverEarningsSummary } from '@/types';
+import {
+  getDriverEarnings,
+  getDriverEarningsSummary,
+  getDriverPayouts,
+} from '@/services/api';
+import type { DriverEarningItem, DriverEarningsSummary, DriverPayout } from '@/types';
 import OrderEarningDetailModal from '@/components/OrderEarningDetailModal';
+import PayoutDetailModal from '@/components/PayoutDetailModal';
 
 const { width } = Dimensions.get('window');
 
 type PeriodType = 'today' | 'this_week' | 'this_month' | 'all';
 type PaymentFilterType = 'all' | 'bank_transfer' | 'cod' | 'chapa' | 'telebirr';
+type MainTabType = 'orders' | 'payouts';
 
 export default function EarningsScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation('deliveryHome');
   const isAmharic = i18n.language?.startsWith('am');
 
+  const [mainTab, setMainTab] = useState<MainTabType>('orders');
   const [period, setPeriod] = useState<PeriodType>('today');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilterType>('all');
   const [allEarnings, setAllEarnings] = useState<DriverEarningItem[]>([]);
   const [summary, setSummary] = useState<DriverEarningsSummary | null>(null);
+  const [payouts, setPayouts] = useState<DriverPayout[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<DriverEarningItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPayout, setSelectedPayout] = useState<DriverPayout | null>(null);
+  const [payoutModalVisible, setPayoutModalVisible] = useState(false);
 
-  // Fetch earnings data for the selected period
+  // Fetch earnings & payouts data
   const fetchData = useCallback(async () => {
     try {
-      const [earningsRes, summaryRes] = await Promise.all([
+      const [earningsRes, summaryRes, payoutsRes] = await Promise.all([
         getDriverEarnings({ period }),
         getDriverEarningsSummary(),
+        getDriverPayouts().catch((err) => {
+          console.warn('[EarningsScreen] Error fetching payouts:', err);
+          return { data: [] };
+        }),
       ]);
 
       const list = Array.isArray(earningsRes.data)
         ? earningsRes.data
         : (earningsRes.data as any)?.results || [];
 
+      const payoutList = Array.isArray(payoutsRes.data)
+        ? payoutsRes.data
+        : (payoutsRes.data as any)?.results || [];
+
       setAllEarnings(list);
       setSummary(summaryRes.data);
+      setPayouts(payoutList);
     } catch (err) {
       console.error('[EarningsScreen] Error fetching earnings:', err);
     } finally {
@@ -233,6 +252,37 @@ export default function EarningsScreen() {
     }
   };
 
+  // Payout settlement status badge on delivered orders
+  const renderPayoutStatusBadge = (status?: string) => {
+    if (status === 'confirmed') {
+      return (
+        <View style={[styles.payoutStatusPill, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
+          <Ionicons name="checkmark-done" size={10} color="#16A34A" style={{ marginRight: 2 }} />
+          <Text style={[styles.payoutStatusPillText, { color: '#16A34A' }]}>{t('confirmed', 'Paid')}</Text>
+        </View>
+      );
+    }
+    if (status === 'disbursed') {
+      return (
+        <View style={[styles.payoutStatusPill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
+          <Ionicons name="time" size={10} color="#D97706" style={{ marginRight: 2 }} />
+          <Text style={[styles.payoutStatusPillText, { color: '#D97706' }]}>{t('pendingConfirmation', 'Disbursed')}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.payoutStatusPill, { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }]}>
+        <Ionicons name="hourglass-outline" size={10} color="#64748B" style={{ marginRight: 2 }} />
+        <Text style={[styles.payoutStatusPillText, { color: '#64748B' }]}>{t('unpaid', 'Unpaid')}</Text>
+      </View>
+    );
+  };
+
+  // Find first payout awaiting driver confirmation
+  const pendingPayout = useMemo(() => {
+    return payouts.find((p) => p.status === 'disbursed');
+  }, [payouts]);
+
   const renderOrderItem = ({ item }: { item: DriverEarningItem }) => {
     const fee = parseFloat(item.driver_earning || item.delivery_fee || '0').toFixed(2);
     const dateStr = item.completed_at
@@ -286,6 +336,7 @@ export default function EarningsScreen() {
 
           <View style={styles.badgeAndDate}>
             {renderPaymentBadge(item.payment_method, item.payment_method_display)}
+            {renderPayoutStatusBadge(item.payout_status)}
             {!!dateStr && <Text style={styles.dateText}>{dateStr}</Text>}
           </View>
         </View>
@@ -293,15 +344,154 @@ export default function EarningsScreen() {
     );
   };
 
+  // Render payout batch item
+  const renderPayoutItem = ({ item }: { item: DriverPayout }) => {
+    const compName = isAmharic && item.company_name_am ? item.company_name_am : item.company_name;
+    const isAwaiting = item.status === 'disbursed';
+    const isConfirmed = item.status === 'confirmed';
+    const isDisputed = item.status === 'disputed';
+
+    const dateStr = item.disbursed_at
+      ? new Date(item.disbursed_at).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : new Date(item.created_at).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        });
+
+    return (
+      <TouchableOpacity
+        style={[styles.payoutCard, isAwaiting && styles.payoutCardAwaiting]}
+        activeOpacity={0.85}
+        onPress={() => {
+          setSelectedPayout(item);
+          setPayoutModalVisible(true);
+        }}
+      >
+        <View style={styles.payoutCardTopRow}>
+          <View style={styles.payoutNumberGroup}>
+            <View
+              style={[
+                styles.payoutIconCircle,
+                isAwaiting
+                  ? { backgroundColor: '#FEF3C7' }
+                  : isConfirmed
+                  ? { backgroundColor: '#DCFCE7' }
+                  : { backgroundColor: '#F1F5F9' },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={isAwaiting ? 'alert-circle' : isConfirmed ? 'check-decagram' : 'cash-multiple'}
+                size={18}
+                color={isAwaiting ? '#D97706' : isConfirmed ? '#16A34A' : '#64748B'}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.payoutNumberText}>#{item.payout_number}</Text>
+                <View style={styles.payoutTypeTag}>
+                  <Text style={styles.payoutTypeTagText}>{item.payout_type?.toUpperCase()}</Text>
+                </View>
+              </View>
+              <Text style={styles.payoutStoreText} numberOfLines={1}>{compName}</Text>
+            </View>
+          </View>
+
+          <View style={styles.payoutAmountBox}>
+            <Text style={styles.payoutAmountText}>
+              {parseFloat(item.net_payout_amount).toFixed(2)}
+            </Text>
+            <Text style={styles.payoutCurrencyText}>{t('etb', 'ETB')}</Text>
+          </View>
+        </View>
+
+        <View style={styles.payoutCardBottomRow}>
+          <View style={styles.payoutMetaLeft}>
+            <View style={styles.payoutMetaItem}>
+              <Ionicons name="receipt-outline" size={12} color="#64748B" />
+              <Text style={styles.payoutMetaText}>
+                {item.items_count} {t('ordersSettled', 'Orders')}
+              </Text>
+            </View>
+            <Text style={styles.payoutMetaDot}>•</Text>
+            <Text style={styles.payoutMetaText}>{dateStr}</Text>
+          </View>
+
+          {/* Status Badge */}
+          <View
+            style={[
+              styles.payoutBadge,
+              isAwaiting
+                ? { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }
+                : isConfirmed
+                ? { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }
+                : isDisputed
+                ? { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }
+                : { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
+            ]}
+          >
+            <Ionicons
+              name={
+                isAwaiting
+                  ? 'time'
+                  : isConfirmed
+                  ? 'checkmark-circle'
+                  : isDisputed
+                  ? 'alert-circle'
+                  : 'close-circle'
+              }
+              size={12}
+              color={
+                isAwaiting
+                  ? '#D97706'
+                  : isConfirmed
+                  ? '#16A34A'
+                  : isDisputed
+                  ? '#DC2626'
+                  : '#64748B'
+              }
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.payoutBadgeText,
+                {
+                  color: isAwaiting
+                    ? '#D97706'
+                    : isConfirmed
+                    ? '#16A34A'
+                    : isDisputed
+                    ? '#DC2626'
+                    : '#64748B',
+                },
+              ]}
+            >
+              {isAwaiting
+                ? t('confirmReceived', 'Confirm Receipt')
+                : isConfirmed
+                ? t('confirmed', 'Confirmed')
+                : isDisputed
+                ? t('reportIssue', 'Disputed')
+                : item.status}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const currentListData = mainTab === 'orders' ? filteredEarnings : (payouts as any[]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Top App Header */}
       <View style={styles.screenHeader}>
         <View>
           <Text style={styles.screenTitle}>{t('driverEarningsTitle', 'Earning History')}</Text>
-          {/* <Text style={styles.screenSubtitle}>
-            {t('earningsSubtitle', 'Transparent per-order delivery compensation')}
-          </Text> */}
         </View>
         <TouchableOpacity style={styles.headerActionBtn} onPress={onRefresh} activeOpacity={0.7}>
           <Ionicons name="refresh" size={26} color="#6750A4" />
@@ -310,9 +500,17 @@ export default function EarningsScreen() {
 
       {/* Main Content */}
       <FlatList
-        data={filteredEarnings}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderOrderItem}
+        data={currentListData}
+        keyExtractor={(item: any) =>
+          mainTab === 'orders'
+            ? item.id.toString()
+            : item.id ? `payout-${item.id}` : item.payout_number
+        }
+        renderItem={({ item }: any) =>
+          mainTab === 'orders'
+            ? renderOrderItem({ item })
+            : renderPayoutItem({ item })
+        }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -320,6 +518,41 @@ export default function EarningsScreen() {
         }
         ListHeaderComponent={
           <View style={styles.headerComponent}>
+            {/* Urgent Payout Confirmation Banner */}
+            {pendingPayout && (
+              <TouchableOpacity
+                style={styles.pendingActionBanner}
+                activeOpacity={0.9}
+                onPress={() => {
+                  setSelectedPayout(pendingPayout);
+                  setPayoutModalVisible(true);
+                }}
+              >
+                <View style={styles.pendingBannerIcon}>
+                  <MaterialCommunityIcons name="hand-coin" size={24} color="#D97706" />
+                </View>
+                <View style={styles.pendingBannerContent}>
+                  <View style={styles.pendingBannerTitleRow}>
+                    <Text style={styles.pendingBannerTitle}>
+                      {t('payoutActionTitle', 'Payout Received?')}
+                    </Text>
+                    <View style={styles.pendingBannerBadge}>
+                      <Text style={styles.pendingBannerBadgeText}>{t('pendingConfirmation', 'Action Needed')}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.pendingBannerSub}>
+                    {isAmharic && pendingPayout.company_name_am ? pendingPayout.company_name_am : pendingPayout.company_name} · ETB {parseFloat(pendingPayout.net_payout_amount).toFixed(2)}
+                  </Text>
+                  <View style={styles.pendingBannerBtnRow}>
+                    <View style={styles.confirmInlineBtn}>
+                      <Text style={styles.confirmInlineBtnText}>{t('confirmReceived', 'Confirm Received')}</Text>
+                      <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+
             {/* Period Segment Selector */}
             <View style={styles.periodSelector}>
               {[
@@ -350,7 +583,6 @@ export default function EarningsScreen() {
 
             {/* Primary Hero Financial Card */}
             <View style={styles.heroCard}>
-              {/* <View style={styles.heroGlow} /> */}
               <Text style={styles.heroLabel}>{getPeriodLabel()}</Text>
 
               <View style={styles.heroAmountRow}>
@@ -382,112 +614,126 @@ export default function EarningsScreen() {
               </View>
             </View>
 
-            {/* Channels Earning Breakdown (Pure Delivery Compensation) */}
-            {/* <View style={styles.channelsCard}>
-              <Text style={styles.channelsHeaderTitle}>
-                {t('earningsByChannel', 'LIFETIME EARNINGS BY PAYMENT CHANNEL')}
-              </Text>
-              <View style={styles.channelsRow}>
-               
-                <View style={styles.channelCol}>
-                  <View style={[styles.channelIconBox, { backgroundColor: '#EFF6FF' }]}>
-                    <MaterialCommunityIcons name="bank" size={16} color="#2563EB" />
-                  </View>
-                  <Text style={styles.channelLabel} numberOfLines={1}>{t('paymentBankTransfer', 'Bank Transfer')}</Text>
-                  <Text style={[styles.channelValue, { color: '#2563EB' }]}>
-                    {summary?.payment_breakdown?.bank_transfer || '0.00'} {t('etb', 'ETB')}
-                  </Text>
+            {/* Settlement Overview Card (Unpaid Balance vs Settled Payouts) */}
+            <View style={styles.settlementOverviewCard}>
+              <View style={styles.settlementCol}>
+                <View style={styles.settlementIconRow}>
+                  <MaterialCommunityIcons name="clock-outline" size={14} color="#D97706" />
+                  <Text style={styles.settlementLabel}>{t('unpaidBalance', 'Unpaid Balance')}</Text>
                 </View>
-
-                <View style={styles.channelDivider} />
-
-                
-                <View style={styles.channelCol}>
-                  <View style={[styles.channelIconBox, { backgroundColor: '#FFF7ED' }]}>
-                    <MaterialCommunityIcons name="cash-multiple" size={16} color="#EA580C" />
-                  </View>
-                  <Text style={styles.channelLabel} numberOfLines={1}>{t('paymentCOD', 'COD')}</Text>
-                  <Text style={[styles.channelValue, { color: '#EA580C' }]}>
-                    {summary?.payment_breakdown?.cod || '0.00'} {t('etb', 'ETB')}
-                  </Text>
-                </View>
-
-                <View style={styles.channelDivider} />
-
-               
-                <View style={styles.channelCol}>
-                  <View style={[styles.channelIconBox, { backgroundColor: '#F0FDF4' }]}>
-                    <MaterialCommunityIcons name="credit-card-check-outline" size={16} color="#16A34A" />
-                  </View>
-                  <Text style={styles.channelLabel} numberOfLines={1}>{t('paymentChapa', 'Chapa')}</Text>
-                  <Text style={[styles.channelValue, { color: '#16A34A' }]}>
-                    {summary?.payment_breakdown?.chapa || '0.00'} {t('etb', 'ETB')}
-                  </Text>
-                </View>
-
-                <View style={styles.channelDivider} />
-
-               
-                <View style={styles.channelCol}>
-                  <View style={[styles.channelIconBox, { backgroundColor: '#F5F3FF' }]}>
-                    <MaterialCommunityIcons name="cellphone-check" size={16} color="#7C3AED" />
-                  </View>
-                  <Text style={styles.channelLabel} numberOfLines={1}>{t('paymentTelebirr', 'Telebirr')}</Text>
-                  <Text style={[styles.channelValue, { color: '#7C3AED' }]}>
-                    {summary?.payment_breakdown?.telebirr || '0.00'} {t('etb', 'ETB')}
-                  </Text>
-                </View>
+                <Text style={styles.settlementValueUnpaid}>
+                  {summary?.unpaid_balance ?? '0.00'} <Text style={styles.settlementCurrency}>{t('etb', 'ETB')}</Text>
+                </Text>
               </View>
-            </View> */}
 
+              <View style={styles.settlementDivider} />
 
-            {/* Payment Method Filter Tabs (Horizontally scrollable with count badges like cash-on-hand) */}
-            <View style={styles.filterSection}>
-              <Text style={styles.filterHeaderTitle}>{t('filterByPaymentMethod', 'FILTER BY PAYMENT')}</Text>
-              <View style={styles.tabsContainer}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.tabsScrollContent}
-                >
-                  {filterTabs.map((tab) => {
-                    const active = paymentFilter === tab.key;
-                    return (
-                      <TouchableOpacity
-                        key={tab.key}
-                        style={[styles.tabButton, active && styles.tabButtonActive]}
-                        onPress={() => setPaymentFilter(tab.key)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                          {tab.label}
-                        </Text>
-                        <View
-                          style={[
-                            styles.tabCountBadge,
-                            active ? styles.tabCountBadgeActive : styles.tabCountBadgeInactive,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.tabCountBadgeText,
-                              active && styles.tabCountBadgeTextActive,
-                            ]}
-                          >
-                            {tab.count}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+              <View style={styles.settlementCol}>
+                <View style={styles.settlementIconRow}>
+                  <Ionicons name="checkmark-done-circle-outline" size={14} color="#16A34A" />
+                  <Text style={styles.settlementLabel}>{t('totalPaidOut', 'Settled Payouts')}</Text>
+                </View>
+                <Text style={styles.settlementValuePaid}>
+                  {summary?.total_paid_out ?? '0.00'} <Text style={styles.settlementCurrency}>{t('etb', 'ETB')}</Text>
+                </Text>
               </View>
             </View>
 
+            {/* Main Tabs Switcher: Orders vs Payouts */}
+            <View style={styles.mainTabSwitch}>
+              <TouchableOpacity
+                style={[styles.mainTabBtn, mainTab === 'orders' && styles.mainTabBtnActive]}
+                onPress={() => setMainTab('orders')}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons
+                  name="moped-outline"
+                  size={16}
+                  color={mainTab === 'orders' ? '#6750A4' : '#64748B'}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={[styles.mainTabText, mainTab === 'orders' && styles.mainTabTextActive]}>
+                  {t('ordersTab', 'Orders')} ({filteredEarnings.length})
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.mainTabBtn, mainTab === 'payouts' && styles.mainTabBtnActive]}
+                onPress={() => setMainTab('payouts')}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons
+                  name="wallet-outline"
+                  size={16}
+                  color={mainTab === 'payouts' ? '#6750A4' : '#64748B'}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={[styles.mainTabText, mainTab === 'payouts' && styles.mainTabTextActive]}>
+                  {t('payoutsTab', 'Payouts')} ({payouts.length})
+                </Text>
+                {payouts.some((p) => p.status === 'disbursed') && (
+                  <View style={styles.pendingDot} />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Payment Method Filter Tabs (Only shown when orders tab is active) */}
+            {mainTab === 'orders' && (
+              <View style={styles.filterSection}>
+                <Text style={styles.filterHeaderTitle}>{t('filterByPaymentMethod', 'FILTER BY PAYMENT')}</Text>
+                <View style={styles.tabsContainer}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.tabsScrollContent}
+                  >
+                    {filterTabs.map((tab) => {
+                      const active = paymentFilter === tab.key;
+                      return (
+                        <TouchableOpacity
+                          key={tab.key}
+                          style={[styles.tabButton, active && styles.tabButtonActive]}
+                          onPress={() => setPaymentFilter(tab.key)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                            {tab.label}
+                          </Text>
+                          <View
+                            style={[
+                              styles.tabCountBadge,
+                              active ? styles.tabCountBadgeActive : styles.tabCountBadgeInactive,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.tabCountBadgeText,
+                                active && styles.tabCountBadgeTextActive,
+                              ]}
+                            >
+                              {tab.count}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              </View>
+            )}
+
             {/* Feed Section Title */}
             <View style={styles.feedHeader}>
-              <Text style={styles.feedTitle}>{t('orderEarningsFeed', 'Delivered Orders & Compensation')}</Text>
-              <Text style={styles.feedCount}>{filteredEarnings.length} {t('orders', 'Orders')}</Text>
+              <Text style={styles.feedTitle}>
+                {mainTab === 'orders'
+                  ? t('orderEarningsFeed', 'Delivered Orders & Compensation')
+                  : t('payoutHistory', 'Payout History')}
+              </Text>
+              <Text style={styles.feedCount}>
+                {mainTab === 'orders'
+                  ? `${filteredEarnings.length} ${t('orders', 'Orders')}`
+                  : `${payouts.length} ${t('payouts', 'Payouts')}`}
+              </Text>
             </View>
           </View>
         }
@@ -500,11 +746,21 @@ export default function EarningsScreen() {
           ) : (
             <View style={styles.emptyBox}>
               <View style={styles.emptyIconCircle}>
-                <MaterialCommunityIcons name="wallet-outline" size={36} color="#94A3B8" />
+                <MaterialCommunityIcons
+                  name={mainTab === 'orders' ? 'wallet-outline' : 'cash-remove'}
+                  size={36}
+                  color="#94A3B8"
+                />
               </View>
-              <Text style={styles.emptyTitle}>{t('noEarningsFound', 'No Earning History Yet')}</Text>
+              <Text style={styles.emptyTitle}>
+                {mainTab === 'orders'
+                  ? t('noEarningsFound', 'No Earning History Yet')
+                  : t('noPayoutsFound', 'No Payouts Yet')}
+              </Text>
               <Text style={styles.emptySubtitle}>
-                {t('noEarningsSub', 'Completed delivered orders will appear here with transparent delivery fees.')}
+                {mainTab === 'orders'
+                  ? t('noEarningsSub', 'Completed delivered orders will appear here with transparent delivery fees.')
+                  : t('noPayoutsSub', 'When companies issue your payouts, they will appear here.')}
               </Text>
             </View>
           )
@@ -518,6 +774,20 @@ export default function EarningsScreen() {
         onClose={() => {
           setModalVisible(false);
           setSelectedOrder(null);
+        }}
+      />
+
+      {/* Payout Detail & Confirmation Modal */}
+      <PayoutDetailModal
+        visible={payoutModalVisible}
+        payout={selectedPayout}
+        onClose={() => {
+          setPayoutModalVisible(false);
+          setSelectedPayout(null);
+        }}
+        onPayoutUpdated={(updated) => {
+          fetchData();
+          setSelectedPayout(updated);
         }}
       />
     </SafeAreaView>
@@ -937,5 +1207,296 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 18,
+  },
+  // Pending Action Banner
+  pendingActionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 16,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  pendingBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  pendingBannerContent: {
+    flex: 1,
+  },
+  pendingBannerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  pendingBannerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  pendingBannerBadge: {
+    backgroundColor: '#FDE68A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  pendingBannerBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  pendingBannerSub: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#B45309',
+    marginBottom: 8,
+  },
+  pendingBannerBtnRow: {
+    flexDirection: 'row',
+  },
+  confirmInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6750A4',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  confirmInlineBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  // Settlement Overview Card
+  settlementOverviewCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  settlementCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  settlementIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  settlementLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  settlementValueUnpaid: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#D97706',
+  },
+  settlementValuePaid: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#16A34A',
+  },
+  settlementCurrency: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  settlementDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: '#E2E8F0',
+  },
+  // Main Tabs Switcher (Orders vs Payouts)
+  mainTabSwitch: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 16,
+  },
+  mainTabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    position: 'relative',
+  },
+  mainTabBtnActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mainTabText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  mainTabTextActive: {
+    color: '#6750A4',
+    fontWeight: '800',
+  },
+  pendingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    position: 'absolute',
+    top: 8,
+    right: 12,
+  },
+  // Order Payout Status Pill
+  payoutStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  payoutStatusPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  // Payout Batch Cards
+  payoutCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  payoutCardAwaiting: {
+    borderColor: '#FDE68A',
+    backgroundColor: '#FFFDF7',
+  },
+  payoutCardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  payoutNumberGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    marginRight: 10,
+  },
+  payoutIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payoutNumberText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  payoutTypeTag: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  payoutTypeTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#475569',
+  },
+  payoutStoreText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  payoutAmountBox: {
+    alignItems: 'flex-end',
+  },
+  payoutAmountText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#16A34A',
+  },
+  payoutCurrencyText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#16A34A',
+  },
+  payoutCardBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
+  },
+  payoutMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  payoutMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  payoutMetaText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  payoutMetaDot: {
+    fontSize: 10,
+    color: '#CBD5E1',
+  },
+  payoutBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  payoutBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

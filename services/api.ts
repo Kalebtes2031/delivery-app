@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Config from '@/constants/Config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { DeliveryAssignment, DeliveryStatus, LoginResponse, User, DeliveryReviewsResponse, DriverEarningItem, DriverEarningsSummary } from '@/types';
+import type { DeliveryAssignment, DeliveryStatus, LoginResponse, User, DeliveryReviewsResponse, DriverEarningItem, DriverEarningsSummary, DriverPayout } from '@/types';
 
 // ── Axios Instance ──
 
@@ -95,6 +95,23 @@ export const getDriverEarnings = async (params?: { period?: string; payment_meth
 // Driver Earnings Summary (Aggregated totals, payment breakdown, net COD settlement)
 export const getDriverEarningsSummary = async () => {
   return api.get<DriverEarningsSummary>('/deliveries/earnings/summary/');
+};
+
+// Driver Payouts
+export const getDriverPayouts = async (params?: { status?: string }) => {
+  return api.get<DriverPayout[]>('/deliveries/payouts/', { params });
+};
+
+export const getDriverPayoutDetail = async (id: number) => {
+  return api.get<DriverPayout>(`/deliveries/payouts/${id}/`);
+};
+
+export const confirmDriverPayout = async (id: number) => {
+  return api.post<{ message: string; payout: DriverPayout }>(`/deliveries/payouts/${id}/confirm/`);
+};
+
+export const disputeDriverPayout = async (id: number, reason: string) => {
+  return api.post<{ message: string; payout: DriverPayout }>(`/deliveries/payouts/${id}/dispute/`, { reason });
 };
 
 // COD orders the driver has delivered (supports filter: 'pending' | 'settled' | 'all')
