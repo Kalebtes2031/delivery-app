@@ -258,7 +258,7 @@ export default function EarningsScreen() {
       return (
         <View style={[styles.payoutStatusPill, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
           <Ionicons name="checkmark-done" size={10} color="#16A34A" style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: '#16A34A' }]}>{t('confirmed', 'Paid')}</Text>
+          <Text style={[styles.payoutStatusPillText, { color: '#16A34A' }]}>{t('paid', 'Paid')}</Text>
         </View>
       );
     }
@@ -266,7 +266,15 @@ export default function EarningsScreen() {
       return (
         <View style={[styles.payoutStatusPill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
           <Ionicons name="time" size={10} color="#D97706" style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: '#D97706' }]}>{t('pendingConfirmation', 'Disbursed')}</Text>
+          <Text style={[styles.payoutStatusPillText, { color: '#D97706' }]}>{t('disbursed', 'Disbursed')}</Text>
+        </View>
+      );
+    }
+    if (status === 'disputed') {
+      return (
+        <View style={[styles.payoutStatusPill, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+          <Ionicons name="alert-circle" size={10} color="#DC2626" style={{ marginRight: 2 }} />
+          <Text style={[styles.payoutStatusPillText, { color: '#DC2626' }]}>{t('disputed', 'Disputed')}</Text>
         </View>
       );
     }
@@ -278,26 +286,42 @@ export default function EarningsScreen() {
     );
   };
 
-  // Find first payout awaiting driver confirmation
-  const pendingPayout = useMemo(() => {
-    return payouts.find((p) => p.status === 'disbursed');
+  // Payouts awaiting driver confirmation
+  const pendingPayouts = useMemo(() => {
+    return payouts.filter((p) => p.status === 'disbursed');
+  }, [payouts]);
+  const pendingPayout = pendingPayouts.length > 0 ? pendingPayouts[0] : null;
+
+  // Disputed payouts under review
+  const disputedPayouts = useMemo(() => {
+    return payouts.filter((p) => p.status === 'disputed');
   }, [payouts]);
 
   const renderOrderItem = ({ item }: { item: DriverEarningItem }) => {
     const fee = parseFloat(item.driver_earning || item.delivery_fee || '0').toFixed(2);
     const dateStr = item.completed_at
-      ? new Date(item.completed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      ? new Date(item.completed_at).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : item.assigned_at
-        ? new Date(item.assigned_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-        : '';
+      ? new Date(item.assigned_at).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        })
+      : '';
 
-    const companyName = isAmharic && item.company_name_am
-      ? item.company_name_am
-      : item.company_name || t('vendor', 'Store');
+    const companyName =
+      isAmharic && item.company_name_am
+        ? item.company_name_am
+        : item.company_name || t('vendor', 'Store');
 
-    const orderId = item.master_order_id && item.vendor_order_id
-      ? `${item.master_order_id}-${item.vendor_order_id}`
-      : (item.order_number || '').replace(/^MO-/, '').replace(/-VO-/, '-');
+    const orderId =
+      item.master_order_id && item.vendor_order_id
+        ? `${item.master_order_id}-${item.vendor_order_id}`
+        : (item.order_number || '').replace(/^MO-/, '').replace(/-VO-/, '-');
     const displayOrderNumber = t('orderNumber', { id: orderId, defaultValue: `Order #${orderId}` });
 
     return (
@@ -309,14 +333,17 @@ export default function EarningsScreen() {
           setModalVisible(true);
         }}
       >
+        {/* Row 1: Order # + Store & Delivery Fee */}
         <View style={styles.cardTopRow}>
           <View style={styles.orderNumberRow}>
             <View style={styles.cardIconCircle}>
               <MaterialCommunityIcons name="moped" size={18} color="#6750A4" />
             </View>
-            <View>
-              <Text style={styles.orderNumberText}>{displayOrderNumber}</Text>
-              <Text style={styles.storeNameText} numberOfLines={1}>{companyName}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.orderNumberText}>#{orderId}</Text>
+              <Text style={styles.storeNameText} numberOfLines={1}>
+                {companyName}
+              </Text>
             </View>
           </View>
 
@@ -326,19 +353,54 @@ export default function EarningsScreen() {
           </View>
         </View>
 
-        <View style={styles.cardBottomRow}>
+        {/* Row 2: Customer Name & Completion Time */}
+        <View style={styles.cardMiddleRow}>
           <View style={styles.customerRow}>
-            <Ionicons name="location-outline" size={13} color="#64748B" />
+            <Ionicons name="person-outline" size={13} color="#64748B" />
             <Text style={styles.customerText} numberOfLines={1}>
               {item.customer_name || t('customer', 'Customer')}
             </Text>
           </View>
+          {!!dateStr && (
+            <View style={styles.dateRow}>
+              <Ionicons name="time-outline" size={12} color="#94A3B8" />
+              <Text style={styles.dateText}>{dateStr}</Text>
+            </View>
+          )}
+        </View>
 
-          <View style={styles.badgeAndDate}>
-            {renderPaymentBadge(item.payment_method, item.payment_method_display)}
-            {renderPayoutStatusBadge(item.payout_status)}
-            {!!dateStr && <Text style={styles.dateText}>{dateStr}</Text>}
-          </View>
+        {/* Row 3: Responsive Badges (Payment, Payout Status, COD Handover) */}
+        <View style={styles.cardBadgesRow}>
+          {renderPaymentBadge(item.payment_method, item.payment_method_display)}
+          {renderPayoutStatusBadge(item.payout_status)}
+          {item.payment_method?.toLowerCase() === 'cod' && (
+            <View
+              style={[
+                styles.payoutStatusPill,
+                {
+                  backgroundColor: item.cod_payment_confirmed ? '#F0FDF4' : '#FFFBEB',
+                  borderColor: item.cod_payment_confirmed ? '#BBF7D0' : '#FDE68A',
+                },
+              ]}
+            >
+              <Ionicons
+                name={item.cod_payment_confirmed ? 'checkmark-circle' : 'cash-outline'}
+                size={10}
+                color={item.cod_payment_confirmed ? '#16A34A' : '#D97706'}
+                style={{ marginRight: 2 }}
+              />
+              <Text
+                style={[
+                  styles.payoutStatusPillText,
+                  { color: item.cod_payment_confirmed ? '#16A34A' : '#D97706' },
+                ]}
+              >
+                {item.cod_payment_confirmed
+                  ? t('codHandedIn', 'COD Handed In')
+                  : t('codPendingTurnIn', 'COD Pending Turn-in')}
+              </Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -372,6 +434,7 @@ export default function EarningsScreen() {
           setPayoutModalVisible(true);
         }}
       >
+        {/* Row 1: Payout Number & Store on left, Net Amount on right */}
         <View style={styles.payoutCardTopRow}>
           <View style={styles.payoutNumberGroup}>
             <View
@@ -381,21 +444,23 @@ export default function EarningsScreen() {
                   ? { backgroundColor: '#FEF3C7' }
                   : isConfirmed
                   ? { backgroundColor: '#DCFCE7' }
+                  : isDisputed
+                  ? { backgroundColor: '#FEE2E2' }
                   : { backgroundColor: '#F1F5F9' },
               ]}
             >
               <MaterialCommunityIcons
-                name={isAwaiting ? 'alert-circle' : isConfirmed ? 'check-decagram' : 'cash-multiple'}
+                name={isAwaiting ? 'alert-circle' : isConfirmed ? 'check-decagram' : isDisputed ? 'alert-octagon' : 'cash-multiple'}
                 size={18}
-                color={isAwaiting ? '#D97706' : isConfirmed ? '#16A34A' : '#64748B'}
+                color={isAwaiting ? '#D97706' : isConfirmed ? '#16A34A' : isDisputed ? '#DC2626' : '#64748B'}
               />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.payoutNumberText}>#{item.payout_number}</Text>
-                <View style={styles.payoutTypeTag}>
+                {/* <View style={styles.payoutTypeTag}>
                   <Text style={styles.payoutTypeTagText}>{item.payout_type?.toUpperCase()}</Text>
-                </View>
+                </View> */}
               </View>
               <Text style={styles.payoutStoreText} numberOfLines={1}>{compName}</Text>
             </View>
@@ -409,19 +474,37 @@ export default function EarningsScreen() {
           </View>
         </View>
 
-        <View style={styles.payoutCardBottomRow}>
-          <View style={styles.payoutMetaLeft}>
+        {/* Row 2: Metadata (Items count, date, payment channel) */}
+        <View style={styles.payoutCardMiddleRow}>
+          {item.status === 'cancelled' ? (
+            <View style={styles.payoutMetaItem}>
+              <Ionicons name="arrow-undo-outline" size={12} color="#64748B" />
+              <Text style={styles.payoutMetaText}>
+                {t('ordersReleased', 'Orders Released')}
+              </Text>
+            </View>
+          ) : (
             <View style={styles.payoutMetaItem}>
               <Ionicons name="receipt-outline" size={12} color="#64748B" />
               <Text style={styles.payoutMetaText}>
-                {item.items_count} {t('ordersSettled', 'Orders')}
+                {item.items_count === 1
+                  ? t('orderSettled_one', { count: 1, defaultValue: '1 Order Settled' })
+                  : t('ordersSettled_other', { count: item.items_count, defaultValue: `${item.items_count} Orders Settled` })}
               </Text>
             </View>
-            <Text style={styles.payoutMetaDot}>•</Text>
-            <Text style={styles.payoutMetaText}>{dateStr}</Text>
-          </View>
+          )}
+          <Text style={styles.payoutMetaDot}>•</Text>
+          <Text style={styles.payoutMetaText}>{dateStr}</Text>
+          {!!item.payment_method && (
+            <>
+              <Text style={styles.payoutMetaDot}>•</Text>
+              <Text style={styles.payoutMetaText}>{item.payment_method.toUpperCase()}</Text>
+            </>
+          )}
+        </View>
 
-          {/* Status Badge */}
+        {/* Row 3: Status Badge & Tap Action Hint */}
+        <View style={styles.payoutCardBottomRow}>
           <View
             style={[
               styles.payoutBadge,
@@ -471,13 +554,39 @@ export default function EarningsScreen() {
               ]}
             >
               {isAwaiting
-                ? t('confirmReceived', 'Confirm Receipt')
+                ? t('awaitingYourConfirmation', 'Awaiting Your Confirmation')
                 : isConfirmed
-                ? t('confirmed', 'Confirmed')
+                ? t('confirmedAndPaid', 'Confirmed & Paid')
                 : isDisputed
-                ? t('reportIssue', 'Disputed')
+                ? t('disputedUnderReview', 'Disputed / Under Review')
+                : item.status === 'cancelled'
+                ? t('cancelled', 'Cancelled')
                 : item.status}
             </Text>
+          </View>
+
+          <View style={styles.payoutActionHint}>
+            <Text
+              style={[
+                styles.payoutActionHintText,
+                isAwaiting
+                  ? { color: '#6750A4' }
+                  : isDisputed
+                  ? { color: '#DC2626' }
+                  : { color: '#64748B' },
+              ]}
+            >
+              {isAwaiting
+                ? t('reviewAndConfirm', 'Review & Confirm')
+                : isDisputed
+                ? t('viewDispute', 'View Dispute')
+                : t('receiptDetails', 'Receipt Details')}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={13}
+              color={isAwaiting ? '#6750A4' : isDisputed ? '#DC2626' : '#64748B'}
+            />
           </View>
         </View>
       </TouchableOpacity>
@@ -518,8 +627,8 @@ export default function EarningsScreen() {
         }
         ListHeaderComponent={
           <View style={styles.headerComponent}>
-            {/* Urgent Payout Confirmation Banner */}
-            {pendingPayout && (
+            {/* Urgent Payout Confirmation Banner (Single Payout) */}
+            {pendingPayouts.length === 1 && pendingPayout && (
               <TouchableOpacity
                 style={styles.pendingActionBanner}
                 activeOpacity={0.9}
@@ -537,7 +646,7 @@ export default function EarningsScreen() {
                       {t('payoutActionTitle', 'Payout Received?')}
                     </Text>
                     <View style={styles.pendingBannerBadge}>
-                      <Text style={styles.pendingBannerBadgeText}>{t('pendingConfirmation', 'Action Needed')}</Text>
+                      <Text style={styles.pendingBannerBadgeText}>{t('actionNeeded', 'Action Needed')}</Text>
                     </View>
                   </View>
                   <Text style={styles.pendingBannerSub}>
@@ -549,6 +658,84 @@ export default function EarningsScreen() {
                       <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
                     </View>
                   </View>
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {/* Multi-Payout Action Banner (When multiple stores disbursed) */}
+            {pendingPayouts.length > 1 && (
+              <TouchableOpacity
+                style={styles.pendingActionBanner}
+                activeOpacity={0.9}
+                onPress={() => {
+                  setMainTab('payouts');
+                }}
+              >
+                <View style={styles.pendingBannerIcon}>
+                  <MaterialCommunityIcons name="wallet-giftcard" size={24} color="#D97706" />
+                </View>
+                <View style={styles.pendingBannerContent}>
+                  <View style={styles.pendingBannerTitleRow}>
+                    <Text style={styles.pendingBannerTitle}>
+                      {t('multiPayoutsAwaitingTitle', {
+                        count: pendingPayouts.length,
+                        defaultValue: `${pendingPayouts.length} Payouts Awaiting Confirmation`,
+                      })}
+                    </Text>
+                    <View style={styles.pendingBannerBadge}>
+                      <Text style={styles.pendingBannerBadgeText}>{t('actionNeeded', 'Action Needed')}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.pendingBannerSub}>
+                    {t('multiPayoutsAwaitingSub', {
+                      count: pendingPayouts.length,
+                      total: pendingPayouts
+                        .reduce((sum, p) => sum + parseFloat(p.net_payout_amount || '0'), 0)
+                        .toFixed(2),
+                      defaultValue: `Total: ETB ${pendingPayouts
+                        .reduce((sum, p) => sum + parseFloat(p.net_payout_amount || '0'), 0)
+                        .toFixed(2)} across ${pendingPayouts.length} stores`,
+                    })}
+                  </Text>
+                  <View style={styles.pendingBannerBtnRow}>
+                    <View style={styles.confirmInlineBtn}>
+                      <Text style={styles.confirmInlineBtnText}>{t('reviewPayouts', 'Review Payouts')}</Text>
+                      <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {/* Disputed Payouts Notice Banner */}
+            {disputedPayouts.length > 0 && (
+              <TouchableOpacity
+                style={[styles.pendingActionBanner, { borderColor: '#FECACA', backgroundColor: '#FEF2F2' }]}
+                activeOpacity={0.9}
+                onPress={() => {
+                  setMainTab('payouts');
+                }}
+              >
+                <View style={[styles.pendingBannerIcon, { backgroundColor: '#FEE2E2' }]}>
+                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#DC2626" />
+                </View>
+                <View style={styles.pendingBannerContent}>
+                  <View style={styles.pendingBannerTitleRow}>
+                    <Text style={[styles.pendingBannerTitle, { color: '#991B1B' }]} numberOfLines={1}>
+                      {disputedPayouts.length === 1
+                        ? t('disputeTitleSingle', 'Payout Dispute')
+                        : t('disputeTitleMulti', {
+                            count: disputedPayouts.length,
+                            defaultValue: `${disputedPayouts.length} Payout Disputes`,
+                          })}
+                    </Text>
+                    <View style={[styles.pendingBannerBadge, { backgroundColor: '#FEE2E2', borderColor: '#FECACA', borderWidth: 1 }]}>
+                      <Text style={[styles.pendingBannerBadgeText, { color: '#DC2626' }]}>{t('underReview', 'Under Review')}</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.pendingBannerSub, { color: '#B91C1C' }]}>
+                    {t('disputeBannerSub', 'Store admin is reviewing your reported issue. Tap to view resolution details.')}
+                  </Text>
                 </View>
               </TouchableOpacity>
             )}
@@ -731,8 +918,12 @@ export default function EarningsScreen() {
               </Text>
               <Text style={styles.feedCount}>
                 {mainTab === 'orders'
-                  ? `${filteredEarnings.length} ${t('orders', 'Orders')}`
-                  : `${payouts.length} ${t('payouts', 'Payouts')}`}
+                  ? filteredEarnings.length === 1
+                    ? t('ordersCount_one', { count: 1, defaultValue: '1 Order' })
+                    : t('ordersCount_other', { count: filteredEarnings.length, defaultValue: `${filteredEarnings.length} Orders` })
+                  : payouts.length === 1
+                    ? t('payoutCount_one', { count: 1, defaultValue: '1 Payout' })
+                    : t('payoutCount_other', { count: payouts.length, defaultValue: `${payouts.length} Payouts` })}
               </Text>
             </View>
           </View>
@@ -774,6 +965,16 @@ export default function EarningsScreen() {
         onClose={() => {
           setModalVisible(false);
           setSelectedOrder(null);
+        }}
+        onViewPayout={(payoutId) => {
+          setModalVisible(false);
+          const found = payouts.find((p) => p.id === payoutId);
+          if (found) {
+            setSelectedPayout(found);
+            setPayoutModalVisible(true);
+          } else {
+            setMainTab('payouts');
+          }
         }}
       />
 
@@ -1134,28 +1335,41 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#16A34A',
   },
-  cardBottomRow: {
+  cardMiddleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    marginBottom: 8,
   },
   customerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     flex: 1,
+    marginRight: 8,
   },
   customerText: {
     fontSize: 12,
     color: '#64748B',
+    fontWeight: '500',
   },
-  badgeAndDate: {
+  dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
+  },
+  dateText: {
+    fontSize: 11,
+    color: '#94A3B8',
+  },
+  cardBadgesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
   },
   paymentBadge: {
     flexDirection: 'row',
@@ -1168,10 +1382,6 @@ const styles = StyleSheet.create({
   paymentBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-  },
-  dateText: {
-    fontSize: 11,
-    color: '#94A3B8',
   },
   centerBox: {
     paddingVertical: 50,
@@ -1240,18 +1450,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 2,
+    marginBottom: 4,
+    gap: 8,
   },
   pendingBannerTitle: {
     fontSize: 14,
     fontWeight: '800',
     color: '#92400E',
+    flex: 1,
+    flexShrink: 1,
   },
   pendingBannerBadge: {
     backgroundColor: '#FDE68A',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    flexShrink: 0,
   },
   pendingBannerBadgeText: {
     fontSize: 10,
@@ -1460,6 +1674,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#16A34A',
   },
+  payoutCardMiddleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
   payoutCardBottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1467,11 +1688,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#F8FAFC',
-  },
-  payoutMetaLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   payoutMetaItem: {
     flexDirection: 'row',
@@ -1496,6 +1712,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   payoutBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  payoutActionHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  payoutActionHintText: {
     fontSize: 11,
     fontWeight: '700',
   },

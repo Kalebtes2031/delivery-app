@@ -157,8 +157,11 @@ export interface DriverEarningItem {
   assigned_at: string;
   completed_at: string | null;
   is_paid?: boolean;
+  payout_id?: number | null;
   payout_status?: string;
   payout_number?: string | null;
+  cod_collected?: string;
+  cod_payment_confirmed?: boolean;
 }
 
 export interface DriverEarningsSummary {
@@ -183,6 +186,8 @@ export interface DriverEarningsSummary {
   unpaid_balance?: string;
   pending_confirmation_amount?: string;
   pending_confirmation_count?: number;
+  disputed_amount?: string;
+  disputed_count?: number;
   total_paid_out?: string;
 }
 

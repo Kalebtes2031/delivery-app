@@ -9,7 +9,22 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.active.deliveryapp",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification"
+        ],
+        "NSLocationWhenInUseUsageDescription": "Elilita Driver needs your location to navigate to pickup and delivery addresses.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Elilita Driver tracks your location in the background to provide live delivery tracking to customers.",
+        "NSLocationAlwaysUsageDescription": "Elilita Driver tracks your location while delivering orders even when the app is in the background.",
+        "NSPhotoLibraryUsageDescription": "Elilita Driver needs access to your photos to update your profile picture.",
+        "NSCameraUsageDescription": "Elilita Driver needs access to your camera to take a profile picture.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.active.deliveryapp",

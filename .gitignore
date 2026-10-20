@@ -9,7 +9,7 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native & Firebase secrets
 .kotlin/
 *.orig.*
 *.jks
@@ -17,6 +17,8 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+GoogleService-Info.plist
+GoogleService-Info*.plist
 
 # Metro
 .metro-health-check*
@@ -30,8 +32,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (keep .env.example committed)
+.env
 .env*.local
+!.env.example
 
 # typescript
 *.tsbuildinfo

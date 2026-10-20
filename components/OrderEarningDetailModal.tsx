@@ -18,6 +18,7 @@ interface OrderEarningDetailModalProps {
   visible: boolean;
   order: DriverEarningItem | null;
   onClose: () => void;
+  onViewPayout?: (payoutId: number) => void;
 }
 
 const { width } = Dimensions.get('window');
@@ -26,6 +27,7 @@ export default function OrderEarningDetailModal({
   visible,
   order,
   onClose,
+  onViewPayout,
 }: OrderEarningDetailModalProps) {
   const { t, i18n } = useTranslation('deliveryHome');
   const router = useRouter();
@@ -143,14 +145,100 @@ export default function OrderEarningDetailModal({
               </View> */}
             </View>
 
-            {/* Payment Method Badge & Info */}
-            {/* <View style={[styles.paymentBanner, { backgroundColor: payment.bg, borderColor: payment.color + '40' }]}>
-              <View style={styles.paymentBannerHeader}>
-                <MaterialCommunityIcons name={payment.icon as any} size={20} color={payment.color} />
-                <Text style={[styles.paymentBannerTitle, { color: payment.color }]}>{payment.badgeText}</Text>
+            {/* Payout Settlement Status Section */}
+            <View style={styles.sectionCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <Text style={styles.sectionTitle}>{t('payoutSettlementTitle', 'Payout Settlement')}</Text>
+                {order.payout_status === 'confirmed' ? (
+                  <View style={[styles.badgePill, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
+                    <Ionicons name="checkmark-done" size={12} color="#16A34A" />
+                    <Text style={[styles.badgePillText, { color: '#16A34A' }]}>{t('paidAndConfirmed', 'Paid & Confirmed')}</Text>
+                  </View>
+                ) : order.payout_status === 'disbursed' ? (
+                  <View style={[styles.badgePill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
+                    <Ionicons name="time" size={12} color="#D97706" />
+                    <Text style={[styles.badgePillText, { color: '#D97706' }]}>{t('disbursedAwaitingConfirm', 'Disbursed (Awaiting Confirm)')}</Text>
+                  </View>
+                ) : order.payout_status === 'disputed' ? (
+                  <View style={[styles.badgePill, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+                    <Ionicons name="alert-circle" size={12} color="#DC2626" />
+                    <Text style={[styles.badgePillText, { color: '#DC2626' }]}>{t('disputedUnderReview', 'Disputed / Under Review')}</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.badgePill, { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }]}>
+                    <Ionicons name="hourglass-outline" size={12} color="#64748B" />
+                    <Text style={[styles.badgePillText, { color: '#64748B' }]}>{t('unpaidQueued', 'Unpaid / Queued')}</Text>
+                  </View>
+                )}
               </View>
-              <Text style={styles.paymentBannerNote}>{payment.note}</Text>
-            </View> */}
+
+              {/* COD Handover Status if COD order */}
+              {order.payment_method?.toLowerCase() === 'cod' && (
+                <View style={styles.codHandoverRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.tableLabel}>{t('codCollectedTitle', 'Cash on Delivery Collected')}</Text>
+                    <Text style={styles.codStatusSubtitle}>
+                      {order.cod_payment_confirmed
+                        ? t('codHandedInSub', 'Cash handed in to store admin.')
+                        : t('codPendingTurnInSub', 'Physical cash awaiting turn-in to store.')}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.badgePill,
+                      {
+                        backgroundColor: order.cod_payment_confirmed ? '#F0FDF4' : '#FFFBEB',
+                        borderColor: order.cod_payment_confirmed ? '#BBF7D0' : '#FDE68A',
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={order.cod_payment_confirmed ? 'checkmark-circle' : 'cash-outline'}
+                      size={12}
+                      color={order.cod_payment_confirmed ? '#16A34A' : '#D97706'}
+                    />
+                    <Text
+                      style={[
+                        styles.badgePillText,
+                        { color: order.cod_payment_confirmed ? '#16A34A' : '#D97706' },
+                      ]}
+                    >
+                      {order.cod_payment_confirmed
+                        ? t('handedIn', 'Handed In')
+                        : t('pendingTurnIn', 'Pending Turn-in')}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Payout Reference & Link */}
+              {order.payout_id ? (
+                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableLabel}>{t('payoutReferenceLabel', 'Payout Reference')}</Text>
+                    <Text style={styles.tableValueSmall}>{order.payout_number || `#DP-${order.payout_id}`}</Text>
+                  </View>
+                  {onViewPayout && (
+                    <TouchableOpacity
+                      style={styles.viewPayoutBtn}
+                      activeOpacity={0.8}
+                      onPress={() => onViewPayout(order.payout_id!)}
+                    >
+                      <MaterialCommunityIcons name="receipt-text-outline" size={15} color="#6750A4" />
+                      <Text style={styles.viewPayoutBtnText}>{t('viewSettlementReceipt', 'View Settlement Receipt')}</Text>
+                      <Ionicons name="chevron-forward" size={14} color="#6750A4" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                <Text style={styles.unpaidHelperText}>
+                  {t('unpaidQueuedHelper', {
+                    store: companyName,
+                    defaultValue: `This delivery fee is queued for settlement in the next payout batch by ${companyName}.`,
+                  })}
+                </Text>
+              )}
+            </View>
 
             {/* Financial Summary Table */}
             <View style={styles.sectionCard}>
@@ -484,5 +572,56 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  badgePillText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  codHandoverRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
+  },
+  codStatusSubtitle: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  viewPayoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#F5F3FF',
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    marginTop: 8,
+  },
+  viewPayoutBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6750A4',
+  },
+  unpaidHelperText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    marginTop: 6,
+    lineHeight: 16,
   },
 });

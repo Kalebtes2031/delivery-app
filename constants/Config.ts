@@ -1,14 +1,33 @@
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const API_URL = Platform.select({
-    // android: 'https://vivacious-pedigree-reissue.ngrok-free.dev/api/v1',
-    android: 'http://192.168.1.4:8000/api/v1',
-    // android: 'http://192.168.100.51:8000/api/v1',
-    // android: 'https://backend-qine.activetechet.com/api/v1',
-    // ios: 'https://backend-qine.activetechet.com/api/v1',
-    // default: 'https://backend.elilitapp.com/api/v1',
-});
+function requireApiUrl(): string {
+  const url =
+    process.env.EXPO_PUBLIC_API_URL ||
+    (Constants.expoConfig?.extra?.apiUrl as string | undefined);
+
+  if (url && typeof url === 'string' && url.trim().length > 0) {
+    return url.trim().replace(/\/$/, '');
+  }
+
+  if (__DEV__) {
+    console.warn(
+      '[Config] EXPO_PUBLIC_API_URL is not set. Please define EXPO_PUBLIC_API_URL in your .env file or Expo environment variables.'
+    );
+  } else {
+    console.error(
+      '[Config] EXPO_PUBLIC_API_URL is missing. Ensure EXPO_PUBLIC_API_URL is configured in your EAS project environment variables.'
+    );
+  }
+
+  return '';
+}
+
+const API_URL = requireApiUrl();
+
+/** Origin for media paths returned as /media/... from the API */
+const API_ORIGIN = API_URL ? API_URL.replace(/\/api\/v1\/?$/, '') : '';
 
 export default {
-    API_URL,
+  API_URL,
+  API_ORIGIN,
 };

@@ -96,6 +96,10 @@ export async function registerForPush(): Promise<string | null> {
       return null;
     }
 
+    if (Platform.OS === 'ios') {
+      await messaging().registerDeviceForRemoteMessages();
+    }
+
     const token = await messaging().getToken();
     if (!token) return null;
 
