@@ -181,19 +181,19 @@ export default function ProfileScreen() {
             <MenuItem
               icon={<Ionicons name="document-text-outline" size={20} color="#fff" />}
               label={t('termsAndConditions')}
-            // onPress={() => router.push("/terms")}
+            onPress={() => router.push("/terms")}
             />
 
             <MenuItem
               icon={<Ionicons name="shield-checkmark-outline" size={20} color="#fff" />}
               label={t('privacyPolicy')}
-            // onPress={() => router.push("/privacy-policy")}
+            onPress={() => router.push("/privacy-policy")}
             />
 
             <MenuItem
               icon={<Ionicons name="help-circle-outline" size={20} color="#fff" />}
               label={t('helpAndSupport')}
-            // onPress={() => router.push("/help")}
+            onPress={() => router.push("/help")}
             />
 
             <MenuItem
