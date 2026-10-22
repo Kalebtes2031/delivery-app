@@ -5,6 +5,9 @@ export default {
   termsAndConditions: "የአጠቃቀም ውሎች",
   privacyPolicy: "የግላዊነት መመሪያ",
   helpAndSupport: "እገዛ እና ድጋፍ",
+  shareApp: "መተግበሪያውን ያጋሩ",
+  shareMessage:
+    "እልልታ የማድረሻ መተግበሪያ (Elilita Delivery App) - ይቀላቀሉን፣ ያድሱ፣ ገቢ ያግኙ!\n\n🛵 ፈጣንና አስተማማኝ የማድረሻ ትዕዛዞች\n📍 የቀጥታ የካርታ አቅጣጫና ቀላል አጠቃቀም\n💵 አስተማማኝና ፈጣን የገቢ ክፍያ ስርዓት\n\nአሁኑኑ በነፃ ጭነው ይጠቀሙበት፦",
   signOut: "ይውጡ",
   activeDeliveryApp: "እልልታ የማድረሻ መተግበሪያ v1.0.0",
   signOutConfirmTitle: "መውጣት",

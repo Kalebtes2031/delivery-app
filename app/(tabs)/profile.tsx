@@ -15,8 +15,9 @@ import { Ionicons, Feather, Entypo, MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
 import StarRating from '@/components/StarRating';
-import { useTranslation } from 'react-i18next';
-import { Linking } from 'react-native';
+import { Linking, Share } from 'react-native';
+import { Asset } from 'expo-asset';
+import RNShare from 'react-native-share';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -69,7 +70,70 @@ export default function ProfileScreen() {
   const { user, logout, refreshUser } = useAuth();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { t } = useTranslation('driverProfile');
+  const { t, i18n } = useTranslation(['driverProfile', 'common']);
+  const isAmharic = i18n.language === 'am';
+  const isSharingRef = useRef(false);
+
+  const handleShareApp = async () => {
+    if (isSharingRef.current) return;
+
+    isSharingRef.current = true;
+
+    const appName = isAmharic ? 'እልልታ የማድረሻ መተግበሪያ' : 'Elilita Delivery App';
+    const playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.active.deliveryapp';
+
+    const defaultShareMessage = isAmharic
+      ? 'እልልታ የማድረሻ መተግበሪያ (Elilita Delivery App) - ይቀላቀሉን፣ ያድሱ፣ ገቢ ያግኙ!\n\n🛵 ፈጣንና አስተማማኝ የማድረሻ ትዕዛዞች\n📍 የቀጥታ የካርታ አቅጣጫና ቀላል አጠቃቀም\n💵 አስተማማኝና ፈጣን የገቢ ክፍያ ስርዓት\n\nአሁኑኑ በነፃ ጭነው ይጠቀሙበት፦'
+      : 'Discover Elilita Delivery App - Deliver, earn, and grow with us!\n\n🛵 Fast and reliable delivery orders\n📍 Live GPS navigation and easy order management\n💵 Reliable and quick earnings payouts\n\nDownload for free:';
+
+    const message = `${t('shareMessage', {
+      defaultValue: defaultShareMessage,
+    })}\n${playStoreUrl}`;
+
+    try {
+      const asset = Asset.fromModule(
+        require('@/assets/images/elilitadeliveryshare.png')
+      );
+
+      await asset.downloadAsync();
+
+      const imageUri = asset.localUri ?? asset.uri;
+
+      if (!imageUri) {
+        throw new Error('Cover image is unavailable');
+      }
+
+      await RNShare.open({
+        title: appName,
+        subject: appName,
+        message,
+        url: imageUri,
+        type: 'image/png',
+        filename: 'elilitadeliveryshare',
+        failOnCancel: false,
+      });
+    } catch (error: any) {
+      if (
+        error?.message &&
+        !error.message.includes('User did not share') &&
+        !error.message.includes('CANCELLED')
+      ) {
+        console.error('Delivery app sharing failed:', error);
+        try {
+          await Share.share({
+            title: appName,
+            message,
+          });
+        } catch (fallbackError) {
+          console.error('Native share fallback failed:', fallbackError);
+        }
+      }
+    } finally {
+      isSharingRef.current = false;
+    }
+  };
+
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -194,6 +258,12 @@ export default function ProfileScreen() {
               icon={<Ionicons name="help-circle-outline" size={20} color="#fff" />}
               label={t('helpAndSupport')}
             onPress={() => router.push("/help")}
+            />
+
+            <MenuItem
+              icon={<Ionicons name="share-social-outline" size={20} color="#fff" />}
+              label={t('shareApp', { defaultValue: 'Share App' })}
+              onPress={handleShareApp}
             />
 
             <MenuItem

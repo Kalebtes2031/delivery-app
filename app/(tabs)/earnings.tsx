@@ -186,6 +186,16 @@ export default function EarningsScreen() {
     return (amount / trips).toFixed(2);
   };
 
+  const formatMoney = (val: string | number | undefined | null) => {
+    if (val === undefined || val === null || val === '') return '0.00';
+    const num = typeof val === 'number' ? val : parseFloat(val);
+    if (isNaN(num)) return '0.00';
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   const getPeriodLabel = () => {
     switch (period) {
       case 'today':
@@ -774,11 +784,18 @@ export default function EarningsScreen() {
 
               <View style={styles.heroAmountRow}>
                 <Text style={styles.heroCurrency}>{t('etb', 'ETB')}</Text>
-                <Text style={styles.heroAmount}>+{getHeroAmount()}</Text>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.65}
+                  style={styles.heroAmount}
+                >
+                  +{formatMoney(getHeroAmount())}
+                </Text>
               </View>
 
-              {/* Quick Sub-Stats inside Hero */}
-              <View style={styles.heroMetricsRow}>
+              {/* [Commented out to save vertical space]: Completed Deliveries & Avg / Delivery */}
+              {/* <View style={styles.heroMetricsRow}>
                 <View style={styles.heroMetricItem}>
                   <Text style={styles.heroMetricVal}>{getPeriodCompletedTrips()}</Text>
                   <Text
@@ -798,11 +815,62 @@ export default function EarningsScreen() {
                     minimumFontScale={0.8}
                     style={styles.heroMetricLbl}>{t('avgPerDelivery', 'Avg / Delivery')}</Text>
                 </View>
+              </View> */}
+
+              {/* Compact Settlement Row inside Hero: Unpaid Balance vs Settled Payouts */}
+              <View style={styles.heroSettlementRow}>
+                <View style={styles.heroSettlementCol}>
+                  <View style={styles.heroSettlementIconRow}>
+                    <MaterialCommunityIcons name="clock-outline" size={13} color="#E9D5FF" />
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.75}
+                      style={styles.heroSettlementLabel}
+                    >
+                      {t('unpaidBalance', 'Unpaid Balance')}
+                    </Text>
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.68}
+                    style={styles.heroSettlementValueUnpaid}
+                  >
+                    {formatMoney(summary?.unpaid_balance ?? '0.00')}{' '}
+                    <Text style={styles.heroSettlementCurrency}>{t('etb', 'ETB')}</Text>
+                  </Text>
+                </View>
+
+                <View style={styles.heroSettlementDivider} />
+
+                <View style={styles.heroSettlementCol}>
+                  <View style={styles.heroSettlementIconRow}>
+                    <Ionicons name="checkmark-done-circle-outline" size={13} color="#E9D5FF" />
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.75}
+                      style={styles.heroSettlementLabel}
+                    >
+                      {t('totalPaidOut', 'Settled Payouts')}
+                    </Text>
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.68}
+                    style={styles.heroSettlementValuePaid}
+                  >
+                    {formatMoney(summary?.total_paid_out ?? '0.00')}{' '}
+                    <Text style={styles.heroSettlementCurrency}>{t('etb', 'ETB')}</Text>
+                  </Text>
+                </View>
               </View>
             </View>
 
-            {/* Settlement Overview Card (Unpaid Balance vs Settled Payouts) */}
-            <View style={styles.settlementOverviewCard}>
+            {/* [Commented out]: Redundant Settlement Overview Card replaced by compact in-hero row above */}
+            {/* <View style={styles.settlementOverviewCard}>
               <View style={styles.settlementCol}>
                 <View style={styles.settlementIconRow}>
                   <MaterialCommunityIcons name="clock-outline" size={14} color="#D97706" />
@@ -824,7 +892,7 @@ export default function EarningsScreen() {
                   {summary?.total_paid_out ?? '0.00'} <Text style={styles.settlementCurrency}>{t('etb', 'ETB')}</Text>
                 </Text>
               </View>
-            </View>
+            </View> */}
 
             {/* Main Tabs Switcher: Orders vs Payouts */}
             <View style={styles.mainTabSwitch}>
@@ -1101,8 +1169,11 @@ const styles = StyleSheet.create({
   heroAmountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    justifyContent: 'center',
     gap: 8,
     marginBottom: 16,
+    maxWidth: '100%',
+    paddingHorizontal: 8,
   },
   heroCurrency: {
     fontSize: 20,
@@ -1113,6 +1184,7 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '900',
     color: '#FFFFFF',
+    flexShrink: 1,
   },
   heroMetricsRow: {
     flexDirection: 'row',
@@ -1141,6 +1213,54 @@ const styles = StyleSheet.create({
   heroMetricDivider: {
     width: 1,
     height: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  // In-Hero Settlement Row Styles
+  heroSettlementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    width: '100%',
+  },
+  heroSettlementCol: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  heroSettlementIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 3,
+  },
+  heroSettlementLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#E9D5FF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  heroSettlementValueUnpaid: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#E9D5FF',
+  },
+  heroSettlementValuePaid: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#E9D5FF',
+  },
+  heroSettlementCurrency: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#F3E8FF',
+  },
+  heroSettlementDivider: {
+    width: 1,
+    height: 26,
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   channelsCard: {
