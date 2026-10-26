@@ -73,4 +73,15 @@ export default {
   deliveryConfirmationMessage: "Has the order been successfully delivered?",
   cancel: "Cancel",
   confirm: "Confirm",
+
+  // ── NEW DECLINE TRANSLATIONS ──
+  decline: "Decline",
+  declineAssignment: "Decline Assignment",
+  declineModalTitle: "Decline Order?",
+  declineModalMessage: "Are you sure you want to decline this delivery assignment? It will be removed from your list and reassigned to another driver.",
+  yesDecline: "Yes, Decline",
+  declineSuccessTitle: "Order Declined",
+  declineSuccessMessage: "The order has been removed from your list.",
+  declineFailedTitle: "Failed to decline",
+  declineFailedMessage: "Please try again.",
 };

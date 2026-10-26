@@ -137,8 +137,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     borderLeftWidth: 5,
-    zIndex: 999999,
-    elevation: 999999,
+    zIndex: 99999999,
+    elevation: 99999999,
     width: '92%',
     ...Platform.select({
       ios: {

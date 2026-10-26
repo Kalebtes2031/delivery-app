@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 
 function requireApiUrl(): string {
   const url =
-    process.env.EXPO_PUBLIC_API_URL ||"https://backend-qine.activetechet.com/api/v1"||
+    process.env.EXPO_PUBLIC_API_URL ||"https://backend.elilitapp.com/api/v1/"||
     (Constants.expoConfig?.extra?.apiUrl as string | undefined);
 
   if (url && typeof url === 'string' && url.trim().length > 0) {

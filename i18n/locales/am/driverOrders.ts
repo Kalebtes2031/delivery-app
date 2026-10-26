@@ -73,4 +73,15 @@ export default {
   deliveryConfirmationMessage: "ትዕዛዙ ለደንበኛው በተሳካ ሁኔታ ደርሷል?",
   cancel: "ይሰርዙ",
   confirm: "ያረጋግጡ",
+
+  // ── NEW DECLINE TRANSLATIONS ──
+  decline: "አልቀበልም",
+  declineAssignment: "ትዕዛዙን አልቀበልም",
+  declineModalTitle: "ትዕዛዙን ማለቅ?",
+  declineModalMessage: "እርግጠኛ ነዎት ይህንን የማድረሻ ትዕዛዝ ማለቅ ይፈልጋሉ? ከዝርዝርዎ ይወገዳል እና ለሌላ አሽከርካሪ ይመደባል።",
+  yesDecline: "አዎ፣ አልቀበልም",
+  declineSuccessTitle: "ትዕዛዙ ተሰርዟል",
+  declineSuccessMessage: "ትዕዛዙ ከዝርዝርዎ ተወግዷል።",
+  declineFailedTitle: "ማለቅ አልተቻለም",
+  declineFailedMessage: "እባክዎ እንደገና ይሞክሩ።",
 };

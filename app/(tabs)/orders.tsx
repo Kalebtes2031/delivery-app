@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -23,6 +24,10 @@ import {
 import ToggleSwitch from "@/components/ToggleButton";
 import { STATUS_TABS, STATUS_CONFIG } from "@/constants/deliveryConstants";
 import { useTranslation } from "react-i18next";
+import Toast from "react-native-toast-message";
+
+import { updateDeliveryStatus } from "@/services/api"; 
+
 // Helper to get display label for status
 const getStatusLabel = (status: string): string => {
   const statusMap: Record<string, string> = {
@@ -50,6 +55,12 @@ export default function OrdersScreen() {
 
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
+
+  // ── State for Decline Modal ──
+  const [declineModalVisible, setDeclineModalVisible] = useState(false);
+  const [orderToDecline, setOrderToDecline] = useState<DeliveryAssignment | null>(null);
+  const [isDeclining, setIsDeclining] = useState(false);
+
   // ── Get count for each status tab ──
   const getStatusCount = useCallback((status: string | "all") => {
     if (status === "all") {
@@ -66,7 +77,7 @@ export default function OrdersScreen() {
 
   // State to store location names
   const [locationNames, setLocationNames] = useState<Record<number, string>>({});
-  // ADD: State for loading locations
+  // State for loading locations
   const [loadingLocations, setLoadingLocations] = useState<Record<number, boolean>>({});
 
   // Helper to get location name from coordinates using OpenStreetMap
@@ -74,18 +85,15 @@ export default function OrdersScreen() {
     if (locationNames[deliveryId]) return; // Already fetched
 
     try {
-      // Use OpenStreetMap Nominatim API (FREE, no API key required)
       const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=16&addressdetails=1`;
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'DeliveryApp/1.0 (https://your-app.com)' // Required by OSM
+          'User-Agent': 'DeliveryApp/1.0 (https://your-app.com)'
         }
       });
 
-      // Handle rate limiting (HTTP 429)
       if (response.status === 429) {
-        // Wait 1 second and retry
         await new Promise(resolve => setTimeout(resolve, 1000));
         return getLocationName(lat, lon, deliveryId);
       }
@@ -93,10 +101,8 @@ export default function OrdersScreen() {
       const data = await response.json();
 
       if (data && data.display_name) {
-        // Extract the best location name
         let locationName = data.display_name;
 
-        // Try to get just the city/neighborhood for cleaner display
         if (data.address) {
           const city = data.address.city ||
             data.address.town ||
@@ -108,7 +114,6 @@ export default function OrdersScreen() {
           }
         }
 
-        // If still too long, shorten
         if (locationName.length > 35) {
           const parts = data.display_name.split(',');
           locationName = parts.slice(0, 2).join(',').trim();
@@ -116,7 +121,6 @@ export default function OrdersScreen() {
 
         setLocationNames(prev => ({ ...prev, [deliveryId]: locationName }));
       } else {
-        // If no display_name, try to get from address object
         if (data && data.address) {
           const addr = data.address;
           const parts = [];
@@ -129,55 +133,48 @@ export default function OrdersScreen() {
           }
         }
 
-        // Fallback: show formatted coordinates
         const latNum = parseFloat(lat).toFixed(4);
         const lonNum = parseFloat(lon).toFixed(4);
         setLocationNames(prev => ({ ...prev, [deliveryId]: `📍 ${latNum}, ${lonNum}` }));
       }
     } catch (error) {
       console.log('Error fetching location name:', error);
-      // Show formatted coordinates as fallback
       const latNum = parseFloat(lat).toFixed(4);
       const lonNum = parseFloat(lon).toFixed(4);
       setLocationNames(prev => ({ ...prev, [deliveryId]: `📍 ${latNum}, ${lonNum}` }));
     }
   }, [locationNames]);
 
-  // Fetch location names when deliveries load with throttling
   useEffect(() => {
     if (allDeliveries.length > 0) {
       allDeliveries.forEach((delivery, index) => {
         if (delivery.customer_lat && delivery.customer_lon) {
-          // Add delay between requests to avoid rate limiting
           setTimeout(() => {
             getLocationName(
               delivery.customer_lat,
               delivery.customer_lon,
               delivery.id
             );
-          }, index * 300); // 300ms between requests
+          }, index * 300);
         }
       });
     }
   }, [allDeliveries, getLocationName]);
 
-  // Navigation helper - opens in-app tracking map with customer location (view-only)
   const openNavigation = (deliveryId: number, orderId: number) => {
     router.push({
       pathname: "/delivery/tracking",
       params: {
         id: deliveryId.toString(),
         order_id: orderId.toString(),
-        viewOnly: "true" // ADDED: Tells tracking screen to hide complete button
+        viewOnly: "true"
       }
     });
   };
 
-  // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
-  // Reset animation when component mounts or filter changes
   const resetAnimation = useCallback(() => {
     fadeAnim.setValue(0);
     slideAnim.setValue(20);
@@ -202,59 +199,42 @@ export default function OrdersScreen() {
     }, [resetAnimation])
   );
 
-  // Also trigger animation when filter param changes
   useEffect(() => {
     resetAnimation();
   }, [filter, resetAnimation]);
-  /**
-   * Get the effective display status of a delivery.
-   * This centralizes the logic for determining what status to show.
-   * 
-   * Why: A delivery's display status might differ from its actual status
-   * when the associated order is cancelled/rejected/failed.
-   */
+
   const getEffectiveStatus = (delivery: DeliveryAssignment): DeliveryStatus => {
     const deliveryStatus = delivery.status?.toLowerCase?.() || 'pending';
     const orderStatus = (delivery as any)?.vendor_order_detail?.status?.toLowerCase?.() || '';
 
-    // Check if the order is in a failed state
     const isOrderFailed = ['cancelled', 'rejected', 'failed'].includes(orderStatus);
     const hasFailureReason = !!(delivery as any)?.failure_reason ||
       !!(delivery as any)?.cancellation_reason ||
       !!(delivery as any)?.vendor_order_detail?.failure_reason ||
       !!(delivery as any)?.vendor_order_detail?.cancellation_reason;
 
-    // If order is failed or has failure reason, show as failed
     if (isOrderFailed || hasFailureReason) {
       return 'failed';
     }
 
-    // Otherwise return the actual delivery status
     return deliveryStatus as DeliveryStatus;
   };
 
-  /**
-   * Check if a delivery should be considered "failed" for filtering purposes.
-   */
   const isFailedDelivery = (delivery: DeliveryAssignment): boolean => {
     return getEffectiveStatus(delivery) === 'failed';
   };
 
-  // Derive filtered + sorted deliveries from context
   const deliveries =
     activeTab === "all"
       ? [...allDeliveries].sort((a, b) => b.vendor_order - a.vendor_order)
       : allDeliveries
         .filter((d) => {
-          // For "failed" tab, show failed deliveries
           if (activeTab === 'failed') {
             return isFailedDelivery(d);
           }
-          // For "delivered" tab, exclude failed deliveries
           if (activeTab === 'delivered') {
             return d.status === 'delivered' && !isFailedDelivery(d);
           }
-          // For all other tabs, filter by status
           return d.status === activeTab;
         })
         .sort((a, b) => b.vendor_order - a.vendor_order);
@@ -280,10 +260,49 @@ export default function OrdersScreen() {
     refreshDeliveries();
   };
 
-  const renderDeliveryCard = ({ item }: { item: DeliveryAssignment }) => {
-    // Get the effective display status using the centralized helper
-    const normalizedStatus = getEffectiveStatus(item);
+  // ── Decline Handlers ──
+  const handleDeclinePress = (item: DeliveryAssignment) => {
+    setOrderToDecline(item);
+    setDeclineModalVisible(true);
+  };
 
+  const confirmDecline = async () => {
+    if (!orderToDecline) return;
+    try {
+      setIsDeclining(true);
+      
+      await updateDeliveryStatus(
+        orderToDecline.id, 
+        'declined', 
+        "Declined by driver", 
+        'declined'
+      );
+      
+      // ✅ Applied translation keys
+      Toast.show({
+        type: "success",
+        text1: t("declineSuccessTitle"),
+        text2: t("declineSuccessMessage"),
+      });
+      
+      setDeclineModalVisible(false);
+      setOrderToDecline(null);
+      refreshDeliveries();
+    } catch (error: any) {
+      console.error("Failed to decline order:", error);
+      // ✅ Applied translation keys
+      Toast.show({
+        type: "error",
+        text1: t("declineFailedTitle"),
+        text2: error.response?.data?.detail || t("declineFailedMessage"),
+      });
+    } finally {
+      setIsDeclining(false);
+    }
+  };
+
+  const renderDeliveryCard = ({ item }: { item: DeliveryAssignment }) => {
+    const normalizedStatus = getEffectiveStatus(item);
     const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.pending;
 
     const timeAssigned = new Date(item.assigned_at).toLocaleTimeString([], {
@@ -291,11 +310,8 @@ export default function OrdersScreen() {
       minute: "2-digit",
     });
     const dateAssigned = new Date(item.assigned_at).toLocaleDateString();
-    const dateTimeAssigned = `${dateAssigned} at ${timeAssigned}`;
-
-    // Localized names with fallback
-    const company =
-      (item as any)?.vendor_order_detail?.company;
+    
+    const company = (item as any)?.vendor_order_detail?.company;
 
     const companyName = isAmharic
       ? company?.name_am || company?.name || t("vendor")
@@ -304,45 +320,38 @@ export default function OrdersScreen() {
       ? (item as any)?.customer_name_am || item.customer_name || t("customer")
       : item.customer_name || (item as any)?.customer_name_am || t("customer");
 
-    // ✅ Function to get the best available address
     const getDeliveryAddress = () => {
       const detail = (item as any)?.vendor_order_detail;
 
-      // 1. Try API result FIRST (from latitude/longitude - MOST ACCURATE)
       if (locationNames[item.id] && locationNames[item.id] !== t('locationAvailable')) {
         return locationNames[item.id];
       }
 
-      // 2. If coordinates exist but API failed or loading, show formatted coordinates
       if (item.customer_lat && item.customer_lon) {
-        // If loading, show loading message
         if (loadingLocations[item.id]) {
           return t('loadingLocation');
         }
-        // Otherwise show formatted coordinates
         const lat = parseFloat(item.customer_lat).toFixed(4);
         const lon = parseFloat(item.customer_lon).toFixed(4);
         return `📍 ${lat}, ${lon}`;
       }
 
-      // 3. Try shipping_address_text (if API didn't return anything)
       if (detail?.shipping_address_text && detail.shipping_address_text !== 'Addis Ababa') {
         return detail.shipping_address_text;
       }
 
-      // 4. Try company_address
       if (item.company_address) {
         return item.company_address;
       }
 
-      // 5. Try shipping_address_text as fallback
       if (detail?.shipping_address_text) {
         return detail.shipping_address_text;
       }
 
-      // 6. Final fallback
       return t("customerLocation");
     };
+
+    const canDecline = normalizedStatus === 'pending' || normalizedStatus === 'assigned';
 
     return (
       <TouchableOpacity
@@ -350,14 +359,12 @@ export default function OrdersScreen() {
         activeOpacity={0.9}
         style={styles.card}
       >
-        {/* Vertical Line - Left Side */}
         <View style={styles.verticalLine} />
 
-        {/* Card Content */}
         <View style={styles.cardContent}>
           {/* Card Header */}
           <View style={styles.cardHeader}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.orderIdText}>
                 {t("orderNumber", { id: `${item?.vendor_order_detail?.master_order_id}-${item?.vendor_order}` })}
               </Text>
@@ -365,34 +372,47 @@ export default function OrdersScreen() {
                 {t("assignedAt", { time: timeAssigned })}
               </Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-              <MaterialCommunityIcons
-                name={config.icon}
-                size={14}
-                color={config.text}
-              />
 
-              <Text style={[styles.statusText, { color: config.text }]}>
-                {item.status === 'out_for_delivery' ? t('status.inTransit') :
-                  item.status === 'pending' ? t('status.assigned') :
-                    t(`status.${item.status}`)}
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {/* NEW: Small Decline Button */}
+              {canDecline && (
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation(); // Prevent card press
+                    handleDeclinePress(item);
+                  }}
+                  style={styles.smallDeclineBtn}
+                  activeOpacity={0.7}
+                >
+                  {/* ✅ Applied translation key */}
+                  <Text style={styles.smallDeclineText}>{t('decline')}</Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
+                <MaterialCommunityIcons
+                  name={config.icon}
+                  size={14}
+                  color={config.text}
+                />
+                <Text style={[styles.statusText, { color: config.text }]}>
+                  {item.status === 'out_for_delivery' ? t('status.inTransit') :
+                    item.status === 'pending' ? t('status.assigned') :
+                      t(`status.${item.status}`)}
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Route Visualization - Combined Clickable Area */}
+          {/* Route Visualization */}
           <View style={styles.routeContainer}>
             <View style={styles.routeIcons}>
               <View style={[styles.dot, { backgroundColor: "#6750A4" }]} />
               <View style={styles.line} />
-              {/* Location Icon - Now inside the border area */}
               {(() => {
                 const hasCoords = !!(item.customer_lat && item.customer_lon);
                 const isDelivered = normalizedStatus === 'delivered';
-
-                const iconColor = isDelivered
-                  ? '#6750A4'
-                  : '#EF4444';  // All non-delivered show red (including failed)
+                const iconColor = isDelivered ? '#6750A4' : '#EF4444';
 
                 return (
                   <View style={styles.locationIconWrapper}>
@@ -415,7 +435,6 @@ export default function OrdersScreen() {
                 </Text>
               </View>
 
-              {/* Deliver To - Combined Clickable Area (Icon + Name + Address) */}
               {(item.customer_lat && item.customer_lon && item.status === 'pending') ? (
                 <TouchableOpacity
                   onPress={(e) => {
@@ -451,7 +470,7 @@ export default function OrdersScreen() {
                   </Text>
                   <Text style={styles.addressText} numberOfLines={2}>
                     {loadingLocations[item.id]
-                      ? 'Loading location...'
+                      ? t('loadingLocation')
                       : getDeliveryAddress()}
                   </Text>
                 </View>
@@ -459,7 +478,6 @@ export default function OrdersScreen() {
             </View>
           </View>
 
-          {/* Card Footer — tap hint so users know the whole card is tappable */}
           <View style={styles.cardFooter}>
             <Text style={styles.tapHintText}>{t("viewDetails")}</Text>
             <View style={styles.arrowCircle}>
@@ -480,7 +498,6 @@ export default function OrdersScreen() {
           transform: [{ translateY: slideAnim }],
         }}
       >
-        {/* Header */}
         <Animated.View
           style={[
             styles.header,
@@ -493,10 +510,8 @@ export default function OrdersScreen() {
           <View>
             <Text style={styles.titleText}>{t("allOrders")}</Text>
           </View>
-          {/* <ToggleSwitch /> */}
         </Animated.View>
 
-        {/* Status Filter Tabs */}
         <Animated.View
           style={{
             marginBottom: 15,
@@ -546,7 +561,6 @@ export default function OrdersScreen() {
           </ScrollView>
         </Animated.View>
 
-        {/* Deliveries List */}
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color="#6750A4" />
@@ -580,6 +594,51 @@ export default function OrdersScreen() {
           />
         )}
       </Animated.View>
+
+      {/* ── Decline Confirmation Modal ── */}
+      <Modal
+        visible={declineModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeclineModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconWrapper}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
+            </View>
+            
+            {/* ✅ Applied translation keys */}
+            <Text style={styles.modalTitle}>{t('declineModalTitle')}</Text>
+            <Text style={styles.modalMessage}>
+              {t('declineModalMessage')}
+            </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setDeclineModalVisible(false)}
+                disabled={isDeclining}
+              >
+                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={confirmDecline}
+                disabled={isDeclining}
+              >
+                {isDeclining ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>{t('yesDecline')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -676,6 +735,23 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0,0,0,0.04)",
   },
   statusText: { fontSize: 10, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 },
+  
+  // Small Decline Button Styles
+  smallDeclineBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  smallDeclineText: {
+    color: '#DC2626',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+
   routeContainer: { flexDirection: "row", marginBottom: 15 },
   routeIcons: {
     alignItems: "center",
@@ -697,7 +773,6 @@ const styles = StyleSheet.create({
   companyName: { fontSize: 14, fontWeight: "600", color: "#1E293B", letterSpacing: -0.2 },
   customerName: { fontSize: 15, fontWeight: "700", color: "#0F172A", letterSpacing: -0.2 },
 
-  // Location icon wrapper
   locationIconWrapper: {
     position: 'relative',
     width: 52,
@@ -705,19 +780,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // ✅ Clickable Deliver To container - Light red border
   deliverToClickable: {
     padding: 10,
-    paddingLeft: 44,  // More left padding to create space
+    paddingLeft: 44,
     borderRadius: 12,
-    marginLeft: -44,   // Pull further left to create space around icon
+    marginLeft: -44,
     marginRight: -8,
     borderWidth: 1.5,
     borderColor: '#f9d4d4',
     borderStyle: 'dashed',
     backgroundColor: 'rgba(239, 68, 68, 0.04)',
   },
-  // Location header row with indicator
   locationHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -786,5 +859,77 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: "center",
     lineHeight: 20,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  modalIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

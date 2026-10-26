@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import Toast from 'react-native-toast-message'; // ✅ Added Toast import
 import type { DriverPayout } from '@/types';
 import { confirmDriverPayout, disputeDriverPayout } from '@/services/api';
 import ConfirmActionModal from './ConfirmActionModal';
@@ -96,19 +97,8 @@ export default function PayoutDetailModal({
   const [showDisputeInput, setShowDisputeInput] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
 
-  // Custom modal states (replacing OS native alerts)
+  // Modal state for receipt confirmation only
   const [showConfirmReceiptModal, setShowConfirmReceiptModal] = useState(false);
-  const [statusModalConfig, setStatusModalConfig] = useState<{
-    visible: boolean;
-    title: string;
-    description: string;
-    variant: 'danger' | 'warning' | 'info' | 'success';
-  }>({
-    visible: false,
-    title: '',
-    description: '',
-    variant: 'info',
-  });
 
   // Always invoke hooks unconditionally before any early returns
   const parsedNotes = useMemo(() => parsePayoutNotes(payout?.notes), [payout?.notes]);
@@ -149,25 +139,29 @@ export default function PayoutDetailModal({
       const res = await confirmDriverPayout(payout.id);
       setShowConfirmReceiptModal(false);
       onPayoutUpdated(res.data.payout);
-      setStatusModalConfig({
-        visible: true,
-        title: t('confirmSuccessTitle', 'Payout Confirmed!'),
-        description: t('confirmSuccessSub', {
+      
+      // ✅ Replaced Status Modal with Toast
+      Toast.show({
+        type: 'success',
+        text1: t('confirmSuccessTitle', 'Payout Confirmed!'),
+        text2: t('confirmSuccessSub', {
           amount: parseFloat(payout.net_payout_amount).toFixed(2),
           store: companyName,
           defaultValue: `You have successfully confirmed receiving ${parseFloat(payout.net_payout_amount).toFixed(2)} ETB from ${companyName}.`,
         }),
-        variant: 'success',
       });
+
     } catch (err: any) {
       setShowConfirmReceiptModal(false);
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Could not confirm payout. Please try again.';
-      setStatusModalConfig({
-        visible: true,
-        title: t('confirmFailedTitle', 'Confirmation Failed'),
-        description: msg,
-        variant: 'danger',
+      
+      // ✅ Replaced Status Modal with Toast
+      Toast.show({
+        type: 'error',
+        text1: t('confirmFailedTitle', 'Confirmation Failed'),
+        text2: msg,
       });
+
     } finally {
       setConfirming(false);
     }
@@ -175,11 +169,11 @@ export default function PayoutDetailModal({
 
   const handleDispute = async () => {
     if (!disputeReason.trim()) {
-      setStatusModalConfig({
-        visible: true,
-        title: t('reasonRequiredTitle', 'Reason Required'),
-        description: t('reasonRequiredDesc', 'Please describe the issue or why you have not received this payout.'),
-        variant: 'warning',
+      // ✅ Replaced Status Modal with Toast
+      Toast.show({
+        type: 'warning',
+        text1: t('reasonRequiredTitle', 'Reason Required'),
+        text2: t('reasonRequiredDesc', 'Please describe the issue or why you have not received this payout.'),
       });
       return;
     }
@@ -189,20 +183,24 @@ export default function PayoutDetailModal({
       setShowDisputeInput(false);
       setDisputeReason('');
       onPayoutUpdated(res.data.payout);
-      setStatusModalConfig({
-        visible: true,
-        title: t('disputeSubmittedTitle', 'Dispute Submitted'),
-        description: t('disputeSubmittedDesc', 'Your dispute has been reported to store administration for review and resolution.'),
-        variant: 'info',
+      
+      // ✅ Replaced Status Modal with Toast
+      Toast.show({
+        type: 'info',
+        text1: t('disputeSubmittedTitle', 'Dispute Submitted'),
+        text2: t('disputeSubmittedDesc', 'Your dispute has been reported to store administration for review and resolution.'),
       });
+
     } catch (err: any) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Could not submit dispute. Please try again.';
-      setStatusModalConfig({
-        visible: true,
-        title: t('disputeFailedTitle', 'Dispute Failed'),
-        description: msg,
-        variant: 'danger',
+      
+      // ✅ Replaced Status Modal with Toast
+      Toast.show({
+        type: 'error',
+        text1: t('disputeFailedTitle', 'Dispute Failed'),
+        text2: msg,
       });
+
     } finally {
       setDisputing(false);
     }
@@ -513,18 +511,6 @@ export default function PayoutDetailModal({
         isLoading={confirming}
         onConfirm={executeConfirm}
         onClose={() => setShowConfirmReceiptModal(false)}
-      />
-
-      {/* Status Alert Modal (Replacing OS native alert) */}
-      <ConfirmActionModal
-        visible={statusModalConfig.visible}
-        variant={statusModalConfig.variant}
-        title={statusModalConfig.title}
-        description={statusModalConfig.description}
-        info={true}
-        confirmText={t('ok', 'OK')}
-        onConfirm={() => setStatusModalConfig((prev) => ({ ...prev, visible: false }))}
-        onClose={() => setStatusModalConfig((prev) => ({ ...prev, visible: false }))}
       />
     </Modal>
   );

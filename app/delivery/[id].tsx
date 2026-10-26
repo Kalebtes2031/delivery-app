@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  Modal,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,7 +30,8 @@ import {
   STATUS_CONFIG,
   NEXT_ACTION,
 } from "@/constants/deliveryConstants";
-import { useTranslation } from "react-i18next"; // 👈 added
+import { useTranslation } from "react-i18next";
+import { updateDeliveryStatus } from "@/services/api"; 
 
 const { width } = Dimensions.get("window");
 
@@ -40,6 +42,10 @@ export default function DeliveryDetailScreen() {
   const [delivery, setDelivery] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+
+  // ── Decline State ──
+  const [declineModalVisible, setDeclineModalVisible] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
 
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
@@ -56,7 +62,6 @@ export default function DeliveryDetailScreen() {
     failed: { bg: "#FEF2F2", text: "#DC2626" },
   };
 
-  // Helper for localized names (same as OrdersScreen)
   const getLocalName = (
     defaultName: string | undefined,
     amField?: string | null,
@@ -111,6 +116,41 @@ export default function DeliveryDetailScreen() {
     }
   };
 
+  // ── Decline Handler ──
+  const confirmDecline = async () => {
+    if (!delivery) return;
+    try {
+      setIsDeclining(true);
+      
+      await updateDeliveryStatus(
+        delivery.id, 
+        'declined', 
+        "Declined by driver", 
+        'declined'
+      );
+      
+      // ✅ Applied translation keys
+      Toast.show({
+        type: "success",
+        text1: t("declineSuccessTitle"),
+        text2: t("declineSuccessMessage"),
+      });
+      
+      setDeclineModalVisible(false);
+      router.back();
+    } catch (error: any) {
+      console.error("Failed to decline order:", error);
+      // ✅ Applied translation keys
+      Toast.show({
+        type: "error",
+        text1: t("declineFailedTitle"),
+        text2: error.response?.data?.detail || t("declineFailedMessage"),
+      });
+    } finally {
+      setIsDeclining(false);
+    }
+  };
+
   if (loading)
     return (
       <View style={styles.loaderContainer}>
@@ -121,16 +161,12 @@ export default function DeliveryDetailScreen() {
   if (!delivery) return null;
   const action = NEXT_ACTION[delivery.status];
 
-  // Distinction between terminal non-success states
   const isDeclined = delivery?.status === 'declined';
   const isExpired = delivery?.status === 'expired';
   const isOrderFailed = delivery?.status === 'failed' ||
     delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
     delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
 
-  // Effective status for index calculation:
-  // - If declined or expired, the process terminated at step 0 (pending / dispatch offer)
-  // - If order failed during fulfillment, terminate at final step (delivered/failed)
   const effectiveStatus = (isDeclined || isExpired)
     ? 'pending'
     : isOrderFailed
@@ -141,8 +177,8 @@ export default function DeliveryDetailScreen() {
   const hasBottomActions = delivery.status !== "delivered" && !isDeclined && !isExpired && !isOrderFailed && Boolean(action);
   const orderDetail = delivery.vendor_order_detail;
 
+  const canDecline = delivery.status === 'pending';
 
-  // console.log(delivery);
   const companyName =
     isAmharic
       ? orderDetail?.company?.name_am || delivery?.company_name || t("vendor")
@@ -153,15 +189,12 @@ export default function DeliveryDetailScreen() {
   const customerNested = (delivery as any).customer;
   const customerName = getLocalName(customerDefault, customerAmField, customerNested) || customerDefault;
 
-  // Localized subcategory name (if available)
   const subCategoryDefault = orderDetail?.company?.sub_category_name || '';
   const subCategoryAm = (orderDetail?.company as any)?.sub_category_name_am;
   const subCategoryName = isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
 
   return (
-    <View style={[styles.container,
-      // { paddingTop: insets.top }
-    ]}>
+    <View style={[styles.container]}>
       <StatusBar barStyle="light-content" />
 
       {/* --- HERO HEADER --- */}
@@ -183,11 +216,9 @@ export default function DeliveryDetailScreen() {
               <Text style={styles.heroOrderTitle}>
                 {t('orderNumber', { id: `${delivery?.vendor_order_detail?.master_order_id}-${delivery?.vendor_order}` })}
               </Text>
-              {/* <Text style={styles.heroInvoiceTitle}>{orderDetail?.tax_invoice?.invoice_number}</Text> */}
             </View>
             <View></View>
           </View>
-
         </SafeAreaView>
         <View style={[styles.headerInfo, {
           position: "absolute", bottom: 50, left: 20,
@@ -226,7 +257,6 @@ export default function DeliveryDetailScreen() {
             : 20 + insets.bottom,
         }}
       >
-
         {/* --- STATUS PIPELINE --- */}
         <View style={styles.card}>
           <View style={styles.progressContainer}>
@@ -236,7 +266,6 @@ export default function DeliveryDetailScreen() {
               const isFuture = index > currentIndex;
               const isDeliveredCurrent = isCurrent && status === "delivered";
 
-              // Distinct step flags for terminal non-success states
               const isStepDeclined = isCurrent && index === 0 && isDeclined;
               const isStepExpired = isCurrent && index === 0 && isExpired;
               const isStepFailed = isDeliveredCurrent && isOrderFailed;
@@ -249,8 +278,7 @@ export default function DeliveryDetailScreen() {
                         style={[
                           styles.progressLine,
                           {
-                            backgroundColor:
-                              isCompleted ? "#16A34A" : "#E5E7EB",
+                            backgroundColor: isCompleted ? "#16A34A" : "#E5E7EB",
                             left: "-50%",
                             right: "50%",
                           },
@@ -350,6 +378,18 @@ export default function DeliveryDetailScreen() {
           </View>
         </View>
 
+        {/* --- NEW: DECLINE BUTTON SECTION --- */}
+        {canDecline && (
+          <TouchableOpacity
+            style={styles.declineBtn}
+            onPress={() => setDeclineModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="close-circle-outline" size={20} color="#DC2626" />
+            <Text style={styles.declineBtnText}>{t('declineAssignment')}</Text>
+          </TouchableOpacity>
+        )}
+
         {/* --- VENDOR & CUSTOMER CARDS --- */}
         <View style={styles.dualCardRow}>
           <View
@@ -362,11 +402,7 @@ export default function DeliveryDetailScreen() {
             <Text style={styles.miniTitle} numberOfLines={1}>
               {companyName}
             </Text>
-            <TouchableOpacity
-              style={styles.miniAction}
-            // onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${delivery.company_address}`)}
-            >
-              {/* <Feather name="map-pin" size={12} color="#6750A4" /> */}
+            <TouchableOpacity style={styles.miniAction}>
               <Text style={styles.miniActionText}>
                 {isAmharic ? t('store') : delivery.vendor_order_detail.company.business_type}
               </Text>
@@ -416,18 +452,15 @@ export default function DeliveryDetailScreen() {
                     borderRadius: 144,
                   },
                 ]}
-                onPress={() =>
-                  Linking.openURL(`tel:${delivery.customer_phone}`)
-                }
+                onPress={() => Linking.openURL(`tel:${delivery.customer_phone}`)}
               >
                 <Ionicons name="call" size={14} color="#ffffff" />
-                {/* <Text style={[styles.miniActionText, { color: '#10B981'}]}></Text> */}
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* --- ITEM LIST (The Core Addition) --- */}
+        {/* --- ITEM LIST --- */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardLabel}>
@@ -460,7 +493,6 @@ export default function DeliveryDetailScreen() {
               />
               <View style={styles.itemInfo}>
                 <Text style={styles.itemTitle}>{item.title}</Text>
-                {/* <Text style={styles.itemSku}>{t('sku')}: {item.sku}</Text> */}
                 <View style={styles.itemPriceRow}>
                   <Text style={styles.itemQty}>{t('qty')}: {item.qty}</Text>
                   <Text style={styles.itemPrice}>
@@ -494,7 +526,6 @@ export default function DeliveryDetailScreen() {
           </View>
         </View>
 
-        {/* Add extra bottom padding when no bottom actions */}
         {!hasBottomActions && <View style={{ height: insets.bottom + 20 }} />}
       </ScrollView>
 
@@ -523,40 +554,62 @@ export default function DeliveryDetailScreen() {
           paddingBottom: 20 + insets.bottom,
           paddingTop: 20
         }]}>
-
           {action && (
             <SlideToConfirm
-              label={t(`actions.${delivery.status}`)} // translated action label
+              label={t(`actions.${delivery.status}`)}
               color={action.color}
               icon={action.icon}
               onConfirm={handleStatusUpdate}
               isLoading={updating}
             />
           )}
-          {/* {delivery.status === 'delivered' && (
-          <TouchableOpacity
-            onPress={() => router.push(`/delivery/tracking?id=${delivery.id}`)}
-            style={{
-              flexDirection: 'row',
-              gap: 12,
-              backgroundColor: '#6750A4',
-              borderRadius: 120,
-              padding: 20,
-              alignItems: 'center',
-              shadowColor: '#6750A4',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.3,
-              shadowRadius: 20,
-              elevation: 10,
-              justifyContent: "center"
-            }}
-          >
-            <FontAwesome6 name="route" size={18} color="#fff" />
-            <Text style={styles.trackingFloatingText}>{t('trackOrder')}</Text>
-          </TouchableOpacity>
-        )} */}
         </View>
       )}
+
+      {/* --- DECLINE CONFIRMATION MODAL --- */}
+      <Modal
+        visible={declineModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeclineModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconWrapper}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
+            </View>
+            
+            {/* ✅ Applied translation keys */}
+            <Text style={styles.modalTitle}>{t('declineModalTitle')}</Text>
+            <Text style={styles.modalMessage}>
+              {t('declineModalMessage')}
+            </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setDeclineModalVisible(false)}
+                disabled={isDeclining}
+              >
+                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={confirmDecline}
+                disabled={isDeclining}
+              >
+                {isDeclining ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>{t('yesDecline')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -580,7 +633,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    // paddingTop: 10,
   },
   glassCircle: {
     width: 40,
@@ -642,6 +694,25 @@ const styles = StyleSheet.create({
   },
   categoryText: { fontSize: 10, fontWeight: "700", color: "#64748B" },
 
+  // NEW: Decline Button
+  declineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+    gap: 8,
+  },
+  declineBtnText: {
+    color: '#DC2626',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
   // Dual Cards
   dualCardRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
   miniCard: {
@@ -675,7 +746,7 @@ const styles = StyleSheet.create({
   },
   miniActionText: { fontSize: 10, fontWeight: "700", color: "#6750A4" },
 
-  // Pipeline (The one from previous step, integrated)
+  // Pipeline
   progressContainer: { flexDirection: "row", justifyContent: "space-between" },
   stepWrapper: { flex: 1, alignItems: "center" },
   nodeZone: {
@@ -717,15 +788,9 @@ const styles = StyleSheet.create({
     borderColor: "#F59E0B",
     opacity: 0.4,
   },
-  pulseRingCompleted: {
-    borderColor: "#16A34A",
-  },
-  pulseRingFailed: {
-    borderColor: "#DC2626",
-  },
-  pulseRingExpired: {
-    borderColor: "#D97706",
-  },
+  pulseRingCompleted: { borderColor: "#16A34A" },
+  pulseRingFailed: { borderColor: "#DC2626" },
+  pulseRingExpired: { borderColor: "#D97706" },
   stepLabel: {
     fontSize: 8,
     color: "#94A3B8",
@@ -830,5 +895,77 @@ const styles = StyleSheet.create({
     borderColor: "#10B981",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  modalIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
