@@ -6,7 +6,7 @@ export default {
   helpAndSupport: "Help & Support",
   shareApp: "Share App",
   shareMessage:
-    "Discover Elilita Delivery App - Deliver, earn, and grow with us!\n\n🛵 Fast and reliable delivery orders\n📍 Live GPS navigation and easy order management\n💵 Reliable and quick earnings payouts\n\nDownload for free:",
+    "Discover Elilita Delivery App - Deliver, earn, and grow with us!\n\n🛵 Fast and reliable delivery orders\n📲 On foot, by bicycle, motorcycle, or car, accept orders from your location.\n📍 Live GPS navigation and easy order management\n💵 Reliable and quick earnings payouts\n\nDownload for free:",
   signOut: "Sign Out",
   activeDeliveryApp: "Elilita Delivery App v1.0.0",
   signOutConfirmTitle: "Sign Out",

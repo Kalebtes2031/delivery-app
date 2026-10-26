@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import YoutubePlayer from "react-native-youtube-iframe";
 // import SuccessModal from "@/components/SuccessModal";
 
 const BRAND_COLOR = "#6750A4";
@@ -52,6 +53,7 @@ export default function HelpScreen() {
   const [showVideosModal, setShowVideosModal] = useState(false);
   const [preparingVideoId, setPreparingVideoId] = useState<string | null>(null);
   const [failedThumbs, setFailedThumbs] = useState<Record<string, boolean>>({});
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -213,57 +215,124 @@ export default function HelpScreen() {
     </View>
   );
 
+  const playVideoInline = (video: VideoTutorial) => {
+    setPlayingVideoId((current) => (current === video.id ? null : video.id));
+  };
+
   const renderVideoCard = (video: VideoTutorial) => {
     const isPreparing = preparingVideoId === video.id;
+    const isPlaying = playingVideoId === video.id;
     const thumbFailed = failedThumbs[video.id] === true;
     const coverUri = thumbFailed ? video.fallbackThumbnail : video.thumbnail;
+    const playerWidth = SCREEN_WIDTH - 36; // 18px horizontal padding from parent scrollview
 
     return (
       <View
         key={video.id}
         style={{
-          marginBottom: 12, overflow: "hidden", borderRadius: 12, borderWidth: 1,
-          borderColor: BORDER_COLOR, backgroundColor: "#fff",
-          shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8,
-          shadowOffset: { width: 0, height: 3 }, elevation: 2,
+          marginBottom: 12,
+          overflow: "hidden",
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: BORDER_COLOR,
+          backgroundColor: "#fff",
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 2,
         }}
       >
-        <TouchableOpacity onPress={() => openOnYouTube(video)} activeOpacity={0.85}>
-          <View
-            style={{
-              width: "100%", aspectRatio: 16 / 9, justifyContent: "center",
-              alignItems: "center", backgroundColor: BRAND_COLOR,
-            }}
-          >
-            {/* Thumbnail image */}
-            <ThumbnailImage
-              uri={coverUri}
-              onError={() => {
-                if (!thumbFailed) setFailedThumbs((prev) => ({ ...prev, [video.id]: true }));
+        {isPlaying ? (
+          <View style={{ backgroundColor: "#000" }}>
+            <YoutubePlayer
+              height={playerWidth * (9 / 16)}
+              width={playerWidth}
+              play={true}
+              videoId={video.id}
+              initialPlayerParams={{
+                preventFullScreen: false,
+                rel: false,
               }}
             />
-            <LinearGradient
-              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.6)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={[StyleSheet.absoluteFillObject, { justifyContent: "center", alignItems: "center" }]}
+            <TouchableOpacity
+              onPress={() => setPlayingVideoId(null)}
+              activeOpacity={0.7}
+              style={{
+                position: "absolute",
+                right: 8,
+                top: 8,
+                width: 32,
+                height: 32,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 16,
+                backgroundColor: "rgba(0,0,0,0.6)",
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close video"
             >
-              <View
-                style={{
-                  width: 56, height: 56, borderRadius: 28,
-                  backgroundColor: "rgba(255,255,255,0.25)",
-                  justifyContent: "center", alignItems: "center",
-                  borderWidth: 1.5, borderColor: "rgba(255,255,255,0.6)",
-                }}
-              >
-                <Ionicons name="play" size={28} color="white" style={{ marginLeft: 4 }} />
-              </View>
-              <Text style={{ marginTop: 8, fontSize: 12, fontWeight: "600", color: "rgba(255,255,255,0.9)" }}>
-                {t("videoTutorials.tapToPlay")}
-              </Text>
-            </LinearGradient>
+              <Ionicons name="close" size={18} color="white" />
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => playVideoInline(video)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={`Play ${t(video.titleKey)}`}
+          >
+            <View
+              style={{
+                width: "100%",
+                aspectRatio: 16 / 9,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: BRAND_COLOR,
+              }}
+            >
+              {/* Thumbnail image */}
+              <ThumbnailImage
+                uri={coverUri}
+                onError={() => {
+                  if (!thumbFailed) setFailedThumbs((prev) => ({ ...prev, [video.id]: true }));
+                }}
+              />
+              <LinearGradient
+                colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.6)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={[StyleSheet.absoluteFillObject, { justifyContent: "center", alignItems: "center" }]}
+              >
+                <View
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: "rgba(255,255,255,0.25)",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderWidth: 1.5,
+                    borderColor: "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  <Ionicons name="play" size={28} color="white" style={{ marginLeft: 4 }} />
+                </View>
+                <Text
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    fontWeight: "600",
+                    color: "rgba(255,255,255,0.9)",
+                  }}
+                >
+                  {t("videoTutorials.tapToPlay")}
+                </Text>
+              </LinearGradient>
+            </View>
+          </TouchableOpacity>
+        )}
+
         <View style={{ padding: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: "700", color: TEXT_PRIMARY }}>{t(video.titleKey)}</Text>
           <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 20, color: TEXT_SECONDARY }}>
@@ -274,10 +343,16 @@ export default function HelpScreen() {
             activeOpacity={0.7}
             disabled={isPreparing}
             style={{
-              marginTop: 16, flexDirection: "row", alignItems: "center",
-              justifyContent: "center", borderRadius: 8, paddingVertical: 10,
+              marginTop: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 8,
+              paddingVertical: 10,
               backgroundColor: "rgba(103,80,164,0.08)",
             }}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: isPreparing, busy: isPreparing }}
           >
             {isPreparing ? (
               <ActivityIndicator size="small" color={BRAND_COLOR} />
@@ -471,7 +546,10 @@ export default function HelpScreen() {
       <Modal
         visible={showVideosModal}
         animationType="slide"
-        onRequestClose={() => setShowVideosModal(false)}
+        onRequestClose={() => {
+          setPlayingVideoId(null);
+          setShowVideosModal(false);
+        }}
       >
         <View style={{ flex: 1, backgroundColor: BG_COLOR }}>
           <StatusBar barStyle="light-content" backgroundColor={BRAND_COLOR} />
@@ -491,7 +569,10 @@ export default function HelpScreen() {
                 {t("videoTutorials.sectionTitle")}
               </Text>
               <TouchableOpacity
-                onPress={() => setShowVideosModal(false)}
+                onPress={() => {
+                  setPlayingVideoId(null);
+                  setShowVideosModal(false);
+                }}
                 activeOpacity={0.7}
                 style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
               >

@@ -17,13 +17,21 @@ import ConfirmActionModal from '@/components/ConfirmActionModal';
 import StarRating from '@/components/StarRating';
 import { Linking, Share } from 'react-native';
 import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system/legacy';
 import RNShare from 'react-native-share';
+import { useTranslation } from 'react-i18next';
+import Config from '@/constants/Config';
+
+import { LinearGradient } from 'expo-linear-gradient';
+
+const BRAND_COLOR = "#6750A4";
 
 interface MenuItemProps {
   icon: React.ReactNode;
   label: string;
   danger?: boolean;
   onPress?: () => void;
+  style?: any;
 }
 
 function MenuItem({
@@ -31,37 +39,56 @@ function MenuItem({
   label,
   danger = false,
   onPress,
+  style,
 }: MenuItemProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={!onPress}
       activeOpacity={0.6}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 16,
-        borderBottomWidth: danger ? 0 : 1,
-        borderBottomColor: "rgba(255,255,255,0.1)",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <View style={{
-          width: 40,
-          height: 40,
-          borderRadius: 12,
+      style={[
+        {
+          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: danger ? "#ff000020" : "rgba(255,255,255,0.15)",
-        }}>
+          justifyContent: "space-between",
+          paddingVertical: 16,
+          borderBottomWidth: danger ? 0 : 1,
+          borderBottomColor: "rgba(255,255,255,0.1)",
+        },
+        style,
+      ]}
+    >
+      {/* LEFT SIDE */}
+      <View style={{ flexDirection: "row", alignItems: "center", columnGap: 12, flex: 1 }}>
+        <View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: danger ? "rgba(239, 68, 68, 0.2)" : "rgba(255, 255, 255, 0.1)",
+          }}
+        >
           {icon}
         </View>
-        <Text style={{ fontWeight: '600', fontSize: 16, color: "#fff" }} numberOfLines={1}
+
+        <Text
+          style={{ fontWeight: '600', fontSize: 16, color: "#fff", flex: 1 }}
+          numberOfLines={1}
           adjustsFontSizeToFit
-          minimumFontScale={0.8} >{label}</Text>
+          minimumFontScale={0.8}
+        >
+          {label}
+        </Text>
       </View>
-      {!danger && <Entypo name="chevron-right" size={20} color="#fff" />}
+
+      {/* RIGHT SIDE */}
+      {!danger && (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
+          <Entypo name="chevron-right" size={20} color="#fff" />
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -91,28 +118,93 @@ export default function ProfileScreen() {
       defaultValue: defaultShareMessage,
     })}\n${playStoreUrl}`;
 
+    const remoteImageUrl = `${Config.API_ORIGIN}/media/share/elilitadeliveryshare.jpg`;
+    const targetFile = `${FileSystem.cacheDirectory}elilitadeliveryshare.jpg`;
+    const tempFile = `${FileSystem.cacheDirectory}elilitadeliveryshare.jpg.tmp`;
+    const MIN_VALID_SIZE = 30000; // 30 KB
+    let isCachedValid = false;
+
     try {
-      const asset = Asset.fromModule(
-        require('@/assets/images/elilitadeliveryshare.png')
-      );
-
-      await asset.downloadAsync();
-
-      const imageUri = asset.localUri ?? asset.uri;
-
-      if (!imageUri) {
-        throw new Error('Cover image is unavailable');
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(targetFile);
+        if (fileInfo.exists && typeof fileInfo.size === 'number' && fileInfo.size >= MIN_VALID_SIZE) {
+          isCachedValid = true;
+        } else if (fileInfo.exists) {
+          // Truncated or corrupt from interrupted download - delete it so it re-downloads cleanly
+          await FileSystem.deleteAsync(targetFile, { idempotent: true });
+        }
+      } catch (cacheCheckErr) {
+        console.warn('Cache verification check error:', cacheCheckErr);
       }
 
-      await RNShare.open({
-        title: appName,
-        subject: appName,
-        message,
-        url: imageUri,
-        type: 'image/png',
-        filename: 'elilitadeliveryshare',
-        failOnCancel: false,
-      });
+      if (!isCachedValid) {
+        try {
+          await FileSystem.deleteAsync(tempFile, { idempotent: true });
+          const downloadRes = await FileSystem.downloadAsync(remoteImageUrl, tempFile);
+
+          if (downloadRes.status === 200) {
+            const tempInfo = await FileSystem.getInfoAsync(tempFile);
+            if (tempInfo.exists && typeof tempInfo.size === 'number' && tempInfo.size >= MIN_VALID_SIZE) {
+              await FileSystem.moveAsync({
+                from: tempFile,
+                to: targetFile,
+              });
+              isCachedValid = true;
+            }
+          }
+        } catch (downloadErr) {
+          console.warn('Backend image download failed, attempting asset fallback:', downloadErr);
+        } finally {
+          try {
+            await FileSystem.deleteAsync(tempFile, { idempotent: true });
+          } catch {}
+        }
+      }
+
+      // Dev-mode asset fallback if backend download was not possible
+      if (!isCachedValid) {
+        try {
+          const [asset] = await Asset.loadAsync(
+            require('@/assets/images/elilitadeliveryshare.jpg')
+          );
+          const sourceUri = asset.localUri || asset.uri;
+          if (
+            sourceUri &&
+            (sourceUri.startsWith('file:') ||
+              sourceUri.startsWith('http:') ||
+              sourceUri.startsWith('content:'))
+          ) {
+            await FileSystem.copyAsync({
+              from: sourceUri,
+              to: targetFile,
+            });
+            const fallbackInfo = await FileSystem.getInfoAsync(targetFile);
+            if (fallbackInfo.exists && typeof fallbackInfo.size === 'number' && fallbackInfo.size >= MIN_VALID_SIZE) {
+              isCachedValid = true;
+            }
+          }
+        } catch (assetErr) {
+          console.warn('Asset fallback copy failed:', assetErr);
+        }
+      }
+
+      if (isCachedValid) {
+        const shareUrl = targetFile.startsWith('file://') ? targetFile : `file://${targetFile}`;
+        await RNShare.open({
+          title: appName,
+          subject: appName,
+          message,
+          url: shareUrl,
+          type: 'image/jpeg',
+          filename: 'elilitadeliveryshare',
+          failOnCancel: false,
+        });
+      } else {
+        await Share.share({
+          title: appName,
+          message,
+        });
+      }
     } catch (error: any) {
       if (
         error?.message &&
@@ -229,50 +321,55 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* --- MENU OPTIONS --- */}
-          <View style={styles.menuContainer}>
+          <LinearGradient
+            colors={[BRAND_COLOR, "#6750A4"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.menuContainer}
+          >
             <MenuItem
-              icon={<Ionicons name="person-outline" size={20} color="#fff" />}
+              icon={<Ionicons name="person-outline" size={18} color="#fff" />}
               label={t('editProfile')}
               onPress={() => router.push("/myprofile")}
             />
 
             <MenuItem
-              icon={<Ionicons name="language-outline" size={20} color="#fff" />}
+              icon={<Ionicons name="language-outline" size={18} color="#fff" />}
               label={t('language')}
               onPress={() => router.push("/language")}
             />
 
             <MenuItem
-              icon={<Ionicons name="document-text-outline" size={20} color="#fff" />}
+              icon={<Ionicons name="document-text-outline" size={18} color="#fff" />}
               label={t('termsAndConditions')}
-            onPress={() => router.push("/terms")}
+              onPress={() => router.push("/terms")}
             />
 
             <MenuItem
-              icon={<Ionicons name="shield-checkmark-outline" size={20} color="#fff" />}
+              icon={<Ionicons name="shield-checkmark-outline" size={18} color="#fff" />}
               label={t('privacyPolicy')}
-            onPress={() => router.push("/privacy-policy")}
+              onPress={() => router.push("/privacy-policy")}
             />
 
             <MenuItem
-              icon={<Ionicons name="help-circle-outline" size={20} color="#fff" />}
+              icon={<Ionicons name="help-circle-outline" size={18} color="#fff" />}
               label={t('helpAndSupport')}
-            onPress={() => router.push("/help")}
+              onPress={() => router.push("/help")}
             />
 
             <MenuItem
-              icon={<Ionicons name="share-social-outline" size={20} color="#fff" />}
+              icon={<Ionicons name="share-social-outline" size={18} color="#fff" />}
               label={t('shareApp', { defaultValue: 'Share App' })}
               onPress={handleShareApp}
             />
 
             <MenuItem
-              icon={<MaterialIcons name="logout" size={20} color="#ff6b6b" />}
+              icon={<MaterialIcons name="logout" size={18} color="#ef4444" />}
               label={t('signOut')}
               danger
               onPress={() => setShowLogoutConfirm(true)}
             />
-          </View>
+          </LinearGradient>
 
           <Text style={styles.versionText}>{t('activeDeliveryApp')}</Text>
 
@@ -315,7 +412,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { paddingHorizontal: 24, paddingBottom: 40 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40, },
   header: { alignItems: 'center', marginTop: 8, marginBottom: 16 },
   avatarWrapper: { marginBottom: 8 },
   avatarPlaceholder: {
@@ -364,11 +461,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   menuContainer: {
-    backgroundColor: '#6750A4',
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    shadowColor: '#6750A4', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 5,
+    borderRadius: 15,
+    paddingHorizontal: 16,
+    shadowColor: '#6750A4',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 5,
   },
   versionText: { textAlign: 'center', color: '#CBD5E1', fontSize: 12, marginTop: 40, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
 });
