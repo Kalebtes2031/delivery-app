@@ -1,148 +1,288 @@
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, Animated } from "react-native";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, useFocusEffect } from "expo-router";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import StarRating from "@/components/StarRating";
+import { getMyDeliveryReviews } from "@/services/api";
+import type { DeliveryReview, DeliveryReviewsResponse } from "@/types";
 
-const BRAND_COLOR = "#6750A4";
+export default function ReviewsScreen() {
+  const router = useRouter();
+  const { t } = useTranslation("driverProfile");
 
-type Section = {
-  titleKey: string;
-  bodyKey: string;
-  icon: keyof typeof Ionicons.glyphMap;
-};
+  const [data, setData] = useState<DeliveryReviewsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
 
-export default function PrivacyPolicyScreen() {
-  const { t } = useTranslation("privacy");
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start();
+  const fetchReviews = useCallback(async () => {
+    try {
+      setError(false);
+      const res = await getMyDeliveryReviews();
+      setData(res.data);
+    } catch (err) {
+      setError(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
-  const sections: Section[] = [
-    { titleKey: "section1Title", bodyKey: "section1Body", icon: "folder-outline" },
-    { titleKey: "section2Title", bodyKey: "section2Body", icon: "settings-outline" },
-    { titleKey: "section3Title", bodyKey: "section3Body", icon: "share-social-outline" },
-    { titleKey: "section4Title", bodyKey: "section4Body", icon: "lock-closed-outline" },
-    { titleKey: "section5Title", bodyKey: "section5Body", icon: "person-outline" },
-    { titleKey: "section6Title", bodyKey: "section6Body", icon: "time-outline" },
-  ];
+  useFocusEffect(
+    useCallback(() => {
+      fetchReviews();
+    }, [fetchReviews]),
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchReviews();
+  };
+
+  const avg = parseFloat(data?.average_rating || "0") || 0;
+  const total = data?.total_reviews ?? 0;
+  const distribution = data?.distribution || {};
+  const reviews = data?.reviews || [];
+
+  const renderReview = ({ item }: { item: DeliveryReview }) => {
+    const date = item.created_at
+      ? new Date(item.created_at).toLocaleDateString()
+      : "";
+    const initial = (item.customer_name?.[0] || "C").toUpperCase();
+
+    return (
+      <View style={styles.reviewCard}>
+        <View style={styles.reviewHeader}>
+          {item.customer_image ? (
+            <Image source={{ uri: item.customer_image }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitial}>{initial}</Text>
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.reviewerName} numberOfLines={1}>
+              {item.customer_name || t("customerLabel")}
+            </Text>
+            <View style={styles.reviewMetaRow}>
+              <StarRating rating={item.rating} size={13} gap={1} />
+              {!!date && <Text style={styles.reviewDate}>{date}</Text>}
+            </View>
+          </View>
+        </View>
+        {!!item.comment && <Text style={styles.reviewComment}>{item.comment}</Text>}
+      </View>
+    );
+  };
+
+  const Header = () => (
+    <View>
+      {/* Summary hero */}
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryAverage}>{avg.toFixed(1)}</Text>
+        <StarRating rating={avg} size={22} color="#FBBF24" emptyColor="rgba(255,255,255,0.3)" />
+        <Text style={styles.summaryCount}>
+          {total > 0 ? t("reviewsCount", { count: total }) : t("noRatingYet")}
+        </Text>
+      </View>
+
+      {/* Distribution bars 
+      {total > 0 && (
+        <View style={styles.distributionCard}>
+          {[5, 4, 3, 2, 1].map((star) => {
+            const count = distribution[String(star)] || 0;
+            const pct = total > 0 ? (count / total) * 100 : 0;
+            return (
+              <View key={star} style={styles.distRow}>
+                <Text style={styles.distStar}>{star}</Text>
+                <Ionicons name="star" size={12} color="#FBBF24" />
+                <View style={styles.distTrack}>
+                  <View style={[styles.distFill, { width: `${pct}%` }]} />
+                </View>
+                <Text style={styles.distCount}>{count}</Text>
+              </View>
+            );
+          })}
+        </View>
+      )}*/}
+
+      {reviews.length > 0 && (
+        <Text style={styles.sectionLabel}>{t("recentReviews")}</Text>
+      )}
+    </View>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
-      <StatusBar barStyle="light-content" backgroundColor={BRAND_COLOR} />
-
-      <Animated.View
-        style={{
-          paddingHorizontal: 24,
-          paddingBottom: 24,
-          paddingTop: 16,
-          backgroundColor: BRAND_COLOR,
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        }}
-      >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{
-              width: 44, height: 44, borderRadius: 22,
-              backgroundColor: "rgba(255,255,255,0.2)",
-              alignItems: "center", justifyContent: "center",
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={22} color="white" />
-          </TouchableOpacity>
-          <Text style={{ color: "white", fontSize: 18, fontWeight: "700" }}>
-            {t("title")}
-          </Text>
-          <View style={{ width: 44 }} />
-        </View>
-        <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 12 }}>
-          {t("lastUpdated")}
-        </Text>
-      </Animated.View>
-
-      <Animated.ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-        style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
-      >
-        <View
-          style={{
-            backgroundColor: "#F5F0FF", borderRadius: 16, padding: 20, marginBottom: 24,
-            borderWidth: 1, borderColor: "#E8DFF5",
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Ionicons name="shield-checkmark" size={22} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: "700", fontSize: 16 }}>
-              {t("introductionTitle")}
-            </Text>
-          </View>
-          <Text style={{ color: "#6B7280", lineHeight: 24 }}>{t("introductionBody")}</Text>
-        </View>
-
-        {sections.map((section, index) => (
-          <View key={section.titleKey} style={{ marginBottom: 24 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <View
-                style={{
-                  width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: "rgba(103,80,164,0.1)",
-                  alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <Ionicons name={section.icon} size={18} color={BRAND_COLOR} />
-              </View>
-              <Text style={{ color: BRAND_COLOR, fontWeight: "700", fontSize: 17, flex: 1 }}>
-                {index + 1}. {t(section.titleKey)}
-              </Text>
-            </View>
-            <Text style={{ color: "#6B7280", lineHeight: 24, marginLeft: 46 }}>
-              {t(section.bodyKey)}
-            </Text>
-          </View>
-        ))}
-
-        <View
-          style={{
-            backgroundColor: "#F9FAFB", borderRadius: 16, padding: 20,
-            marginBottom: 24, borderWidth: 1, borderColor: "#E5E7EB",
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Ionicons name="mail-outline" size={20} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: "600" }}>{t("contactTitle")}</Text>
-          </View>
-          <Text style={{ color: "#6B7280", fontSize: 14 }}>
-            {t("contactBody")}{" "}
-            <Text style={{ color: BRAND_COLOR, fontWeight: "600" }}>privacy@elilitapp.com</Text>
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            backgroundColor: BRAND_COLOR, paddingVertical: 16, borderRadius: 16,
-            alignItems: "center", marginBottom: 20,
-          }}
-          activeOpacity={0.85}
-        >
-          <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
-            {t("acceptButton")}
-          </Text>
+    <SafeAreaView style={styles.container}>
+      {/* Header bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#6750A4" />
         </TouchableOpacity>
-      </Animated.ScrollView>
+        <Text style={styles.topBarTitle}>{t("ratingsAndReviews")}</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#6750A4" />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <MaterialCommunityIcons name="wifi-off" size={56} color="#CBD5E1" />
+          <Text style={styles.emptyMessage}>{t("reviewsError")}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchReviews}>
+            <Text style={styles.retryText}>{t("retry")}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={reviews}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderReview}
+          ListHeaderComponent={Header}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6750A4" />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyWrapper}>
+              <View style={styles.emptyIconCircle}>
+                <MaterialCommunityIcons name="star-outline" size={56} color="#6750A4" />
+              </View>
+              <Text style={styles.emptyTitle}>{t("noReviewsTitle")}</Text>
+              <Text style={styles.emptyMessage}>{t("noReviewsMessage")}</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#6750A4",
+  },
+  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#6750A4" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
+  listContent: { padding: 20, paddingBottom: 40 },
+
+  // Summary hero
+  summaryCard: {
+    backgroundColor: "#6750A4",
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginBottom: 16,
+    shadowColor: "#6750A4",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  summaryAverage: { color: "#fff", fontSize: 56, fontWeight: "900", lineHeight: 60 },
+  summaryCount: { color: "rgba(255,255,255,0.9)", fontSize: 14, fontWeight: "600", marginTop: 10 },
+
+  // Distribution
+  distributionCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 24,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  distRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  distStar: { fontSize: 13, fontWeight: "700", color: "#475569", width: 10, textAlign: "center" },
+  distTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#F1F5F9",
+    overflow: "hidden",
+    marginHorizontal: 4,
+  },
+  distFill: { height: "100%", borderRadius: 4, backgroundColor: "#FBBF24" },
+  distCount: { fontSize: 12, fontWeight: "700", color: "#94A3B8", width: 24, textAlign: "right" },
+
+  sectionLabel: { fontSize: 16, fontWeight: "800", color: "#1E293B", marginBottom: 12 },
+
+  // Review card
+  reviewCard: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  reviewHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#F1F5F9" },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#6750A415",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarInitial: { fontSize: 18, fontWeight: "800", color: "#6750A4" },
+  reviewerName: { fontSize: 15, fontWeight: "700", color: "#1E293B" },
+  reviewMetaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 3 },
+  reviewDate: { fontSize: 11, color: "#94A3B8" },
+  reviewComment: { fontSize: 14, color: "#475569", lineHeight: 20, marginTop: 12 },
+
+  // Empty / error
+  emptyWrapper: { alignItems: "center", justifyContent: "center", paddingHorizontal: 30, marginTop: 30 },
+  emptyIconCircle: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: "#6750A412",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  emptyTitle: { fontSize: 20, fontWeight: "900", color: "#1E293B", textAlign: "center" },
+  emptyMessage: { fontSize: 14, color: "#64748B", textAlign: "center", marginTop: 8, lineHeight: 21 },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: "#6750A4",
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  retryText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+});
