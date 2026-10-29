@@ -7,6 +7,7 @@ export default {
     picked_up: "የተረከቡ",
     out_for_delivery: "በማድረስ ላይ",
     delivered: "የደረሱ",
+    declined: "የተሰረዘ",
     failed: "ያልተሳኩ",
   },
   orderNumber: "ትዕዛዝ ቁጥር {{id}}",
