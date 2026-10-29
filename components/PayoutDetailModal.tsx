@@ -141,15 +141,15 @@ export default function PayoutDetailModal({
       onPayoutUpdated(res.data.payout);
       
       // ✅ Replaced Status Modal with Toast
-      Toast.show({
-        type: 'success',
-        text1: t('confirmSuccessTitle', 'Payout Confirmed!'),
-        text2: t('confirmSuccessSub', {
-          amount: parseFloat(payout.net_payout_amount).toFixed(2),
-          store: companyName,
-          defaultValue: `You have successfully confirmed receiving ${parseFloat(payout.net_payout_amount).toFixed(2)} ETB from ${companyName}.`,
-        }),
-      });
+      // Toast.show({
+      //   type: 'success',
+      //   text1: t('confirmSuccessTitle', 'Payout Confirmed!'),
+      //   text2: t('confirmSuccessSub', {
+      //     amount: parseFloat(payout.net_payout_amount).toFixed(2),
+      //     store: companyName,
+      //     defaultValue: `You have successfully confirmed receiving ${parseFloat(payout.net_payout_amount).toFixed(2)} ETB from ${companyName}.`,
+      //   }),
+      // });
 
     } catch (err: any) {
       setShowConfirmReceiptModal(false);

@@ -72,6 +72,9 @@ export default function OrdersScreen() {
     if (status === 'delivered') {
       return allDeliveries.filter((d) => d.status === 'delivered' && !isFailedDelivery(d)).length;
     }
+     if (status === 'declined') {
+    return allDeliveries.filter((d) => d.status === 'declined').length;
+  }
     return allDeliveries.filter((d) => d.status === status).length;
   }, [allDeliveries]);
 
@@ -235,6 +238,9 @@ export default function OrdersScreen() {
           if (activeTab === 'delivered') {
             return d.status === 'delivered' && !isFailedDelivery(d);
           }
+           if (activeTab === 'declined') {
+          return d.status === 'declined';
+        }
           return d.status === activeTab;
         })
         .sort((a, b) => b.vendor_order - a.vendor_order);
