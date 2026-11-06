@@ -35,6 +35,19 @@ export default function OrderEarningDetailModal({
   const { colors, isDark } = useAppTheme();
   const isAmharic = i18n.language?.startsWith('am');
 
+  // ─── Dark-mode aware design tokens ───────────────────────────────
+  const brand = isDark ? '#FFFFFF' : '#6750A4';
+  const brandSoftBg = isDark ? '#222222' : '#F5F3FF';
+  const brandBorder = isDark ? '#333333' : '#DDD6FE';
+  const sectionBg = isDark ? '#1A1A1A' : '#F8FAFC';
+  const sectionBorder = isDark ? '#222222' : '#E2E8F0';
+  const dividerColor = isDark ? '#333333' : '#E2E8F0';
+  const routeLineColor = isDark ? '#444444' : '#CBD5E1';
+  const iconCircleBg = isDark ? '#1A1A1A' : '#FFFFFF';
+  const closeBtnBg = isDark ? '#222222' : '#F1F5F9';
+  const closeBtnIcon = isDark ? '#FFFFFF' : '#64748B';
+  const heroBg = isDark ? '#000000' : '#6750A4';
+
   if (!order) return null;
 
   const earningAmount = parseFloat(order.driver_earning || order.delivery_fee || '0').toFixed(2);
@@ -56,8 +69,8 @@ export default function OrderEarningDetailModal({
         return {
           label: t('paymentBankTransfer', 'Bank Transfer'),
           icon: 'bank' as const,
-          color: '#2563EB',
-          bg: '#EFF6FF',
+          color: isDark ? '#93C5FD' : '#2563EB',
+          bg: isDark ? '#1E3A5F' : '#EFF6FF',
           badgeText: t('bankTransferBadge', 'Bank Transfer'),
           note: t(
             'bankTransferNote',
@@ -68,8 +81,8 @@ export default function OrderEarningDetailModal({
         return {
           label: t('paymentCOD', 'Cash on Delivery'),
           icon: 'cash-multiple' as const,
-          color: '#EA580C',
-          bg: '#FFF7ED',
+          color: isDark ? '#FDBA74' : '#EA580C',
+          bg: isDark ? '#3D2A1A' : '#FFF7ED',
           badgeText: t('codBadge', 'Cash on Delivery'),
           note: t(
             'codNote',
@@ -83,8 +96,8 @@ export default function OrderEarningDetailModal({
         return {
           label: order.payment_method_display || t('paymentOnline', 'Online Payment'),
           icon: 'credit-card-check-outline' as const,
-          color: '#10B981',
-          bg: '#F0FDF4',
+          color: isDark ? '#86EFAC' : '#10B981',
+          bg: isDark ? '#1A3D2A' : '#F0FDF4',
           badgeText: order.payment_method_display || t('onlineBadge', 'Online Paid'),
           note: t(
             'onlineNote',
@@ -111,18 +124,18 @@ export default function OrderEarningDetailModal({
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           {/* Header Bar */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: isDark ? '#222222' : '#F1F5F9' }]}>
             <View style={styles.headerLeft}>
-              <View style={styles.iconCircle}>
-                <MaterialCommunityIcons name="wallet-giftcard" size={22} color="#6750A4" />
+              <View style={[styles.iconCircle, { backgroundColor: iconCircleBg, borderColor: brand }]}>
+                <MaterialCommunityIcons name="wallet-giftcard" size={22} color={brand} />
               </View>
               <View>
                 <Text style={[styles.orderNumberText, { color: colors.text }]}>{displayOrderNumber}</Text>
                 <Text style={[styles.subHeaderText, { color: colors.textMuted }]}>{t('earningBreakdownTitle', 'Order Earning Breakdown')}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
-              <Ionicons name="close" size={20} color="#64748B" />
+            <TouchableOpacity style={[styles.closeBtn, { backgroundColor: closeBtnBg }]} onPress={onClose} activeOpacity={0.7}>
+              <Ionicons name="close" size={20} color={closeBtnIcon} />
             </TouchableOpacity>
           </View>
 
@@ -135,51 +148,59 @@ export default function OrderEarningDetailModal({
             keyboardShouldPersistTaps="handled"
           >
             {/* Hero Earning Card */}
-            <View style={styles.heroCard}>
-              <Text style={styles.heroLabel}>{t('youEarned', 'YOU EARNED FOR THIS DELIVERY')}</Text>
+            <View style={[styles.heroCard, { backgroundColor: heroBg, shadowColor: isDark ? 'transparent' : '#6750A4' }]}>
+              <Text style={[styles.heroLabel, { color: isDark ? '#CCCCCC' : '#E9D5FF' }]}>{t('youEarned', 'YOU EARNED FOR THIS DELIVERY')}</Text>
               <View style={styles.heroAmountRow}>
-                <Text style={styles.heroCurrency}>{t('etb', 'ETB')}</Text>
+                <Text style={[styles.heroCurrency, { color: isDark ? '#FFFFFF' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
                 <Text style={styles.heroAmount}>+{earningAmount}</Text>
               </View>
-              {/* <View style={styles.statusPill}>
-                <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
-                <Text style={styles.statusPillText}>{t('deliveryCompleted', 'Delivered & Credited')}</Text>
-              </View> */}
             </View>
 
             {/* Payout Settlement Status Section */}
-            <View style={[styles.sectionCard, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
+            <View style={[styles.sectionCard, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <Text style={styles.sectionTitle}>{t('payoutSettlementTitle', 'Payout Settlement')}</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('payoutSettlementTitle', 'Payout Settlement')}</Text>
                 {order.payout_status === 'confirmed' ? (
-                  <View style={[styles.badgePill, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
-                    <Ionicons name="checkmark-done" size={12} color="#16A34A" />
-                    <Text style={[styles.badgePillText, { color: '#16A34A' }]}>{t('paidAndConfirmed', 'Paid & Confirmed')}</Text>
+                  <View style={[styles.badgePill, {
+                    backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
+                    borderColor: isDark ? '#245C3A' : '#BBF7D0',
+                  }]}>
+                    <Ionicons name="checkmark-done" size={12} color={isDark ? '#86EFAC' : '#16A34A'} />
+                    <Text style={[styles.badgePillText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('paidAndConfirmed', 'Paid & Confirmed')}</Text>
                   </View>
                 ) : order.payout_status === 'disbursed' ? (
-                  <View style={[styles.badgePill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
-                    <Ionicons name="time" size={12} color="#D97706" />
-                    <Text style={[styles.badgePillText, { color: '#D97706' }]}>{t('disbursedAwaitingConfirm', 'Disbursed (Awaiting Confirm)')}</Text>
+                  <View style={[styles.badgePill, {
+                    backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
+                    borderColor: isDark ? '#5C3D20' : '#FDE68A',
+                  }]}>
+                    <Ionicons name="time" size={12} color={isDark ? '#FCD34D' : '#D97706'} />
+                    <Text style={[styles.badgePillText, { color: isDark ? '#FCD34D' : '#D97706' }]}>{t('disbursedAwaitingConfirm', 'Disbursed (Awaiting Confirm)')}</Text>
                   </View>
                 ) : order.payout_status === 'disputed' ? (
-                  <View style={[styles.badgePill, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-                    <Ionicons name="alert-circle" size={12} color="#DC2626" />
-                    <Text style={[styles.badgePillText, { color: '#DC2626' }]}>{t('disputedUnderReview', 'Disputed / Under Review')}</Text>
+                  <View style={[styles.badgePill, {
+                    backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
+                    borderColor: isDark ? '#5C2626' : '#FECACA',
+                  }]}>
+                    <Ionicons name="alert-circle" size={12} color={isDark ? '#FCA5A5' : '#DC2626'} />
+                    <Text style={[styles.badgePillText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('disputedUnderReview', 'Disputed / Under Review')}</Text>
                   </View>
                 ) : (
-                  <View style={[styles.badgePill, { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }]}>
-                    <Ionicons name="hourglass-outline" size={12} color="#64748B" />
-                    <Text style={[styles.badgePillText, { color: '#64748B' }]}>{t('unpaidQueued', 'Unpaid / Queued')}</Text>
+                  <View style={[styles.badgePill, {
+                    backgroundColor: isDark ? '#222222' : '#F8FAFC',
+                    borderColor: isDark ? '#333333' : '#E2E8F0',
+                  }]}>
+                    <Ionicons name="hourglass-outline" size={12} color={colors.textMuted} />
+                    <Text style={[styles.badgePillText, { color: colors.textMuted }]}>{t('unpaidQueued', 'Unpaid / Queued')}</Text>
                   </View>
                 )}
               </View>
 
               {/* COD Handover Status if COD order */}
               {order.payment_method?.toLowerCase() === 'cod' && (
-                <View style={styles.codHandoverRow}>
+                <View style={[styles.codHandoverRow, { borderTopColor: isDark ? '#222222' : '#F8FAFC' }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.tableLabel}>{t('codCollectedTitle', 'Cash on Delivery Collected')}</Text>
-                    <Text style={styles.codStatusSubtitle}>
+                    <Text style={[styles.tableLabel, { color: colors.textMuted }]}>{t('codCollectedTitle', 'Cash on Delivery Collected')}</Text>
+                    <Text style={[styles.codStatusSubtitle, { color: colors.textMuted }]}>
                       {order.cod_payment_confirmed
                         ? t('codHandedInSub', 'Cash handed in to store admin.')
                         : t('codPendingTurnInSub', 'Physical cash awaiting turn-in to store.')}
@@ -189,20 +210,30 @@ export default function OrderEarningDetailModal({
                     style={[
                       styles.badgePill,
                       {
-                        backgroundColor: order.cod_payment_confirmed ? '#F0FDF4' : '#FFFBEB',
-                        borderColor: order.cod_payment_confirmed ? '#BBF7D0' : '#FDE68A',
+                        backgroundColor: order.cod_payment_confirmed
+                          ? (isDark ? '#1A3D2A' : '#F0FDF4')
+                          : (isDark ? '#3D2A1A' : '#FFFBEB'),
+                        borderColor: order.cod_payment_confirmed
+                          ? (isDark ? '#245C3A' : '#BBF7D0')
+                          : (isDark ? '#5C3D20' : '#FDE68A'),
                       },
                     ]}
                   >
                     <Ionicons
                       name={order.cod_payment_confirmed ? 'checkmark-circle' : 'cash-outline'}
                       size={12}
-                      color={order.cod_payment_confirmed ? '#16A34A' : '#D97706'}
+                      color={order.cod_payment_confirmed
+                        ? (isDark ? '#86EFAC' : '#16A34A')
+                        : (isDark ? '#FCD34D' : '#D97706')}
                     />
                     <Text
                       style={[
                         styles.badgePillText,
-                        { color: order.cod_payment_confirmed ? '#16A34A' : '#D97706' },
+                        {
+                          color: order.cod_payment_confirmed
+                            ? (isDark ? '#86EFAC' : '#16A34A')
+                            : (isDark ? '#FCD34D' : '#D97706'),
+                        },
                       ]}
                     >
                       {order.cod_payment_confirmed
@@ -215,25 +246,25 @@ export default function OrderEarningDetailModal({
 
               {/* Payout Reference & Link */}
               {order.payout_id ? (
-                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
+                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDark ? '#222222' : '#F1F5F9' }}>
                   <View style={styles.tableRow}>
-                    <Text style={styles.tableLabel}>{t('payoutReferenceLabel', 'Payout Reference')}</Text>
-                    <Text style={styles.tableValueSmall}>{order.payout_number || `#DP-${order.payout_id}`}</Text>
+                    <Text style={[styles.tableLabel, { color: colors.textMuted }]}>{t('payoutReferenceLabel', 'Payout Reference')}</Text>
+                    <Text style={[styles.tableValueSmall, { color: colors.text }]}>{order.payout_number || `#DP-${order.payout_id}`}</Text>
                   </View>
                   {onViewPayout && (
                     <TouchableOpacity
-                      style={styles.viewPayoutBtn}
+                      style={[styles.viewPayoutBtn, { backgroundColor: brandSoftBg, borderColor: brandBorder }]}
                       activeOpacity={0.8}
                       onPress={() => onViewPayout(order.payout_id!)}
                     >
-                      <MaterialCommunityIcons name="receipt-text-outline" size={15} color="#6750A4" />
-                      <Text style={styles.viewPayoutBtnText}>{t('viewSettlementReceipt', 'View Settlement Receipt')}</Text>
-                      <Ionicons name="chevron-forward" size={14} color="#6750A4" />
+                      <MaterialCommunityIcons name="receipt-text-outline" size={15} color={brand} />
+                      <Text style={[styles.viewPayoutBtnText, { color: brand }]}>{t('viewSettlementReceipt', 'View Settlement Receipt')}</Text>
+                      <Ionicons name="chevron-forward" size={14} color={brand} />
                     </TouchableOpacity>
                   )}
                 </View>
               ) : (
-                <Text style={styles.unpaidHelperText}>
+                <Text style={[styles.unpaidHelperText, { color: colors.textMuted }]}>
                   {t('unpaidQueuedHelper', {
                     store: companyName,
                     defaultValue: `This delivery fee is queued for settlement in the next payout batch by ${companyName}.`,
@@ -243,63 +274,63 @@ export default function OrderEarningDetailModal({
             </View>
 
             {/* Financial Summary Table */}
-            <View style={[styles.sectionCard, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
-              <Text style={styles.sectionTitle}>{t('financialDetails', 'Financial Details')}</Text>
+            <View style={[styles.sectionCard, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('financialDetails', 'Financial Details')}</Text>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableLabel}>{t('deliveryFeeEarned', 'Delivery Fee Earned')}</Text>
-                <Text style={[styles.tableValue, styles.highlightValue]}>+{earningAmount} {t('etb', 'ETB')}</Text>
+                <Text style={[styles.tableLabel, { color: colors.textMuted }]}>{t('deliveryFeeEarned', 'Delivery Fee Earned')}</Text>
+                <Text style={[styles.tableValue, styles.highlightValue, { color: isDark ? '#86EFAC' : '#16A34A' }]}>+{earningAmount} {t('etb', 'ETB')}</Text>
               </View>
 
-              <View style={styles.tableDivider} />
+              <View style={[styles.tableDivider, { backgroundColor: dividerColor }]} />
 
               <View style={styles.tableRow}>
-                <Text style={styles.tableLabel}>{t('orderGrandTotal', 'Customer Order Total')}</Text>
-                <Text style={styles.tableValue}>{orderTotal} {t('etb', 'ETB')}</Text>
+                <Text style={[styles.tableLabel, { color: colors.textMuted }]}>{t('orderGrandTotal', 'Customer Order Total')}</Text>
+                <Text style={[styles.tableValue, { color: colors.text }]}>{orderTotal} {t('etb', 'ETB')}</Text>
               </View>
 
               <View style={styles.tableRow}>
-                <Text style={styles.tableLabel}>{t('paymentStatus', 'Payment Status')}</Text>
-                <Text style={[styles.tableValue, { color: '#16A34A', fontWeight: '600' }]}>
+                <Text style={[styles.tableLabel, { color: colors.textMuted }]}>{t('paymentStatus', 'Payment Status')}</Text>
+                <Text style={[styles.tableValue, { color: isDark ? '#86EFAC' : '#16A34A', fontWeight: '600' }]}>
                   {(order.payment_status || 'Paid').toUpperCase()}
                 </Text>
               </View>
 
               {!!completedDate && (
                 <View style={styles.tableRow}>
-                  <Text style={styles.tableLabel}>{t('deliveredTime', 'Delivered At')}</Text>
-                  <Text style={styles.tableValueSmall}>{completedDate}</Text>
+                  <Text style={[styles.tableLabel, { color: colors.textMuted }]}>{t('deliveredTime', 'Delivered At')}</Text>
+                  <Text style={[styles.tableValueSmall, { color: colors.text }]}>{completedDate}</Text>
                 </View>
               )}
             </View>
 
             {/* Route & Fulfillment Details */}
-            <View style={[styles.sectionCard, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
-              <Text style={styles.sectionTitle}>{t('routeDetails', 'Delivery Route')}</Text>
+            <View style={[styles.sectionCard, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('routeDetails', 'Delivery Route')}</Text>
 
               {/* Pickup / Store */}
               <View style={styles.routePoint}>
-                <View style={[styles.routeDot, { backgroundColor: '#6750A4' }]} />
+                <View style={[styles.routeDot, { backgroundColor: brand }]} />
                 <View style={styles.routeInfo}>
-                  <Text style={styles.routeLabel}>{t('pickupFrom', 'Pickup Store')}</Text>
+                  <Text style={[styles.routeLabel, { color: colors.textMuted }]}>{t('pickupFrom', 'Pickup Store')}</Text>
                   <Text style={[styles.routeName, { color: colors.text }]}>{companyName}</Text>
                   {!!order.company_address && (
-                    <Text style={styles.routeAddress} numberOfLines={2}>{order.company_address}</Text>
+                    <Text style={[styles.routeAddress, { color: colors.textMuted }]} numberOfLines={2}>{order.company_address}</Text>
                   )}
                 </View>
               </View>
 
               {/* Connecting Line */}
-              <View style={styles.routeLine} />
+              <View style={[styles.routeLine, { backgroundColor: routeLineColor }]} />
 
               {/* Dropoff / Customer */}
               <View style={styles.routePoint}>
                 <View style={[styles.routeDot, { backgroundColor: '#10B981' }]} />
                 <View style={styles.routeInfo}>
-                  <Text style={styles.routeLabel}>{t('deliveredTo', 'Delivered To')}</Text>
+                  <Text style={[styles.routeLabel, { color: colors.textMuted }]}>{t('deliveredTo', 'Delivered To')}</Text>
                   <Text style={[styles.routeName, { color: colors.text }]}>{order.customer_name || t('customer', 'Customer')}</Text>
                   {!!order.shipping_address && (
-                    <Text style={styles.routeAddress} numberOfLines={2}>{order.shipping_address}</Text>
+                    <Text style={[styles.routeAddress, { color: colors.textMuted }]} numberOfLines={2}>{order.shipping_address}</Text>
                   )}
                 </View>
               </View>
@@ -309,15 +340,15 @@ export default function OrderEarningDetailModal({
           {/* Action Footer */}
           <View style={styles.footer}>
             <TouchableOpacity
-              style={styles.detailsBtn}
+              style={[styles.detailsBtn, { backgroundColor: brand, shadowColor: isDark ? 'transparent' : '#6750A4' }]}
               activeOpacity={0.8}
               onPress={() => {
                 onClose();
                 router.push(`/delivery/${order.id}`);
               }}
             >
-              <Text style={styles.detailsBtnText}>{t('viewFullOrder', 'View Full Order Details')}</Text>
-              <Ionicons name="arrow-forward" size={16} color="#ffffff" />
+              <Text style={[styles.detailsBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>{t('viewFullOrder', 'View Full Order Details')}</Text>
+              <Ionicons name="arrow-forward" size={16} color={isDark ? '#000000' : '#ffffff'} />
             </TouchableOpacity>
           </View>
         </View>

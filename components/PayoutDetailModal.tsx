@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import Toast from 'react-native-toast-message'; // ✅ Added Toast import
+import Toast from 'react-native-toast-message';
 import type { DriverPayout } from '@/types';
 import { confirmDriverPayout, disputeDriverPayout } from '@/services/api';
 import ConfirmActionModal from './ConfirmActionModal';
@@ -105,6 +105,14 @@ export default function PayoutDetailModal({
   // Always invoke hooks unconditionally before any early returns
   const parsedNotes = useMemo(() => parsePayoutNotes(payout?.notes), [payout?.notes]);
 
+  // ─── Dark-mode aware design tokens ───────────────────────────────
+  const brand = isDark ? '#FFFFFF' : '#6750A4';
+  const surfaceAlt = isDark ? '#1A1A1A' : '#F8FAFC';
+  const surfaceMuted = isDark ? '#222222' : '#F1F5F9';
+  const borderSubtle = isDark ? '#222222' : '#E2E8F0';
+  const borderMuted = isDark ? '#333333' : '#F1F5F9';
+  const handleColor = isDark ? '#444444' : '#CBD5E1';
+
   if (!payout) return null;
 
   const companyName =
@@ -141,23 +149,10 @@ export default function PayoutDetailModal({
       const res = await confirmDriverPayout(payout.id);
       setShowConfirmReceiptModal(false);
       onPayoutUpdated(res.data.payout);
-      
-      // ✅ Replaced Status Modal with Toast
-      // Toast.show({
-      //   type: 'success',
-      //   text1: t('confirmSuccessTitle', 'Payout Confirmed!'),
-      //   text2: t('confirmSuccessSub', {
-      //     amount: parseFloat(payout.net_payout_amount).toFixed(2),
-      //     store: companyName,
-      //     defaultValue: `You have successfully confirmed receiving ${parseFloat(payout.net_payout_amount).toFixed(2)} ETB from ${companyName}.`,
-      //   }),
-      // });
-
     } catch (err: any) {
       setShowConfirmReceiptModal(false);
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Could not confirm payout. Please try again.';
       
-      // ✅ Replaced Status Modal with Toast
       Toast.show({
         type: 'error',
         text1: t('confirmFailedTitle', 'Confirmation Failed'),
@@ -171,7 +166,6 @@ export default function PayoutDetailModal({
 
   const handleDispute = async () => {
     if (!disputeReason.trim()) {
-      // ✅ Replaced Status Modal with Toast
       Toast.show({
         type: 'warning',
         text1: t('reasonRequiredTitle', 'Reason Required'),
@@ -186,7 +180,6 @@ export default function PayoutDetailModal({
       setDisputeReason('');
       onPayoutUpdated(res.data.payout);
       
-      // ✅ Replaced Status Modal with Toast
       Toast.show({
         type: 'info',
         text1: t('disputeSubmittedTitle', 'Dispute Submitted'),
@@ -196,7 +189,6 @@ export default function PayoutDetailModal({
     } catch (err: any) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Could not submit dispute. Please try again.';
       
-      // ✅ Replaced Status Modal with Toast
       Toast.show({
         type: 'error',
         text1: t('disputeFailedTitle', 'Dispute Failed'),
@@ -212,31 +204,43 @@ export default function PayoutDetailModal({
     switch (payout.status) {
       case 'confirmed':
         return (
-          <View style={[styles.statusBadge, { backgroundColor: '#DCFCE7', borderColor: '#86EFAC' }]}>
-            <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
-            <Text style={[styles.statusBadgeText, { color: '#16A34A' }]}>{t('confirmedAndPaid', 'Confirmed Paid')}</Text>
+          <View style={[styles.statusBadge, {
+            backgroundColor: isDark ? '#1A3D2A' : '#DCFCE7',
+            borderColor: isDark ? '#245C3A' : '#86EFAC',
+          }]}>
+            <Ionicons name="checkmark-circle" size={14} color={isDark ? '#86EFAC' : '#16A34A'} />
+            <Text style={[styles.statusBadgeText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('confirmedAndPaid', 'Confirmed Paid')}</Text>
           </View>
         );
       case 'disputed':
         return (
-          <View style={[styles.statusBadge, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-            <Ionicons name="alert-circle" size={14} color="#DC2626" />
-            <Text style={[styles.statusBadgeText, { color: '#DC2626' }]}>{t('disputedUnderReview', 'Disputed / Under Review')}</Text>
+          <View style={[styles.statusBadge, {
+            backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
+            borderColor: isDark ? '#5C2626' : '#FECACA',
+          }]}>
+            <Ionicons name="alert-circle" size={14} color={isDark ? '#FCA5A5' : '#DC2626'} />
+            <Text style={[styles.statusBadgeText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('disputedUnderReview', 'Disputed / Under Review')}</Text>
           </View>
         );
       case 'cancelled':
         return (
-          <View style={[styles.statusBadge, { backgroundColor: '#F1F5F9', borderColor: '#CBD5E1' }]}>
-            <Ionicons name="close-circle" size={14} color="#64748B" />
-            <Text style={[styles.statusBadgeText, { color: '#64748B' }]}>{t('cancelled', 'Cancelled')}</Text>
+          <View style={[styles.statusBadge, {
+            backgroundColor: isDark ? '#222222' : '#F1F5F9',
+            borderColor: isDark ? '#333333' : '#CBD5E1',
+          }]}>
+            <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+            <Text style={[styles.statusBadgeText, { color: colors.textMuted }]}>{t('cancelled', 'Cancelled')}</Text>
           </View>
         );
       case 'disbursed':
       default:
         return (
-          <View style={[styles.statusBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-            <Ionicons name="time" size={14} color="#D97706" />
-            <Text style={[styles.statusBadgeText, { color: '#D97706' }]}>{t('pendingYourConfirmation', 'Pending Your Confirmation')}</Text>
+          <View style={[styles.statusBadge, {
+            backgroundColor: isDark ? '#3D2A1A' : '#FEF3C7',
+            borderColor: isDark ? '#5C3D20' : '#FDE68A',
+          }]}>
+            <Ionicons name="time" size={14} color={isDark ? '#FCD34D' : '#D97706'} />
+            <Text style={[styles.statusBadgeText, { color: isDark ? '#FCD34D' : '#D97706' }]}>{t('pendingYourConfirmation', 'Pending Your Confirmation')}</Text>
           </View>
         );
     }
@@ -249,17 +253,17 @@ export default function PayoutDetailModal({
         <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           {/* Header Handle */}
           <View style={styles.handleContainer}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: handleColor }]} />
           </View>
 
           {/* Modal Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: borderMuted }]}>
             <View>
               <Text style={[styles.headerTitle, { color: colors.text }]}>{payout.payout_number}</Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>{companyName}</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={20} color="#64748B" />
+            <TouchableOpacity style={[styles.closeBtn, { backgroundColor: surfaceMuted }]} onPress={onClose}>
+              <Ionicons name="close" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -271,45 +275,51 @@ export default function PayoutDetailModal({
             keyboardShouldPersistTaps="handled"
           >
             {/* Amount Hero */}
-            <View style={styles.amountHero}>
-              <Text style={styles.amountLabel}>{t('netPayout', 'Net Disbursed Amount')}</Text>
+            <View style={[styles.amountHero, { backgroundColor: surfaceAlt }]}>
+              <Text style={[styles.amountLabel, { color: colors.textMuted }]}>{t('netPayout', 'Net Disbursed Amount')}</Text>
               <View style={styles.amountRow}>
-                <Text style={styles.amountValue}>{parseFloat(payout.net_payout_amount).toFixed(2)}</Text>
-                <Text style={styles.amountCurrency}>{t('etb', 'ETB')}</Text>
+                <Text style={[styles.amountValue, { color: colors.text }]}>{parseFloat(payout.net_payout_amount).toFixed(2)}</Text>
+                <Text style={[styles.amountCurrency, { color: brand }]}>{t('etb', 'ETB')}</Text>
               </View>
               <View style={{ marginTop: 8 }}>{renderStatusBadge()}</View>
             </View>
 
             {/* Confirmation Banner for Disbursed Payout */}
             {payout.status === 'disbursed' && (
-              <View style={styles.confirmPromptCard}>
-                <Ionicons name="information-circle" size={22} color="#D97706" style={{ marginTop: 2 }} />
+              <View style={[styles.confirmPromptCard, {
+                backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
+                borderColor: isDark ? '#5C3D20' : '#FDE68A',
+              }]}>
+                <Ionicons name="information-circle" size={22} color={isDark ? '#FCD34D' : '#D97706'} style={{ marginTop: 2 }} />
                 <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.confirmPromptTitle}>{t('payoutActionTitle', 'Payout Received?')}</Text>
-                  <Text style={styles.confirmPromptBody}>
+                  <Text style={[styles.confirmPromptTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>{t('payoutActionTitle', 'Payout Received?')}</Text>
+                  <Text style={[styles.confirmPromptBody, { color: isDark ? '#FBBF24' : '#B45309' }]}>
                     {t('payoutActionSub', 'Company has sent your payout. Please confirm receipt.')}
                   </Text>
                   {!!parsedNotes.resolutionNote && (
-                    <View style={styles.resolutionCallout}>
+                    <View style={[styles.resolutionCallout, {
+                      backgroundColor: isDark ? '#4D3520' : '#FEF3C7',
+                      borderColor: isDark ? '#5C3D20' : '#FDE68A',
+                    }]}>
                       <View style={styles.resolutionHeaderRow}>
-                        <MaterialCommunityIcons name="comment-check-outline" size={14} color="#92400E" />
-                        <Text style={styles.resolutionTitle}>{t('adminResolutionNote', 'Store Admin Resolution Note')}</Text>
+                        <MaterialCommunityIcons name="comment-check-outline" size={14} color={isDark ? '#FCD34D' : '#92400E'} />
+                        <Text style={[styles.resolutionTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>{t('adminResolutionNote', 'Store Admin Resolution Note')}</Text>
                       </View>
-                      <Text style={styles.resolutionText}>{parsedNotes.resolutionNote}</Text>
+                      <Text style={[styles.resolutionText, { color: isDark ? '#FBBF24' : '#78350F' }]}>{parsedNotes.resolutionNote}</Text>
                     </View>
                   )}
                   <TouchableOpacity
-                    style={styles.confirmBtn}
+                    style={[styles.confirmBtn, { backgroundColor: isDark ? '#FFFFFF' : '#16A34A' }]}
                     onPress={handleConfirmPrompt}
                     disabled={confirming}
                     activeOpacity={0.85}
                   >
                     {confirming ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <ActivityIndicator size="small" color={isDark ? '#000000' : '#FFFFFF'} />
                     ) : (
                       <>
-                        <Ionicons name="checkmark-done" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-                        <Text style={styles.confirmBtnText}>{t('confirmReceived', 'Confirm Received')}</Text>
+                        <Ionicons name="checkmark-done" size={18} color={isDark ? '#000000' : '#FFFFFF'} style={{ marginRight: 6 }} />
+                        <Text style={[styles.confirmBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>{t('confirmReceived', 'Confirm Received')}</Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -319,27 +329,30 @@ export default function PayoutDetailModal({
                       style={styles.reportIssueBtn}
                       onPress={() => setShowDisputeInput(true)}
                     >
-                      <Text style={styles.reportIssueText}>{t('reportIssue', 'Report Issue')}</Text>
+                      <Text style={[styles.reportIssueText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('reportIssue', 'Report Issue')}</Text>
                     </TouchableOpacity>
                   ) : (
-                    <View style={styles.disputeBox}>
+                    <View style={[styles.disputeBox, {
+                      backgroundColor: colors.card,
+                      borderColor: isDark ? '#444444' : '#CBD5E1',
+                    }]}>
                       <TextInput
-                        style={styles.disputeInput}
+                        style={[styles.disputeInput, { color: colors.text }]}
                         placeholder={t('disputePlaceholder', 'Explain why you have not received this payout...')}
-                        placeholderTextColor="#94A3B8"
+                        placeholderTextColor={colors.textMuted}
                         multiline
                         value={disputeReason}
                         onChangeText={setDisputeReason}
                       />
                       <View style={styles.disputeActionsRow}>
                         <TouchableOpacity
-                          style={styles.cancelDisputeBtn}
+                          style={[styles.cancelDisputeBtn, { backgroundColor: surfaceMuted }]}
                           onPress={() => setShowDisputeInput(false)}
                         >
-                          <Text style={styles.cancelDisputeText}>{t('cancel', 'Cancel')}</Text>
+                          <Text style={[styles.cancelDisputeText, { color: colors.text }]}>{t('cancel', 'Cancel')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={styles.submitDisputeBtn}
+                          style={[styles.submitDisputeBtn, { backgroundColor: isDark ? '#B91C1C' : '#DC2626' }]}
                           onPress={handleDispute}
                           disabled={disputing}
                         >
@@ -358,9 +371,12 @@ export default function PayoutDetailModal({
 
             {/* If Confirmed */}
             {payout.status === 'confirmed' && !!confirmedDate && (
-              <View style={styles.confirmedBanner}>
-                <Ionicons name="checkmark-circle" size={20} color="#16A34A" />
-                <Text style={styles.confirmedBannerText}>
+              <View style={[styles.confirmedBanner, {
+                backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
+                borderColor: isDark ? '#245C3A' : '#BBF7D0',
+              }]}>
+                <Ionicons name="checkmark-circle" size={20} color={isDark ? '#86EFAC' : '#16A34A'} />
+                <Text style={[styles.confirmedBannerText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
                   {t('confirmedOn', 'Confirmed On')}: {confirmedDate}
                 </Text>
               </View>
@@ -368,23 +384,29 @@ export default function PayoutDetailModal({
 
             {/* If Disputed */}
             {payout.status === 'disputed' && (
-              <View style={styles.disputedBanner}>
-                <Ionicons name="alert-circle" size={20} color="#DC2626" />
+              <View style={[styles.disputedBanner, {
+                backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
+                borderColor: isDark ? '#5C2626' : '#FECACA',
+              }]}>
+                <Ionicons name="alert-circle" size={20} color={isDark ? '#FCA5A5' : '#DC2626'} />
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={styles.disputedBannerTitle}>{t('disputeUnderReview', 'Dispute Under Review')}</Text>
-                  <Text style={styles.disputedBannerBody}>{payout.dispute_reason || t('issueReportedByDriver', 'Issue reported by driver.')}</Text>
+                  <Text style={[styles.disputedBannerTitle, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('disputeUnderReview', 'Dispute Under Review')}</Text>
+                  <Text style={[styles.disputedBannerBody, { color: isDark ? '#F87171' : '#991B1B' }]}>{payout.dispute_reason || t('issueReportedByDriver', 'Issue reported by driver.')}</Text>
                   {!!payout.disputed_at && (
-                    <Text style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>
+                    <Text style={{ fontSize: 11, color: isDark ? '#F87171' : '#EF4444', marginTop: 4 }}>
                       {t('reportedOn', 'Reported')}: {new Date(payout.disputed_at).toLocaleString()}
                     </Text>
                   )}
                   {!!parsedNotes.resolutionNote && (
-                    <View style={styles.disputeResolutionCallout}>
+                    <View style={[styles.disputeResolutionCallout, {
+                      backgroundColor: colors.card,
+                      borderColor: isDark ? '#5C2626' : '#FECACA',
+                    }]}>
                       <View style={styles.resolutionHeaderRow}>
-                        <MaterialCommunityIcons name="message-reply-text-outline" size={14} color="#991B1B" />
-                        <Text style={styles.disputeResolutionTitle}>{t('adminResponseNotes', 'Store Admin Response')}</Text>
+                        <MaterialCommunityIcons name="message-reply-text-outline" size={14} color={isDark ? '#FCA5A5' : '#991B1B'} />
+                        <Text style={[styles.disputeResolutionTitle, { color: isDark ? '#FCA5A5' : '#991B1B' }]}>{t('adminResponseNotes', 'Store Admin Response')}</Text>
                       </View>
-                      <Text style={styles.disputeResolutionText}>{parsedNotes.resolutionNote}</Text>
+                      <Text style={[styles.disputeResolutionText, { color: colors.text }]}>{parsedNotes.resolutionNote}</Text>
                     </View>
                   )}
                 </View>
@@ -393,17 +415,23 @@ export default function PayoutDetailModal({
 
             {/* If Cancelled */}
             {payout.status === 'cancelled' && (
-              <View style={styles.cancelledBanner}>
-                <Ionicons name="close-circle" size={22} color="#64748B" style={{ marginTop: 2 }} />
+              <View style={[styles.cancelledBanner, {
+                backgroundColor: isDark ? surfaceAlt : '#F8FAFC',
+                borderColor: isDark ? '#333333' : '#CBD5E1',
+              }]}>
+                <Ionicons name="close-circle" size={22} color={colors.textMuted} style={{ marginTop: 2 }} />
                 <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.cancelledBannerTitle}>{t('payoutCancelledTitle', 'Payout Cancelled')}</Text>
-                  <Text style={styles.cancelledBannerBody}>
+                  <Text style={[styles.cancelledBannerTitle, { color: colors.text }]}>{t('payoutCancelledTitle', 'Payout Cancelled')}</Text>
+                  <Text style={[styles.cancelledBannerBody, { color: colors.textMuted }]}>
                     {t('payoutCancelledBody', 'This payout was cancelled by store administration and orders released.')}
                   </Text>
                   {(!!parsedNotes.cancellationReason || !!parsedNotes.generalNote) && (
-                    <View style={styles.cancelledReasonBox}>
-                      <Text style={styles.cancelledReasonLabel}>{t('cancellationReason', 'Cancellation Reason')}:</Text>
-                      <Text style={styles.cancelledReasonText}>
+                    <View style={[styles.cancelledReasonBox, {
+                      backgroundColor: colors.card,
+                      borderColor: borderSubtle,
+                    }]}>
+                      <Text style={[styles.cancelledReasonLabel, { color: colors.textMuted }]}>{t('cancellationReason', 'Cancellation Reason')}:</Text>
+                      <Text style={[styles.cancelledReasonText, { color: colors.text }]}>
                         {parsedNotes.cancellationReason || parsedNotes.generalNote}
                       </Text>
                     </View>
@@ -413,51 +441,51 @@ export default function PayoutDetailModal({
             )}
 
             {/* Payment Meta Card */}
-            <View style={styles.metaCard}>
-              <View style={styles.metaRow}>
-                <Text style={styles.metaLabel}>{t('paymentMethodLabel', 'Payment Method')}</Text>
-                <Text style={styles.metaValue}>{payout.payment_method?.toUpperCase()}</Text>
+            <View style={[styles.metaCard, { backgroundColor: colors.card, borderColor: borderSubtle }]}>
+              <View style={[styles.metaRow, { borderBottomColor: borderMuted }]}>
+                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('paymentMethodLabel', 'Payment Method')}</Text>
+                <Text style={[styles.metaValue, { color: colors.text }]}>{payout.payment_method?.toUpperCase()}</Text>
               </View>
               {!!payout.transaction_reference && (
-                <View style={styles.metaRow}>
-                  <Text style={styles.metaLabel}>{t('transactionReference', 'Reference / TX ID')}</Text>
-                  <Text style={styles.metaValue}>{payout.transaction_reference}</Text>
+                <View style={[styles.metaRow, { borderBottomColor: borderMuted }]}>
+                  <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('transactionReference', 'Reference / TX ID')}</Text>
+                  <Text style={[styles.metaValue, { color: colors.text }]}>{payout.transaction_reference}</Text>
                 </View>
               )}
               {!!disbursedDate && (
-                <View style={styles.metaRow}>
-                  <Text style={styles.metaLabel}>{t('disbursedOn', 'Disbursed On')}</Text>
-                  <Text style={styles.metaValue}>{disbursedDate}</Text>
+                <View style={[styles.metaRow, { borderBottomColor: borderMuted }]}>
+                  <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('disbursedOn', 'Disbursed On')}</Text>
+                  <Text style={[styles.metaValue, { color: colors.text }]}>{disbursedDate}</Text>
                 </View>
               )}
               {!!parsedNotes.generalNote && (
                 <View style={[styles.metaRow, { borderBottomWidth: 0 }]}>
-                  <Text style={styles.metaLabel}>{t('notesLabel', 'Notes')}</Text>
-                  <Text style={[styles.metaValue, { maxWidth: '65%' }]}>{parsedNotes.generalNote}</Text>
+                  <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('notesLabel', 'Notes')}</Text>
+                  <Text style={[styles.metaValue, { color: colors.text, maxWidth: '65%' }]}>{parsedNotes.generalNote}</Text>
                 </View>
               )}
             </View>
 
             {/* Financial Reconciliation Breakdown */}
-            <View style={styles.breakdownCard}>
-              <Text style={styles.sectionTitle}>{t('settlementAccounting', 'Settlement Accounting')}</Text>
+            <View style={[styles.breakdownCard, { backgroundColor: colors.card, borderColor: borderSubtle }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settlementAccounting', 'Settlement Accounting')}</Text>
               <View style={styles.reconcileRow}>
-                <Text style={styles.reconcileLabel}>{t('grossEarned', 'Gross Delivery Fees')}</Text>
-                <Text style={[styles.reconcileVal, { color: '#16A34A' }]}>
+                <Text style={[styles.reconcileLabel, { color: colors.textMuted }]}>{t('grossEarned', 'Gross Delivery Fees')}</Text>
+                <Text style={[styles.reconcileVal, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
                   +{parseFloat(payout.gross_delivery_fees).toFixed(2)} ETB
                 </Text>
               </View>
               {parseFloat(payout.cod_cash_deducted || '0') > 0 && (
                 <View style={styles.reconcileRow}>
-                  <Text style={styles.reconcileLabel}>{t('codCollectedHandedOver', 'COD Collected (Handed Over)')}</Text>
-                  <Text style={[styles.reconcileVal, { color: '#D97706' }]}>
+                  <Text style={[styles.reconcileLabel, { color: colors.textMuted }]}>{t('codCollectedHandedOver', 'COD Collected (Handed Over)')}</Text>
+                  <Text style={[styles.reconcileVal, { color: isDark ? '#FCD34D' : '#D97706' }]}>
                     {parseFloat(payout.cod_cash_deducted).toFixed(2)} ETB
                   </Text>
                 </View>
               )}
-              <View style={[styles.reconcileRow, styles.netRow]}>
-                <Text style={styles.netLabel}>{t('netPayout', 'Net Disbursed Amount')}</Text>
-                <Text style={styles.netVal}>
+              <View style={[styles.reconcileRow, styles.netRow, { borderTopColor: borderSubtle }]}>
+                <Text style={[styles.netLabel, { color: colors.text }]}>{t('netPayout', 'Net Disbursed Amount')}</Text>
+                <Text style={[styles.netVal, { color: brand }]}>
                   {parseFloat(payout.net_payout_amount).toFixed(2)} ETB
                 </Text>
               </View>
@@ -466,28 +494,28 @@ export default function PayoutDetailModal({
             {/* Itemized Orders List */}
             {!!payout.items && payout.items.length > 0 && (
               <View style={styles.ordersSection}>
-                <Text style={styles.sectionTitle}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   {payout.items.length === 1
                     ? t('orderSettled_one', { count: 1, defaultValue: '1 Order Settled' })
                     : t('ordersSettled_other', { count: payout.items.length, defaultValue: `${payout.items.length} Orders Settled` })}
                 </Text>
                 {payout.items.map((it) => (
-                  <View key={it.id} style={styles.orderItemCard}>
+                  <View key={it.id} style={[styles.orderItemCard, { backgroundColor: surfaceAlt }]}>
                     <View style={styles.orderItemLeft}>
-                      <View style={styles.orderItemIcon}>
-                        <MaterialCommunityIcons name="moped" size={16} color="#6750A4" />
+                      <View style={[styles.orderItemIcon, { backgroundColor: isDark ? '#2A2A2A' : '#EDE9FE' }]}>
+                        <MaterialCommunityIcons name="moped" size={16} color={brand} />
                       </View>
                       <View>
-                        <Text style={styles.orderItemNum}>{it.order_number || `Order #${it.assignment_id}`}</Text>
-                        <Text style={styles.orderItemSub}>
+                        <Text style={[styles.orderItemNum, { color: colors.text }]}>{it.order_number || `Order #${it.assignment_id}`}</Text>
+                        <Text style={[styles.orderItemSub, { color: colors.textMuted }]}>
                           {it.customer_name || 'Customer'} · {it.payment_method?.toUpperCase()}
                           {parseFloat(it.cod_collected || '0') > 0 ? ` · COD ${parseFloat(it.cod_collected).toFixed(2)} ETB` : ''}
                         </Text>
                       </View>
                     </View>
                     <View style={styles.orderItemRight}>
-                      <Text style={styles.orderItemFee}>+{parseFloat(it.delivery_fee).toFixed(2)}</Text>
-                      <Text style={styles.orderItemCurrency}>ETB</Text>
+                      <Text style={[styles.orderItemFee, { color: isDark ? '#86EFAC' : '#16A34A' }]}>+{parseFloat(it.delivery_fee).toFixed(2)}</Text>
+                      <Text style={[styles.orderItemCurrency, { color: colors.textMuted }]}>ETB</Text>
                     </View>
                   </View>
                 ))}

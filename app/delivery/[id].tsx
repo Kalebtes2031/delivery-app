@@ -53,15 +53,21 @@ export default function DeliveryDetailScreen() {
   const isAmharic = i18n.language?.startsWith("am");
   const insets = useSafeAreaInsets();
 
+  // ─── Dark-mode aware design tokens ───────────────────────────────
+  const brand = isDark ? '#FFFFFF' : '#6750A4';
+  const surfaceMuted = isDark ? '#1A1A1A' : '#F1F5F9';
+  const itemBorder = isDark ? '#222222' : '#F1F5F9';
+  const lightBorder = isDark ? '#2A2A2A' : '#E2E8F0';
+
   const vendorStatusColors: Record<string, { bg: string; text: string }> = {
-    pending: { bg: "#FFF7ED", text: "#EA580C" },
-    contacted: { bg: "#EFF6FF", text: "#2563EB" },
-    confirmed: { bg: "#EFF6FF", text: "#2563EB" },
-    processing: { bg: "#FAF5FF", text: "#6750A4" },
-    shipped: { bg: "#F0FDF4", text: "#16A34A" },
+    pending: { bg: isDark ? "#3D2A1A" : "#FFF7ED", text: isDark ? "#FDBA74" : "#EA580C" },
+    contacted: { bg: isDark ? "#1E3A5F" : "#EFF6FF", text: isDark ? "#93C5FD" : "#2563EB" },
+    confirmed: { bg: isDark ? "#1E3A5F" : "#EFF6FF", text: isDark ? "#93C5FD" : "#2563EB" },
+    processing: { bg: isDark ? "#2A1F3D" : "#FAF5FF", text: isDark ? "#C4B5FD" : "#6750A4" },
+    shipped: { bg: isDark ? "#1A3D2A" : "#F0FDF4", text: isDark ? "#86EFAC" : "#16A34A" },
     fulfilled: { bg: "#16A34A", text: "#FFFFFF" },
-    cancelled: { bg: "#FEF2F2", text: "#DC2626" },
-    failed: { bg: "#FEF2F2", text: "#DC2626" },
+    cancelled: { bg: isDark ? "#3D1A1A" : "#FEF2F2", text: isDark ? "#FCA5A5" : "#DC2626" },
+    failed: { bg: isDark ? "#3D1A1A" : "#FEF2F2", text: isDark ? "#FCA5A5" : "#DC2626" },
   };
 
   const getLocalName = (
@@ -131,7 +137,6 @@ export default function DeliveryDetailScreen() {
         'declined'
       );
       
-      // ✅ Applied translation keys
       Toast.show({
         type: "success",
         text1: t("declineSuccessTitle"),
@@ -142,7 +147,6 @@ export default function DeliveryDetailScreen() {
       router.back();
     } catch (error: any) {
       console.error("Failed to decline order:", error);
-      // ✅ Applied translation keys
       Toast.show({
         type: "error",
         text1: t("declineFailedTitle"),
@@ -156,7 +160,7 @@ export default function DeliveryDetailScreen() {
   if (loading)
     return (
       <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color="#6750A4" />
+        <ActivityIndicator size="large" color={brand} />
       </View>
     );
 
@@ -210,9 +214,12 @@ export default function DeliveryDetailScreen() {
           <View style={styles.topNav}>
             <TouchableOpacity
               onPress={() => router.back()}
-              style={styles.glassCircle}
+              style={[styles.glassCircle, {
+                backgroundColor: isDark ? '#000000' : '#ffffff',
+                borderColor: isDark ? '#333333' : '#6750A4',
+              }]}
             >
-              <Ionicons name="arrow-back" size={24} color="#6750A4" />
+              <Ionicons name="arrow-back" size={24} color={brand} />
             </TouchableOpacity>
             <View style={styles.headerInfo}>
               <Text style={styles.heroOrderTitle}>
@@ -224,7 +231,11 @@ export default function DeliveryDetailScreen() {
         </SafeAreaView>
         <View style={[styles.headerInfo, {
           position: "absolute", bottom: 50, left: 20,
-          backgroundColor: isDeclined ? "#FEF2F2" : isExpired ? "#FFFBEB" : vendorStatusColors[orderDetail?.status]?.bg || "#FEF2F2",
+          backgroundColor: isDeclined 
+            ? (isDark ? "#3D1A1A" : "#FEF2F2") 
+            : isExpired 
+              ? (isDark ? "#3D2A1A" : "#FFFBEB") 
+              : vendorStatusColors[orderDetail?.status]?.bg || (isDark ? "#3D1A1A" : "#FEF2F2"),
           borderRadius: 20,
           paddingHorizontal: 10, paddingVertical: 4,
           flexDirection: "row",
@@ -232,10 +243,18 @@ export default function DeliveryDetailScreen() {
           gap: 6,
           zIndex: 1000,
           borderWidth: 1,
-          borderColor: isDeclined ? "#FECACA" : isExpired ? "#FDE68A" : "transparent"
+          borderColor: isDeclined 
+            ? (isDark ? "#5C2626" : "#FECACA") 
+            : isExpired 
+              ? (isDark ? "#5C3D20" : "#FDE68A") 
+              : (isDark ? "#333333" : "transparent")
         }]}>
           <Text style={{
-            color: isDeclined ? "#DC2626" : isExpired ? "#D97706" : vendorStatusColors[orderDetail?.status]?.text || "#DC2626",
+            color: isDeclined 
+              ? (isDark ? "#FCA5A5" : "#DC2626") 
+              : isExpired 
+                ? (isDark ? "#FCD34D" : "#D97706") 
+                : vendorStatusColors[orderDetail?.status]?.text || (isDark ? "#FCA5A5" : "#DC2626"),
             fontSize: 12,
             fontWeight: "bold",
             textTransform: "uppercase"
@@ -250,7 +269,7 @@ export default function DeliveryDetailScreen() {
       </View>
 
       <ScrollView
-        style={styles.contentScroll}
+        style={[styles.contentScroll, { backgroundColor: colors.background }]}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: 20,
@@ -280,7 +299,7 @@ export default function DeliveryDetailScreen() {
                         style={[
                           styles.progressLine,
                           {
-                            backgroundColor: isCompleted ? "#16A34A" : "#E5E7EB",
+                            backgroundColor: isCompleted ? "#16A34A" : (isDark ? '#333333' : "#E5E7EB"),
                             left: "-50%",
                             right: "50%",
                           },
@@ -290,6 +309,7 @@ export default function DeliveryDetailScreen() {
                     <View
                       style={[
                         styles.stepIndicator,
+                        { backgroundColor: isDark ? '#1A1A1A' : '#fff' }, // Neutral bg for future steps in dark
                         isCompleted && styles.indicatorCompleted,
                         isCurrent &&
                         (isStepDeclined
@@ -301,7 +321,7 @@ export default function DeliveryDetailScreen() {
                               : isDeliveredCurrent
                                 ? styles.indicatorCompleted
                                 : styles.indicatorCurrent),
-                        isFuture && styles.indicatorFuture,
+                        isFuture && [styles.indicatorFuture, { borderColor: isDark ? '#333333' : "#E5E7EB", backgroundColor: isDark ? '#1A1A1A' : "#F9FAFB" }],
                       ]}
                     >
                       <MaterialCommunityIcons
@@ -319,7 +339,7 @@ export default function DeliveryDetailScreen() {
                         size={isCurrent ? 16 : 12}
                         color={
                           isFuture
-                            ? "#9CA3AF"
+                            ? (isDark ? '#666666' : "#9CA3AF")
                             : (isStepDeclined || isStepExpired || isStepFailed)
                               ? "#FFFFFF"
                               : "#fff"
@@ -346,15 +366,16 @@ export default function DeliveryDetailScreen() {
                   <Text
                     style={[
                       styles.stepLabel,
+                      { color: isDark ? colors.textMuted : "#94A3B8" },
                       isCurrent && {
                         color: isStepDeclined
-                          ? "#DC2626"
+                          ? (isDark ? "#FCA5A5" : "#DC2626")
                           : isStepExpired
-                            ? "#D97706"
+                            ? (isDark ? "#FCD34D" : "#D97706")
                             : isStepFailed
-                              ? "#DC2626"
+                              ? (isDark ? "#FCA5A5" : "#DC2626")
                               : isDeliveredCurrent
-                                ? "#16A34A"
+                                ? (isDark ? "#86EFAC" : "#16A34A")
                                 : "#F59E0B",
                         fontWeight: "900",
                       },
@@ -383,12 +404,15 @@ export default function DeliveryDetailScreen() {
         {/* --- NEW: DECLINE BUTTON SECTION --- */}
         {canDecline && (
           <TouchableOpacity
-            style={styles.declineBtn}
+            style={[styles.declineBtn, {
+              backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
+              borderColor: isDark ? '#5C2626' : '#FECACA',
+            }]}
             onPress={() => setDeclineModalVisible(true)}
             activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="close-circle-outline" size={20} color="#DC2626" />
-            <Text style={styles.declineBtnText}>{t('declineAssignment')}</Text>
+            <MaterialCommunityIcons name="close-circle-outline" size={20} color={isDark ? '#FCA5A5' : '#DC2626'} />
+            <Text style={[styles.declineBtnText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('declineAssignment')}</Text>
           </TouchableOpacity>
         )}
 
@@ -398,15 +422,15 @@ export default function DeliveryDetailScreen() {
             style={[
               styles.miniCard,
               { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 },
-              { borderLeftColor: "#6750A4", borderLeftWidth: 4 },
+              { borderLeftColor: brand, borderLeftWidth: 4 },
             ]}
           >
-            <Text style={styles.miniLabel}>{t('pickupFrom')}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>{t('pickupFrom')}</Text>
             <Text style={[styles.miniTitle, { color: colors.text }]} numberOfLines={1}>
               {companyName}
             </Text>
-            <TouchableOpacity style={styles.miniAction}>
-              <Text style={styles.miniActionText}>
+            <TouchableOpacity style={[styles.miniAction, { backgroundColor: isDark ? '#1A1A1A' : '#6750A410' }]}>
+              <Text style={[styles.miniActionText, { color: brand }]}>
                 {isAmharic ? t('store') : delivery.vendor_order_detail.company.business_type}
               </Text>
             </TouchableOpacity>
@@ -422,7 +446,7 @@ export default function DeliveryDetailScreen() {
               },
             ]}
           >
-            <Text style={styles.miniLabel}>{t('deliverTo')}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>{t('deliverTo')}</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -437,7 +461,7 @@ export default function DeliveryDetailScreen() {
                   style={styles.customerImage}
                 />
               ) : (
-                <View style={styles.customerImage}>
+                <View style={[styles.customerImage, { backgroundColor: isDark ? '#1A1A1A' : 'transparent' }]}>
                   <MaterialIcons name="person" size={24} color="#10B981" />
                 </View>
               )}
@@ -467,11 +491,11 @@ export default function DeliveryDetailScreen() {
         {/* --- ITEM LIST --- */}
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardLabel}>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
               {t('orderItems', { count: orderDetail?.items?.length || 0 })}
             </Text>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>
+            <View style={[styles.categoryBadge, { backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9' }]}>
+              <Text style={[styles.categoryText, { color: colors.textMuted }]}>
                 {subCategoryName}
               </Text>
             </View>
@@ -482,6 +506,7 @@ export default function DeliveryDetailScreen() {
               key={item.id}
               style={[
                 styles.itemRow,
+                { borderBottomColor: itemBorder },
                 index === orderDetail.items.length - 1 && {
                   borderBottomWidth: 0,
                 },
@@ -493,12 +518,12 @@ export default function DeliveryDetailScreen() {
                     item.product_image ||
                     "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=200&auto=format&fit=crop",
                 }}
-                style={styles.itemImage}
+                style={[styles.itemImage, { backgroundColor: isDark ? '#1A1A1A' : '#F8FAFC' }]}
               />
               <View style={styles.itemInfo}>
                 <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
                 <View style={styles.itemPriceRow}>
-                  <Text style={styles.itemQty}>{t('qty')}: {item.qty}</Text>
+                  <Text style={[styles.itemQty, { color: brand }]}>{t('qty')}: {item.qty}</Text>
                   <Text style={[styles.itemPrice, { color: colors.text }]}>
                     {item.unit_price} {orderDetail?.tax_invoice?.currency}
                   </Text>
@@ -508,7 +533,7 @@ export default function DeliveryDetailScreen() {
           ))}
 
           {/* --- BILLING SUMMARY --- */}
-          <View style={styles.billingSection}>
+          <View style={[styles.billingSection, { borderTopColor: itemBorder }]}>
             <View style={styles.billingRow}>
               <Text style={[styles.billingText, { color: colors.textMuted }]}>{t('subtotal')}</Text>
               <Text style={[styles.billingValue, { color: colors.text }]}>
@@ -523,7 +548,7 @@ export default function DeliveryDetailScreen() {
             </View>
             <View style={[styles.billingRow, styles.totalRow]}>
               <Text style={[styles.totalText, { color: colors.text }]}>{t('totalAmount')}</Text>
-              <Text style={[styles.totalValue, { color: colors.primary }]}>
+              <Text style={[styles.totalValue, { color: brand }]}>
                 {orderDetail?.amount} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
@@ -543,10 +568,14 @@ export default function DeliveryDetailScreen() {
               : `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}`;
             router.push(url);
           }}
-          style={[styles.trackingFloatingBtn, { bottom: 120 + insets.bottom }]}
+          style={[styles.trackingFloatingBtn, { 
+            bottom: 120 + insets.bottom,
+            backgroundColor: brand,
+            shadowColor: isDark ? 'transparent' : '#6750A4',
+          }]}
         >
-          <FontAwesome6 name="route" size={18} color="#fff" />
-          <Text style={styles.trackingFloatingText}>
+          <FontAwesome6 name="route" size={18} color={isDark ? '#000000' : "#fff"} />
+          <Text style={[styles.trackingFloatingText, { color: isDark ? '#000000' : '#fff' }]}>
             {delivery.status === 'pending' ? t('viewDirection') : t('trackOrder')}
           </Text>
         </TouchableOpacity>
@@ -582,11 +611,10 @@ export default function DeliveryDetailScreen() {
       >
         <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
           <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
-            <View style={styles.modalIconWrapper}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
+            <View style={[styles.modalIconWrapper, { backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2' }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={isDark ? '#FCA5A5' : '#DC2626'} />
             </View>
             
-            {/* ✅ Applied translation keys */}
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('declineModalTitle')}</Text>
             <Text style={[styles.modalMessage, { color: colors.textMuted }]}>
               {t('declineModalMessage')}
@@ -594,7 +622,7 @@ export default function DeliveryDetailScreen() {
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalCancelBtn, { backgroundColor: isDark ? colors.surface : '#F1F5F9', borderColor: colors.border }]}
+                style={[styles.modalCancelBtn, { backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9', borderColor: colors.border }]}
                 onPress={() => setDeclineModalVisible(false)}
                 disabled={isDeclining}
               >
@@ -602,7 +630,7 @@ export default function DeliveryDetailScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.modalConfirmBtn}
+                style={[styles.modalConfirmBtn, { backgroundColor: isDark ? '#B91C1C' : '#DC2626' }]}
                 onPress={confirmDecline}
                 disabled={isDeclining}
               >

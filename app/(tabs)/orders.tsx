@@ -28,7 +28,7 @@ import { STATUS_TABS, STATUS_CONFIG } from "@/constants/deliveryConstants";
 import { useTranslation } from "react-i18next";
 import Toast from "react-native-toast-message";
 
-import { updateDeliveryStatus } from "@/services/api"; 
+import { updateDeliveryStatus } from "@/services/api";
 
 // Helper to get display label for status
 const getStatusLabel = (status: string): string => {
@@ -59,6 +59,34 @@ export default function OrdersScreen() {
   const { t, i18n } = useTranslation("driverOrders");
   const isAmharic = i18n.language?.startsWith("am");
 
+  // ─── Dark-mode aware design tokens ───────────────────────────────
+  const brand = isDark ? '#A78BFA' : '#6750A4';
+  const brandBg = isDark ? '#2A1F3D' : '#F3E8FF';
+  const brandBorder = isDark ? '#3D2E5C' : '#E8DFF5';
+  const surfaceMuted = isDark ? '#221A33' : '#F1F5F9';
+  const routeLineColor = isDark ? '#3D2E5C' : '#E2E8F0';
+  const addressLabelColor = isDark ? '#C4B5FD' : '#8B7BB5';
+  const addressTextColor = isDark ? '#94A3B8' : '#64748B';
+  const timeTextColor = isDark ? '#64748B' : '#94A3B8';
+
+  // Status badge border (invisible in dark with the old rgba(0,0,0,0.04))
+  const statusBadgeBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
+
+  // Decline button (red-tinted, dark-aware)
+  const declineBtnBg = isDark ? '#3D1A1A' : '#FEF2F2';
+  const declineBtnBorder = isDark ? '#5C2626' : '#FECACA';
+  const declineBtnText = isDark ? '#FCA5A5' : '#DC2626';
+
+  // Deliver-to clickable (dashed red-tinted)
+  const deliverToBorder = isDark ? '#4D2020' : '#f9d4d4';
+  const deliverToBg = isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.04)';
+  const locationPillBg = isDark ? '#2A1F3D' : '#FFFFFF';
+  const locationPillBorder = isDark ? '#5C2626' : '#FEE2E2';
+  const locationPillText = isDark ? '#FCA5A5' : '#EF4444';
+
+  // Modal
+  const modalIconBg = isDark ? '#3D1A1A' : '#FEF2F2';
+
   // ── State for Decline Modal ──
   const [declineModalVisible, setDeclineModalVisible] = useState(false);
   const [orderToDecline, setOrderToDecline] = useState<DeliveryAssignment | null>(null);
@@ -75,9 +103,9 @@ export default function OrdersScreen() {
     if (status === 'delivered') {
       return allDeliveries.filter((d) => d.status === 'delivered' && !isFailedDelivery(d)).length;
     }
-     if (status === 'declined') {
-    return allDeliveries.filter((d) => d.status === 'declined').length;
-  }
+    if (status === 'declined') {
+      return allDeliveries.filter((d) => d.status === 'declined').length;
+    }
     return allDeliveries.filter((d) => d.status === status).length;
   }, [allDeliveries]);
 
@@ -241,9 +269,9 @@ export default function OrdersScreen() {
           if (activeTab === 'delivered') {
             return d.status === 'delivered' && !isFailedDelivery(d);
           }
-           if (activeTab === 'declined') {
-          return d.status === 'declined';
-        }
+          if (activeTab === 'declined') {
+            return d.status === 'declined';
+          }
           return d.status === activeTab;
         })
         .sort((a, b) => b.vendor_order - a.vendor_order);
@@ -279,27 +307,25 @@ export default function OrdersScreen() {
     if (!orderToDecline) return;
     try {
       setIsDeclining(true);
-      
+
       await updateDeliveryStatus(
-        orderToDecline.id, 
-        'declined', 
-        "Declined by driver", 
+        orderToDecline.id,
+        'declined',
+        "Declined by driver",
         'declined'
       );
-      
-      // ✅ Applied translation keys
+
       Toast.show({
         type: "success",
         text1: t("declineSuccessTitle"),
         text2: t("declineSuccessMessage"),
       });
-      
+
       setDeclineModalVisible(false);
       setOrderToDecline(null);
       refreshDeliveries();
     } catch (error: any) {
       console.error("Failed to decline order:", error);
-      // ✅ Applied translation keys
       Toast.show({
         type: "error",
         text1: t("declineFailedTitle"),
@@ -319,7 +345,7 @@ export default function OrdersScreen() {
       minute: "2-digit",
     });
     const dateAssigned = new Date(item.assigned_at).toLocaleDateString();
-    
+
     const company = (item as any)?.vendor_order_detail?.company;
 
     const companyName = isAmharic
@@ -368,8 +394,6 @@ export default function OrdersScreen() {
         activeOpacity={0.9}
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
       >
-        {/* <View style={[styles.verticalLine, { backgroundColor: colors.primary }]} /> */}
-
         <View style={styles.cardContent}>
           {/* Card Header */}
           <View style={styles.cardHeader}>
@@ -377,28 +401,38 @@ export default function OrdersScreen() {
               <Text style={[styles.orderIdText, { color: colors.primary }]}>
                 {t("orderNumber", { id: `${item?.vendor_order_detail?.master_order_id}-${item?.vendor_order}` })}
               </Text>
-              <Text style={styles.timeText}>
+              <Text style={[styles.timeText, { color: timeTextColor }]}>
                 {t("assignedAt", { time: timeAssigned })}
               </Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              {/* NEW: Small Decline Button */}
+              {/* Small Decline Button */}
               {canDecline && (
                 <TouchableOpacity
                   onPress={(e) => {
-                    e.stopPropagation(); // Prevent card press
+                    e.stopPropagation();
                     handleDeclinePress(item);
                   }}
-                  style={styles.smallDeclineBtn}
+                  style={[
+                    styles.smallDeclineBtn,
+                    {
+                      backgroundColor: declineBtnBg,
+                      borderColor: declineBtnBorder,
+                    },
+                  ]}
                   activeOpacity={0.7}
                 >
-                  {/* ✅ Applied translation key */}
-                  <Text style={styles.smallDeclineText}>{t('decline')}</Text>
+                  <Text style={[styles.smallDeclineText, { color: declineBtnText }]}>
+                    {t('decline')}
+                  </Text>
                 </TouchableOpacity>
               )}
 
-              <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
+              <View style={[styles.statusBadge, {
+                backgroundColor: config.bg,
+                borderColor: statusBadgeBorder,
+              }]}>
                 <MaterialCommunityIcons
                   name={config.icon}
                   size={14}
@@ -416,12 +450,12 @@ export default function OrdersScreen() {
           {/* Route Visualization */}
           <View style={styles.routeContainer}>
             <View style={styles.routeIcons}>
-              <View style={[styles.dot, { backgroundColor: "#6750A4" }]} />
-              <View style={styles.line} />
+              <View style={[styles.dot, { backgroundColor: brand }]} />
+              <View style={[styles.line, { backgroundColor: routeLineColor }]} />
               {(() => {
                 const hasCoords = !!(item.customer_lat && item.customer_lon);
                 const isDelivered = normalizedStatus === 'delivered';
-                const iconColor = isDelivered ? '#6750A4' : '#EF4444';
+                const iconColor = isDelivered ? brand : '#EF4444';
 
                 return (
                   <View style={styles.locationIconWrapper}>
@@ -437,9 +471,9 @@ export default function OrdersScreen() {
 
             <View style={styles.addressContainer}>
               <View style={styles.addressBlock}>
-                <Text style={styles.addressLabel}>{t("pickupFrom")}</Text>
+                <Text style={[styles.addressLabel, { color: addressLabelColor }]}>{t("pickupFrom")}</Text>
                 <Text style={{ flexShrink: 1, color: colors.text, fontWeight: '600' }}>{companyName}</Text>
-                <Text style={styles.addressText} numberOfLines={1}>
+                <Text style={[styles.addressText, { color: addressTextColor }]} numberOfLines={1}>
                   {item.company_address}
                 </Text>
               </View>
@@ -451,20 +485,29 @@ export default function OrdersScreen() {
                     openNavigation(item.id, item.vendor_order);
                   }}
                   activeOpacity={0.7}
-                  style={styles.deliverToClickable}
+                  style={[
+                    styles.deliverToClickable,
+                    {
+                      borderColor: deliverToBorder,
+                      backgroundColor: deliverToBg,
+                    },
+                  ]}
                 >
                   <View style={styles.addressBlock}>
                     <View style={styles.locationHeaderRow}>
-                      <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
-                      <View style={styles.locationIndicator}>
-                        <Ionicons name="location-outline" size={10} color="#EF4444" />
-                        <Text style={styles.locationIndicatorText}>{t('tapToTrack')}</Text>
+                      <Text style={[styles.addressLabel, { color: addressLabelColor }]}>{t("deliverTo")}</Text>
+                      <View style={[styles.locationIndicator, {
+                        backgroundColor: locationPillBg,
+                        borderColor: locationPillBorder,
+                      }]}>
+                        <Ionicons name="location-outline" size={10} color={locationPillText} />
+                        <Text style={[styles.locationIndicatorText, { color: locationPillText }]}>{t('tapToTrack')}</Text>
                       </View>
                     </View>
                     <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
                       {customerName}
                     </Text>
-                    <Text style={styles.addressText} numberOfLines={2}>
+                    <Text style={[styles.addressText, { color: addressTextColor }]} numberOfLines={2}>
                       {loadingLocations[item.id]
                         ? t('loadingLocation')
                         : getDeliveryAddress()}
@@ -473,11 +516,11 @@ export default function OrdersScreen() {
                 </TouchableOpacity>
               ) : (
                 <View style={styles.addressBlock}>
-                  <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
+                  <Text style={[styles.addressLabel, { color: addressLabelColor }]}>{t("deliverTo")}</Text>
                   <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
                     {customerName}
                   </Text>
-                  <Text style={styles.addressText} numberOfLines={2}>
+                  <Text style={[styles.addressText, { color: addressTextColor }]} numberOfLines={2}>
                     {loadingLocations[item.id]
                       ? t('loadingLocation')
                       : getDeliveryAddress()}
@@ -512,6 +555,7 @@ export default function OrdersScreen() {
           style={[
             styles.header,
             {
+              backgroundColor: colors.background,
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }]
             }
@@ -542,7 +586,11 @@ export default function OrdersScreen() {
                 <TouchableOpacity
                   key={tab.value}
                   onPress={() => setActiveTab(tab.value)}
-                  style={[styles.tab, { backgroundColor: isDark ? colors.card : '#fff', borderColor: colors.border }, isActive && [styles.activeTab, { backgroundColor: colors.primary, borderColor: colors.primary }]]}
+                  style={[
+                    styles.tab,
+                    { backgroundColor: isDark ? colors.card : '#fff', borderColor: colors.border },
+                    isActive && [styles.activeTab, { backgroundColor: colors.primary, borderColor: colors.primary }],
+                  ]}
                 >
                   <Text
                     style={[
@@ -556,11 +604,13 @@ export default function OrdersScreen() {
                   {count > 0 && (
                     <View style={[
                       styles.badge,
-                      isActive && styles.badgeActive
+                      { backgroundColor: isDark ? '#3D2E5C' : '#F1F5F9' },
+                      isActive && styles.badgeActive,
                     ]}>
                       <Text style={[
                         styles.badgeText,
-                        isActive && styles.badgeTextActive
+                        { color: colors.textMuted },
+                        isActive && styles.badgeTextActive,
                       ]}>
                         {count}
                       </Text>
@@ -574,7 +624,7 @@ export default function OrdersScreen() {
 
         {loading ? (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#6750A4" />
+            <ActivityIndicator size="large" color={brand} />
           </View>
         ) : (
           <FlatList
@@ -586,7 +636,8 @@ export default function OrdersScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#6750A4"
+                tintColor={brand}
+                colors={[brand]}
               />
             }
             ListEmptyComponent={
@@ -594,10 +645,10 @@ export default function OrdersScreen() {
                 <MaterialCommunityIcons
                   name="package-variant-closed"
                   size={80}
-                  color="#6750A4"
+                  color={brand}
                 />
-                <Text style={styles.emptyTitle}>{t("noAssignments")}</Text>
-                <Text style={styles.emptySubtitle}>
+                <Text style={[styles.emptyTitle, { color: isDark ? colors.text : '#6750A4' }]}>{t("noAssignments")}</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
                   {t("newOrdersWillAppear")}
                 </Text>
               </View>
@@ -614,12 +665,15 @@ export default function OrdersScreen() {
         onRequestClose={() => setDeclineModalVisible(false)}
       >
         <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
-            <View style={styles.modalIconWrapper}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
+          <View style={[styles.modalContent, {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            borderWidth: isDark ? 1 : 0,
+          }]}>
+            <View style={[styles.modalIconWrapper, { backgroundColor: modalIconBg }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={isDark ? '#FCA5A5' : '#DC2626'} />
             </View>
-            
-            {/* ✅ Applied translation keys */}
+
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('declineModalTitle')}</Text>
             <Text style={[styles.modalMessage, { color: colors.textMuted }]}>
               {t('declineModalMessage')}
@@ -627,7 +681,10 @@ export default function OrdersScreen() {
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalCancelBtn, { backgroundColor: isDark ? colors.surface : '#F1F5F9', borderColor: colors.border }]}
+                style={[styles.modalCancelBtn, {
+                  backgroundColor: isDark ? colors.surface : '#F1F5F9',
+                  borderColor: colors.border,
+                }]}
                 onPress={() => setDeclineModalVisible(false)}
                 disabled={isDeclining}
               >
@@ -635,7 +692,9 @@ export default function OrdersScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.modalConfirmBtn}
+                style={[styles.modalConfirmBtn, {
+                  backgroundColor: isDark ? '#B91C1C' : '#DC2626',
+                }]}
                 onPress={confirmDecline}
                 disabled={isDeclining}
               >
@@ -746,7 +805,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0,0,0,0.04)",
   },
   statusText: { fontSize: 10, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 },
-  
+
   // Small Decline Button Styles
   smallDeclineBtn: {
     paddingHorizontal: 10,

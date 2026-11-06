@@ -51,6 +51,19 @@ export default function EarningsScreen() {
   const [selectedPayout, setSelectedPayout] = useState<DriverPayout | null>(null);
   const [payoutModalVisible, setPayoutModalVisible] = useState(false);
 
+  // ─── Dark-mode aware design tokens ───────────────────────────────
+  const brand = isDark ? '#A78BFA' : '#6750A4';
+  const brandBg = isDark ? '#2A1F3D' : '#F3E8FF';
+  const brandSoftBg = isDark ? '#1E1730' : '#F3E8FF';
+  const brandBorder = isDark ? '#3D2E5C' : '#E8DFF5';
+  const brandText = isDark ? '#C4B5FD' : '#6750A4';
+  const surfaceAlt = isDark ? '#1A1525' : '#F8FAFC';
+  const surfaceMuted = isDark ? '#221A33' : '#F1F5F9';
+  const lightBorder = isDark ? colors.border : '#F1F5F9';
+  const cardBorder = isDark ? colors.border : '#E2E8F0';
+  const heroBg = isDark ? '#000' : '#6750A4';
+  const heroShadow = isDark ? '#6750A4' : '#6750A4';
+
   // Fetch earnings & payouts data
   const fetchData = useCallback(async () => {
     try {
@@ -213,41 +226,53 @@ export default function EarningsScreen() {
     }
   };
 
-  // Payment badge helper
+  // Payment badge helper (theme-aware)
   const renderPaymentBadge = (method: string, displayLabel?: string) => {
     switch (method?.toLowerCase()) {
       case 'bank_transfer':
         return (
-          <View style={[styles.paymentBadge, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
-            <MaterialCommunityIcons name="bank" size={12} color="#2563EB" style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: '#2563EB' }]}>
+          <View style={[styles.paymentBadge, {
+            backgroundColor: isDark ? '#1E3A5F' : '#EFF6FF',
+            borderColor: isDark ? '#2E4A70' : '#BFDBFE',
+          }]}>
+            <MaterialCommunityIcons name="bank" size={12} color={isDark ? '#93C5FD' : '#2563EB'} style={{ marginRight: 4 }} />
+            <Text style={[styles.paymentBadgeText, { color: isDark ? '#93C5FD' : '#2563EB' }]}>
               {t('paymentBankTransfer', 'Bank Transfer')}
             </Text>
           </View>
         );
       case 'cod':
         return (
-          <View style={[styles.paymentBadge, { backgroundColor: '#FFF7ED', borderColor: '#FED7AA' }]}>
-            <MaterialCommunityIcons name="cash-multiple" size={12} color="#EA580C" style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: '#EA580C' }]}>
+          <View style={[styles.paymentBadge, {
+            backgroundColor: isDark ? '#3D2A1A' : '#FFF7ED',
+            borderColor: isDark ? '#5C3D20' : '#FED7AA',
+          }]}>
+            <MaterialCommunityIcons name="cash-multiple" size={12} color={isDark ? '#FDBA74' : '#EA580C'} style={{ marginRight: 4 }} />
+            <Text style={[styles.paymentBadgeText, { color: isDark ? '#FDBA74' : '#EA580C' }]}>
               {t('paymentCOD', 'COD')}
             </Text>
           </View>
         );
       case 'chapa':
         return (
-          <View style={[styles.paymentBadge, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
-            <MaterialCommunityIcons name="credit-card-check-outline" size={12} color="#16A34A" style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: '#16A34A' }]}>
+          <View style={[styles.paymentBadge, {
+            backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
+            borderColor: isDark ? '#245C3A' : '#BBF7D0',
+          }]}>
+            <MaterialCommunityIcons name="credit-card-check-outline" size={12} color={isDark ? '#86EFAC' : '#16A34A'} style={{ marginRight: 4 }} />
+            <Text style={[styles.paymentBadgeText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
               {t('paymentChapa', 'Chapa')}
             </Text>
           </View>
         );
       case 'telebirr':
         return (
-          <View style={[styles.paymentBadge, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
-            <MaterialCommunityIcons name="cellphone-check" size={12} color="#7C3AED" style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: '#7C3AED' }]}>
+          <View style={[styles.paymentBadge, {
+            backgroundColor: isDark ? '#2A1F3D' : '#F5F3FF',
+            borderColor: isDark ? '#3D2E5C' : '#DDD6FE',
+          }]}>
+            <MaterialCommunityIcons name="cellphone-check" size={12} color={isDark ? '#C4B5FD' : '#7C3AED'} style={{ marginRight: 4 }} />
+            <Text style={[styles.paymentBadgeText, { color: isDark ? '#C4B5FD' : '#7C3AED' }]}>
               {t('paymentTelebirr', 'Telebirr')}
             </Text>
           </View>
@@ -255,9 +280,12 @@ export default function EarningsScreen() {
       case 'online':
       default:
         return (
-          <View style={[styles.paymentBadge, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
-            <MaterialCommunityIcons name="credit-card-check-outline" size={12} color="#16A34A" style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: '#16A34A' }]}>
+          <View style={[styles.paymentBadge, {
+            backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
+            borderColor: isDark ? '#245C3A' : '#BBF7D0',
+          }]}>
+            <MaterialCommunityIcons name="credit-card-check-outline" size={12} color={isDark ? '#86EFAC' : '#16A34A'} style={{ marginRight: 4 }} />
+            <Text style={[styles.paymentBadgeText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
               {displayLabel || t('paymentOnline', 'Online')}
             </Text>
           </View>
@@ -265,36 +293,48 @@ export default function EarningsScreen() {
     }
   };
 
-  // Payout settlement status badge on delivered orders
+  // Payout settlement status badge on delivered orders (theme-aware)
   const renderPayoutStatusBadge = (status?: string) => {
     if (status === 'confirmed') {
       return (
-        <View style={[styles.payoutStatusPill, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
-          <Ionicons name="checkmark-done" size={10} color="#16A34A" style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: '#16A34A' }]}>{t('paid', 'Paid')}</Text>
+        <View style={[styles.payoutStatusPill, {
+          backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
+          borderColor: isDark ? '#245C3A' : '#BBF7D0',
+        }]}>
+          <Ionicons name="checkmark-done" size={10} color={isDark ? '#86EFAC' : '#16A34A'} style={{ marginRight: 2 }} />
+          <Text style={[styles.payoutStatusPillText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('paid', 'Paid')}</Text>
         </View>
       );
     }
     if (status === 'disbursed') {
       return (
-        <View style={[styles.payoutStatusPill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
-          <Ionicons name="time" size={10} color="#D97706" style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: '#D97706' }]}>{t('disbursed', 'Disbursed')}</Text>
+        <View style={[styles.payoutStatusPill, {
+          backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
+          borderColor: isDark ? '#5C3D20' : '#FDE68A',
+        }]}>
+          <Ionicons name="time" size={10} color={isDark ? '#FCD34D' : '#D97706'} style={{ marginRight: 2 }} />
+          <Text style={[styles.payoutStatusPillText, { color: isDark ? '#FCD34D' : '#D97706' }]}>{t('disbursed', 'Disbursed')}</Text>
         </View>
       );
     }
     if (status === 'disputed') {
       return (
-        <View style={[styles.payoutStatusPill, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-          <Ionicons name="alert-circle" size={10} color="#DC2626" style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: '#DC2626' }]}>{t('disputed', 'Disputed')}</Text>
+        <View style={[styles.payoutStatusPill, {
+          backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
+          borderColor: isDark ? '#5C2626' : '#FECACA',
+        }]}>
+          <Ionicons name="alert-circle" size={10} color={isDark ? '#FCA5A5' : '#DC2626'} style={{ marginRight: 2 }} />
+          <Text style={[styles.payoutStatusPillText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('disputed', 'Disputed')}</Text>
         </View>
       );
     }
     return (
-      <View style={[styles.payoutStatusPill, { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }]}>
-        <Ionicons name="hourglass-outline" size={10} color="#64748B" style={{ marginRight: 2 }} />
-        <Text style={[styles.payoutStatusPillText, { color: '#64748B' }]}>{t('unpaid', 'Unpaid')}</Text>
+      <View style={[styles.payoutStatusPill, {
+        backgroundColor: isDark ? surfaceAlt : '#F8FAFC',
+        borderColor: isDark ? colors.border : '#E2E8F0',
+      }]}>
+        <Ionicons name="hourglass-outline" size={10} color={colors.textMuted} style={{ marginRight: 2 }} />
+        <Text style={[styles.payoutStatusPillText, { color: colors.textMuted }]}>{t('unpaid', 'Unpaid')}</Text>
       </View>
     );
   };
@@ -339,7 +379,7 @@ export default function EarningsScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: cardBorder }]}
         activeOpacity={0.85}
         onPress={() => {
           setSelectedOrder(item);
@@ -349,41 +389,41 @@ export default function EarningsScreen() {
         {/* Row 1: Order # + Store & Delivery Fee */}
         <View style={styles.cardTopRow}>
           <View style={styles.orderNumberRow}>
-            <View style={styles.cardIconCircle}>
-              <MaterialCommunityIcons name="moped" size={18} color="#6750A4" />
+            <View style={[styles.cardIconCircle, { backgroundColor: brandBg }]}>
+              <MaterialCommunityIcons name="moped" size={18} color={brand} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.orderNumberText, { color: colors.text }]}>#{orderId}</Text>
-              <Text style={styles.storeNameText} numberOfLines={1}>
+              <Text style={[styles.storeNameText, { color: colors.textMuted }]} numberOfLines={1}>
                 {companyName}
               </Text>
             </View>
           </View>
 
           <View style={styles.earningAmountBox}>
-            <Text style={styles.earningPlusText}>+{fee}</Text>
-            <Text style={styles.earningCurrencyText}>{t('etb', 'ETB')}</Text>
+            <Text style={[styles.earningPlusText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>+{fee}</Text>
+            <Text style={[styles.earningCurrencyText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('etb', 'ETB')}</Text>
           </View>
         </View>
 
         {/* Row 2: Customer Name & Completion Time */}
         <View style={styles.cardMiddleRow}>
           <View style={styles.customerRow}>
-            <Ionicons name="person-outline" size={13} color="#64748B" />
-            <Text style={styles.customerText} numberOfLines={1}>
+            <Ionicons name="person-outline" size={13} color={colors.textMuted} />
+            <Text style={[styles.customerText, { color: colors.textMuted }]} numberOfLines={1}>
               {item.customer_name || t('customer', 'Customer')}
             </Text>
           </View>
           {!!dateStr && (
             <View style={styles.dateRow}>
-              <Ionicons name="time-outline" size={12} color="#94A3B8" />
-              <Text style={styles.dateText}>{dateStr}</Text>
+              <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.dateText, { color: colors.textMuted }]}>{dateStr}</Text>
             </View>
           )}
         </View>
 
         {/* Row 3: Responsive Badges (Payment, Payout Status, COD Handover) */}
-        <View style={styles.cardBadgesRow}>
+        <View style={[styles.cardBadgesRow, { borderTopColor: lightBorder }]}>
           {renderPaymentBadge(item.payment_method, item.payment_method_display)}
           {renderPayoutStatusBadge(item.payout_status)}
           {item.payment_method?.toLowerCase() === 'cod' && (
@@ -391,21 +431,31 @@ export default function EarningsScreen() {
               style={[
                 styles.payoutStatusPill,
                 {
-                  backgroundColor: item.cod_payment_confirmed ? '#F0FDF4' : '#FFFBEB',
-                  borderColor: item.cod_payment_confirmed ? '#BBF7D0' : '#FDE68A',
+                  backgroundColor: item.cod_payment_confirmed
+                    ? (isDark ? '#1A3D2A' : '#F0FDF4')
+                    : (isDark ? '#3D2A1A' : '#FFFBEB'),
+                  borderColor: item.cod_payment_confirmed
+                    ? (isDark ? '#245C3A' : '#BBF7D0')
+                    : (isDark ? '#5C3D20' : '#FDE68A'),
                 },
               ]}
             >
               <Ionicons
                 name={item.cod_payment_confirmed ? 'checkmark-circle' : 'cash-outline'}
                 size={10}
-                color={item.cod_payment_confirmed ? '#16A34A' : '#D97706'}
+                color={item.cod_payment_confirmed
+                  ? (isDark ? '#86EFAC' : '#16A34A')
+                  : (isDark ? '#FCD34D' : '#D97706')}
                 style={{ marginRight: 2 }}
               />
               <Text
                 style={[
                   styles.payoutStatusPillText,
-                  { color: item.cod_payment_confirmed ? '#16A34A' : '#D97706' },
+                  {
+                    color: item.cod_payment_confirmed
+                      ? (isDark ? '#86EFAC' : '#16A34A')
+                      : (isDark ? '#FCD34D' : '#D97706'),
+                  },
                 ]}
               >
                 {item.cod_payment_confirmed
@@ -440,7 +490,14 @@ export default function EarningsScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.payoutCard, { backgroundColor: colors.card, borderColor: colors.border }, isAwaiting && styles.payoutCardAwaiting]}
+        style={[
+          styles.payoutCard,
+          { backgroundColor: colors.card, borderColor: cardBorder },
+          isAwaiting && [styles.payoutCardAwaiting, {
+            borderColor: isDark ? '#5C3D20' : '#FDE68A',
+            backgroundColor: isDark ? '#221A33' : '#FFFDF7',
+          }],
+        ]}
         activeOpacity={0.85}
         onPress={() => {
           setSelectedPayout(item);
@@ -454,36 +511,39 @@ export default function EarningsScreen() {
               style={[
                 styles.payoutIconCircle,
                 isAwaiting
-                  ? { backgroundColor: '#FEF3C7' }
+                  ? { backgroundColor: isDark ? '#3D2A1A' : '#FEF3C7' }
                   : isConfirmed
-                  ? { backgroundColor: '#DCFCE7' }
+                  ? { backgroundColor: isDark ? '#1A3D2A' : '#DCFCE7' }
                   : isDisputed
-                  ? { backgroundColor: '#FEE2E2' }
-                  : { backgroundColor: '#F1F5F9' },
+                  ? { backgroundColor: isDark ? '#3D1A1A' : '#FEE2E2' }
+                  : { backgroundColor: isDark ? surfaceMuted : '#F1F5F9' },
               ]}
             >
               <MaterialCommunityIcons
                 name={isAwaiting ? 'alert-circle' : isConfirmed ? 'check-decagram' : isDisputed ? 'alert-octagon' : 'cash-multiple'}
                 size={18}
-                color={isAwaiting ? '#D97706' : isConfirmed ? '#16A34A' : isDisputed ? '#DC2626' : '#64748B'}
+                color={isAwaiting
+                  ? (isDark ? '#FCD34D' : '#D97706')
+                  : isConfirmed
+                  ? (isDark ? '#86EFAC' : '#16A34A')
+                  : isDisputed
+                  ? (isDark ? '#FCA5A5' : '#DC2626')
+                  : colors.textMuted}
               />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.payoutNumberText}>#{item.payout_number}</Text>
-                {/* <View style={styles.payoutTypeTag}>
-                  <Text style={styles.payoutTypeTagText}>{item.payout_type?.toUpperCase()}</Text>
-                </View> */}
+                <Text style={[styles.payoutNumberText, { color: colors.text }]}>#{item.payout_number}</Text>
               </View>
-              <Text style={styles.payoutStoreText} numberOfLines={1}>{compName}</Text>
+              <Text style={[styles.payoutStoreText, { color: colors.textMuted }]} numberOfLines={1}>{compName}</Text>
             </View>
           </View>
 
           <View style={styles.payoutAmountBox}>
-            <Text style={styles.payoutAmountText}>
+            <Text style={[styles.payoutAmountText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
               {parseFloat(item.net_payout_amount).toFixed(2)}
             </Text>
-            <Text style={styles.payoutCurrencyText}>{t('etb', 'ETB')}</Text>
+            <Text style={[styles.payoutCurrencyText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('etb', 'ETB')}</Text>
           </View>
         </View>
 
@@ -491,43 +551,43 @@ export default function EarningsScreen() {
         <View style={styles.payoutCardMiddleRow}>
           {item.status === 'cancelled' ? (
             <View style={styles.payoutMetaItem}>
-              <Ionicons name="arrow-undo-outline" size={12} color="#64748B" />
-              <Text style={styles.payoutMetaText}>
+              <Ionicons name="arrow-undo-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>
                 {t('ordersReleased', 'Orders Released')}
               </Text>
             </View>
           ) : (
             <View style={styles.payoutMetaItem}>
-              <Ionicons name="receipt-outline" size={12} color="#64748B" />
-              <Text style={styles.payoutMetaText}>
+              <Ionicons name="receipt-outline" size={12} color={colors.textMuted} />
+              <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>
                 {item.items_count === 1
                   ? t('orderSettled_one', { count: 1, defaultValue: '1 Order Settled' })
                   : t('ordersSettled_other', { count: item.items_count, defaultValue: `${item.items_count} Orders Settled` })}
               </Text>
             </View>
           )}
-          <Text style={styles.payoutMetaDot}>•</Text>
-          <Text style={styles.payoutMetaText}>{dateStr}</Text>
+          <Text style={[styles.payoutMetaDot, { color: colors.textMuted }]}>•</Text>
+          <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>{dateStr}</Text>
           {!!item.payment_method && (
             <>
-              <Text style={styles.payoutMetaDot}>•</Text>
-              <Text style={styles.payoutMetaText}>{item.payment_method.toUpperCase()}</Text>
+              <Text style={[styles.payoutMetaDot, { color: colors.textMuted }]}>•</Text>
+              <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>{item.payment_method.toUpperCase()}</Text>
             </>
           )}
         </View>
 
         {/* Row 3: Status Badge & Tap Action Hint */}
-        <View style={styles.payoutCardBottomRow}>
+        <View style={[styles.payoutCardBottomRow, { borderTopColor: lightBorder }]}>
           <View
             style={[
               styles.payoutBadge,
               isAwaiting
-                ? { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }
+                ? { backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB', borderColor: isDark ? '#5C3D20' : '#FDE68A' }
                 : isConfirmed
-                ? { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }
+                ? { backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4', borderColor: isDark ? '#245C3A' : '#BBF7D0' }
                 : isDisputed
-                ? { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }
-                : { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
+                ? { backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2', borderColor: isDark ? '#5C2626' : '#FECACA' }
+                : { backgroundColor: isDark ? surfaceAlt : '#F8FAFC', borderColor: isDark ? colors.border : '#E2E8F0' },
             ]}
           >
             <Ionicons
@@ -543,12 +603,12 @@ export default function EarningsScreen() {
               size={12}
               color={
                 isAwaiting
-                  ? '#D97706'
+                  ? (isDark ? '#FCD34D' : '#D97706')
                   : isConfirmed
-                  ? '#16A34A'
+                  ? (isDark ? '#86EFAC' : '#16A34A')
                   : isDisputed
-                  ? '#DC2626'
-                  : '#64748B'
+                  ? (isDark ? '#FCA5A5' : '#DC2626')
+                  : colors.textMuted
               }
               style={{ marginRight: 4 }}
             />
@@ -557,12 +617,12 @@ export default function EarningsScreen() {
                 styles.payoutBadgeText,
                 {
                   color: isAwaiting
-                    ? '#D97706'
+                    ? (isDark ? '#FCD34D' : '#D97706')
                     : isConfirmed
-                    ? '#16A34A'
+                    ? (isDark ? '#86EFAC' : '#16A34A')
                     : isDisputed
-                    ? '#DC2626'
-                    : '#64748B',
+                    ? (isDark ? '#FCA5A5' : '#DC2626')
+                    : colors.textMuted,
                 },
               ]}
             >
@@ -583,10 +643,10 @@ export default function EarningsScreen() {
               style={[
                 styles.payoutActionHintText,
                 isAwaiting
-                  ? { color: '#6750A4' }
+                  ? { color: brand }
                   : isDisputed
-                  ? { color: '#DC2626' }
-                  : { color: '#64748B' },
+                  ? { color: isDark ? '#FCA5A5' : '#DC2626' }
+                  : { color: colors.textMuted },
               ]}
             >
               {isAwaiting
@@ -598,7 +658,7 @@ export default function EarningsScreen() {
             <Ionicons
               name="chevron-forward"
               size={13}
-              color={isAwaiting ? '#6750A4' : isDisputed ? '#DC2626' : '#64748B'}
+              color={isAwaiting ? brand : isDisputed ? (isDark ? '#FCA5A5' : '#DC2626') : colors.textMuted}
             />
           </View>
         </View>
@@ -644,30 +704,34 @@ export default function EarningsScreen() {
             {/* Urgent Payout Confirmation Banner (Single Payout) */}
             {pendingPayouts.length === 1 && pendingPayout && (
               <TouchableOpacity
-                style={styles.pendingActionBanner}
+                style={[styles.pendingActionBanner, {
+                  backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
+                  borderColor: isDark ? '#5C3D20' : '#FDE68A',
+                  shadowColor: isDark ? '#000' : '#D97706',
+                }]}
                 activeOpacity={0.9}
                 onPress={() => {
                   setSelectedPayout(pendingPayout);
                   setPayoutModalVisible(true);
                 }}
               >
-                <View style={styles.pendingBannerIcon}>
-                  <MaterialCommunityIcons name="hand-coin" size={24} color="#D97706" />
+                <View style={[styles.pendingBannerIcon, { backgroundColor: isDark ? '#4D3520' : '#FEF3C7' }]}>
+                  <MaterialCommunityIcons name="hand-coin" size={24} color={isDark ? '#FCD34D' : '#D97706'} />
                 </View>
                 <View style={styles.pendingBannerContent}>
                   <View style={styles.pendingBannerTitleRow}>
-                    <Text style={styles.pendingBannerTitle}>
+                    <Text style={[styles.pendingBannerTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>
                       {t('payoutActionTitle', 'Payout Received?')}
                     </Text>
-                    <View style={styles.pendingBannerBadge}>
-                      <Text style={styles.pendingBannerBadgeText}>{t('actionNeeded', 'Action Needed')}</Text>
+                    <View style={[styles.pendingBannerBadge, { backgroundColor: isDark ? '#5C3D20' : '#FDE68A' }]}>
+                      <Text style={[styles.pendingBannerBadgeText, { color: isDark ? '#FCD34D' : '#92400E' }]}>{t('actionNeeded', 'Action Needed')}</Text>
                     </View>
                   </View>
-                  <Text style={styles.pendingBannerSub}>
+                  <Text style={[styles.pendingBannerSub, { color: isDark ? '#FBBF24' : '#B45309' }]}>
                     {isAmharic && pendingPayout.company_name_am ? pendingPayout.company_name_am : pendingPayout.company_name} · ETB {parseFloat(pendingPayout.net_payout_amount).toFixed(2)}
                   </Text>
                   <View style={styles.pendingBannerBtnRow}>
-                    <View style={styles.confirmInlineBtn}>
+                    <View style={[styles.confirmInlineBtn, { backgroundColor: isDark ? '#7C5FC9' : '#6750A4' }]}>
                       <Text style={styles.confirmInlineBtnText}>{t('confirmReceived', 'Confirm Received')}</Text>
                       <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
                     </View>
@@ -679,28 +743,32 @@ export default function EarningsScreen() {
             {/* Multi-Payout Action Banner (When multiple stores disbursed) */}
             {pendingPayouts.length > 1 && (
               <TouchableOpacity
-                style={styles.pendingActionBanner}
+                style={[styles.pendingActionBanner, {
+                  backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
+                  borderColor: isDark ? '#5C3D20' : '#FDE68A',
+                  shadowColor: isDark ? '#000' : '#D97706',
+                }]}
                 activeOpacity={0.9}
                 onPress={() => {
                   setMainTab('payouts');
                 }}
               >
-                <View style={styles.pendingBannerIcon}>
-                  <MaterialCommunityIcons name="wallet-giftcard" size={24} color="#D97706" />
+                <View style={[styles.pendingBannerIcon, { backgroundColor: isDark ? '#4D3520' : '#FEF3C7' }]}>
+                  <MaterialCommunityIcons name="wallet-giftcard" size={24} color={isDark ? '#FCD34D' : '#D97706'} />
                 </View>
                 <View style={styles.pendingBannerContent}>
                   <View style={styles.pendingBannerTitleRow}>
-                    <Text style={styles.pendingBannerTitle}>
+                    <Text style={[styles.pendingBannerTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>
                       {t('multiPayoutsAwaitingTitle', {
                         count: pendingPayouts.length,
                         defaultValue: `${pendingPayouts.length} Payouts Awaiting Confirmation`,
                       })}
                     </Text>
-                    <View style={styles.pendingBannerBadge}>
-                      <Text style={styles.pendingBannerBadgeText}>{t('actionNeeded', 'Action Needed')}</Text>
+                    <View style={[styles.pendingBannerBadge, { backgroundColor: isDark ? '#5C3D20' : '#FDE68A' }]}>
+                      <Text style={[styles.pendingBannerBadgeText, { color: isDark ? '#FCD34D' : '#92400E' }]}>{t('actionNeeded', 'Action Needed')}</Text>
                     </View>
                   </View>
-                  <Text style={styles.pendingBannerSub}>
+                  <Text style={[styles.pendingBannerSub, { color: isDark ? '#FBBF24' : '#B45309' }]}>
                     {t('multiPayoutsAwaitingSub', {
                       count: pendingPayouts.length,
                       total: pendingPayouts
@@ -712,7 +780,7 @@ export default function EarningsScreen() {
                     })}
                   </Text>
                   <View style={styles.pendingBannerBtnRow}>
-                    <View style={styles.confirmInlineBtn}>
+                    <View style={[styles.confirmInlineBtn, { backgroundColor: isDark ? '#7C5FC9' : '#6750A4' }]}>
                       <Text style={styles.confirmInlineBtnText}>{t('reviewPayouts', 'Review Payouts')}</Text>
                       <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
                     </View>
@@ -724,18 +792,21 @@ export default function EarningsScreen() {
             {/* Disputed Payouts Notice Banner */}
             {disputedPayouts.length > 0 && (
               <TouchableOpacity
-                style={[styles.pendingActionBanner, { borderColor: '#FECACA', backgroundColor: '#FEF2F2' }]}
+                style={[styles.pendingActionBanner, {
+                  borderColor: isDark ? '#5C2626' : '#FECACA',
+                  backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
+                }]}
                 activeOpacity={0.9}
                 onPress={() => {
                   setMainTab('payouts');
                 }}
               >
-                <View style={[styles.pendingBannerIcon, { backgroundColor: '#FEE2E2' }]}>
-                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#DC2626" />
+                <View style={[styles.pendingBannerIcon, { backgroundColor: isDark ? '#4D2020' : '#FEE2E2' }]}>
+                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color={isDark ? '#FCA5A5' : '#DC2626'} />
                 </View>
                 <View style={styles.pendingBannerContent}>
                   <View style={styles.pendingBannerTitleRow}>
-                    <Text style={[styles.pendingBannerTitle, { color: '#991B1B' }]} numberOfLines={1}>
+                    <Text style={[styles.pendingBannerTitle, { color: isDark ? '#FCA5A5' : '#991B1B' }]} numberOfLines={1}>
                       {disputedPayouts.length === 1
                         ? t('disputeTitleSingle', 'Payout Dispute')
                         : t('disputeTitleMulti', {
@@ -743,11 +814,15 @@ export default function EarningsScreen() {
                             defaultValue: `${disputedPayouts.length} Payout Disputes`,
                           })}
                     </Text>
-                    <View style={[styles.pendingBannerBadge, { backgroundColor: '#FEE2E2', borderColor: '#FECACA', borderWidth: 1 }]}>
-                      <Text style={[styles.pendingBannerBadgeText, { color: '#DC2626' }]}>{t('underReview', 'Under Review')}</Text>
+                    <View style={[styles.pendingBannerBadge, {
+                      backgroundColor: isDark ? '#4D2020' : '#FEE2E2',
+                      borderColor: isDark ? '#5C2626' : '#FECACA',
+                      borderWidth: 1,
+                    }]}>
+                      <Text style={[styles.pendingBannerBadgeText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('underReview', 'Under Review')}</Text>
                     </View>
                   </View>
-                  <Text style={[styles.pendingBannerSub, { color: '#B91C1C' }]}>
+                  <Text style={[styles.pendingBannerSub, { color: isDark ? '#F87171' : '#B91C1C' }]}>
                     {t('disputeBannerSub', 'Store admin is reviewing your reported issue. Tap to view resolution details.')}
                   </Text>
                 </View>
@@ -755,7 +830,7 @@ export default function EarningsScreen() {
             )}
 
             {/* Period Segment Selector */}
-            <View style={styles.periodSelector}>
+            <View style={[styles.periodSelector, { backgroundColor: isDark ? surfaceMuted : '#E2E8F0' }]}>
               {[
                 { key: 'today', label: t('periodToday', 'Today') },
                 { key: 'this_week', label: t('periodWeek', 'Week') },
@@ -766,7 +841,7 @@ export default function EarningsScreen() {
                 return (
                   <TouchableOpacity
                     key={p.key}
-                    style={[styles.periodTab, active && styles.periodTabActive]}
+                    style={[styles.periodTab, active && [styles.periodTabActive, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]]}
                     onPress={() => setPeriod(p.key as PeriodType)}
                     activeOpacity={0.7}
                   >
@@ -774,7 +849,7 @@ export default function EarningsScreen() {
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.8}
-                      style={[styles.periodTabText, active && styles.periodTabTextActive]}>
+                      style={[styles.periodTabText, { color: colors.textMuted }, active && [styles.periodTabTextActive, { color: brand }]]}>
                       {p.label}
                     </Text>
                   </TouchableOpacity>
@@ -783,11 +858,11 @@ export default function EarningsScreen() {
             </View>
 
             {/* Primary Hero Financial Card */}
-            <View style={styles.heroCard}>
-              <Text style={styles.heroLabel}>{getPeriodLabel()}</Text>
+            <View style={[styles.heroCard, { backgroundColor: heroBg, shadowColor: heroShadow ,borderColor: isDark ? colors.border : '#EDE9FE'} ]}>
+              <Text style={[styles.heroLabel, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}>{getPeriodLabel()}</Text>
 
               <View style={styles.heroAmountRow}>
-                <Text style={styles.heroCurrency}>{t('etb', 'ETB')}</Text>
+                <Text style={[styles.heroCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
                 <Text
                   numberOfLines={1}
                   adjustsFontSizeToFit
@@ -798,39 +873,16 @@ export default function EarningsScreen() {
                 </Text>
               </View>
 
-              {/* [Commented out to save vertical space]: Completed Deliveries & Avg / Delivery */}
-              {/* <View style={styles.heroMetricsRow}>
-                <View style={styles.heroMetricItem}>
-                  <Text style={styles.heroMetricVal}>{getPeriodCompletedTrips()}</Text>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                    style={styles.heroMetricLbl}>{t('completedTrips', 'Completed Deliveries')}</Text>
-                </View>
-                <View style={styles.heroMetricDivider} />
-                <View style={styles.heroMetricItem}>
-                  <Text style={styles.heroMetricVal}>
-                    {getPeriodAvgPerDelivery()} {t('etb', 'ETB')}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                    style={styles.heroMetricLbl}>{t('avgPerDelivery', 'Avg / Delivery')}</Text>
-                </View>
-              </View> */}
-
               {/* Compact Settlement Row inside Hero: Unpaid Balance vs Settled Payouts */}
-              <View style={styles.heroSettlementRow}>
+              <View style={[styles.heroSettlementRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255, 255, 255, 0.15)' }]}>
                 <View style={styles.heroSettlementCol}>
                   <View style={styles.heroSettlementIconRow}>
-                    <MaterialCommunityIcons name="clock-outline" size={13} color="#E9D5FF" />
+                    <MaterialCommunityIcons name="clock-outline" size={13} color={isDark ? '#C4B5FD' : '#E9D5FF'} />
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.75}
-                      style={styles.heroSettlementLabel}
+                      style={[styles.heroSettlementLabel, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
                     >
                       {t('unpaidBalance', 'Unpaid Balance')}
                     </Text>
@@ -839,23 +891,23 @@ export default function EarningsScreen() {
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    style={styles.heroSettlementValueUnpaid}
+                    style={[styles.heroSettlementValueUnpaid, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
                   >
                     {formatMoney(summary?.unpaid_balance ?? '0.00')}{' '}
-                    <Text style={styles.heroSettlementCurrency}>{t('etb', 'ETB')}</Text>
+                    <Text style={[styles.heroSettlementCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
                   </Text>
                 </View>
 
-                <View style={styles.heroSettlementDivider} />
+                <View style={[styles.heroSettlementDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255, 255, 255, 0.25)' }]} />
 
                 <View style={styles.heroSettlementCol}>
                   <View style={styles.heroSettlementIconRow}>
-                    <Ionicons name="checkmark-done-circle-outline" size={13} color="#E9D5FF" />
+                    <Ionicons name="checkmark-done-circle-outline" size={13} color={isDark ? '#C4B5FD' : '#E9D5FF'} />
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.75}
-                      style={styles.heroSettlementLabel}
+                      style={[styles.heroSettlementLabel, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
                     >
                       {t('totalPaidOut', 'Settled Payouts')}
                     </Text>
@@ -864,70 +916,45 @@ export default function EarningsScreen() {
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    style={styles.heroSettlementValuePaid}
+                    style={[styles.heroSettlementValuePaid, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
                   >
                     {formatMoney(summary?.total_paid_out ?? '0.00')}{' '}
-                    <Text style={styles.heroSettlementCurrency}>{t('etb', 'ETB')}</Text>
+                    <Text style={[styles.heroSettlementCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
                   </Text>
                 </View>
               </View>
             </View>
 
-            {/* [Commented out]: Redundant Settlement Overview Card replaced by compact in-hero row above */}
-            {/* <View style={styles.settlementOverviewCard}>
-              <View style={styles.settlementCol}>
-                <View style={styles.settlementIconRow}>
-                  <MaterialCommunityIcons name="clock-outline" size={14} color="#D97706" />
-                  <Text style={styles.settlementLabel}>{t('unpaidBalance', 'Unpaid Balance')}</Text>
-                </View>
-                <Text style={styles.settlementValueUnpaid}>
-                  {summary?.unpaid_balance ?? '0.00'} <Text style={styles.settlementCurrency}>{t('etb', 'ETB')}</Text>
-                </Text>
-              </View>
-
-              <View style={styles.settlementDivider} />
-
-              <View style={styles.settlementCol}>
-                <View style={styles.settlementIconRow}>
-                  <Ionicons name="checkmark-done-circle-outline" size={14} color="#16A34A" />
-                  <Text style={styles.settlementLabel}>{t('totalPaidOut', 'Settled Payouts')}</Text>
-                </View>
-                <Text style={styles.settlementValuePaid}>
-                  {summary?.total_paid_out ?? '0.00'} <Text style={styles.settlementCurrency}>{t('etb', 'ETB')}</Text>
-                </Text>
-              </View>
-            </View> */}
-
             {/* Main Tabs Switcher: Orders vs Payouts */}
-            <View style={styles.mainTabSwitch}>
+            <View style={[styles.mainTabSwitch, { backgroundColor: isDark ? surfaceMuted : '#F1F5F9' }]}>
               <TouchableOpacity
-                style={[styles.mainTabBtn, mainTab === 'orders' && styles.mainTabBtnActive]}
+                style={[styles.mainTabBtn, mainTab === 'orders' && [styles.mainTabBtnActive, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]]}
                 onPress={() => setMainTab('orders')}
                 activeOpacity={0.8}
               >
                 <MaterialCommunityIcons
                   name="moped-outline"
                   size={16}
-                  color={mainTab === 'orders' ? '#6750A4' : '#64748B'}
+                  color={mainTab === 'orders' ? brand : colors.textMuted}
                   style={{ marginRight: 6 }}
                 />
-                <Text style={[styles.mainTabText, mainTab === 'orders' && styles.mainTabTextActive]}>
+                <Text style={[styles.mainTabText, { color: colors.textMuted }, mainTab === 'orders' && [styles.mainTabTextActive, { color: brand }]]}>
                   {t('ordersTab', 'Orders')} ({filteredEarnings.length})
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.mainTabBtn, mainTab === 'payouts' && styles.mainTabBtnActive]}
+                style={[styles.mainTabBtn, mainTab === 'payouts' && [styles.mainTabBtnActive, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]]}
                 onPress={() => setMainTab('payouts')}
                 activeOpacity={0.8}
               >
                 <MaterialCommunityIcons
                   name="wallet-outline"
                   size={16}
-                  color={mainTab === 'payouts' ? '#6750A4' : '#64748B'}
+                  color={mainTab === 'payouts' ? brand : colors.textMuted}
                   style={{ marginRight: 6 }}
                 />
-                <Text style={[styles.mainTabText, mainTab === 'payouts' && styles.mainTabTextActive]}>
+                <Text style={[styles.mainTabText, { color: colors.textMuted }, mainTab === 'payouts' && [styles.mainTabTextActive, { color: brand }]]}>
                   {t('payoutsTab', 'Payouts')} ({payouts.length})
                 </Text>
                 {payouts.some((p) => p.status === 'disbursed') && (
@@ -939,8 +966,8 @@ export default function EarningsScreen() {
             {/* Payment Method Filter Tabs (Only shown when orders tab is active) */}
             {mainTab === 'orders' && (
               <View style={styles.filterSection}>
-                <Text style={styles.filterHeaderTitle}>{t('filterByPaymentMethod', 'FILTER BY PAYMENT')}</Text>
-                <View style={styles.tabsContainer}>
+                <Text style={[styles.filterHeaderTitle, { color: colors.textMuted }]}>{t('filterByPaymentMethod', 'FILTER BY PAYMENT')}</Text>
+                <View style={[styles.tabsContainer, { backgroundColor: colors.card, borderColor: cardBorder }]}>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -951,22 +978,25 @@ export default function EarningsScreen() {
                       return (
                         <TouchableOpacity
                           key={tab.key}
-                          style={[styles.tabButton, active && styles.tabButtonActive]}
+                          style={[styles.tabButton, active && [styles.tabButtonActive, { backgroundColor: brand }]]}
                           onPress={() => setPaymentFilter(tab.key)}
                           activeOpacity={0.8}
                         >
-                          <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                          <Text style={[styles.tabText, { color: colors.text }, active && styles.tabTextActive]}>
                             {tab.label}
                           </Text>
                           <View
                             style={[
                               styles.tabCountBadge,
-                              active ? styles.tabCountBadgeActive : styles.tabCountBadgeInactive,
+                              active
+                                ? styles.tabCountBadgeActive
+                                : [styles.tabCountBadgeInactive, { backgroundColor: isDark ? '#3D2E5C' : '#CBD5E1' }],
                             ]}
                           >
                             <Text
                               style={[
                                 styles.tabCountBadgeText,
+                                { color: colors.text },
                                 active && styles.tabCountBadgeTextActive,
                               ]}
                             >
@@ -983,12 +1013,12 @@ export default function EarningsScreen() {
 
             {/* Feed Section Title */}
             <View style={styles.feedHeader}>
-              <Text style={styles.feedTitle}>
+              <Text style={[styles.feedTitle, { color: colors.text }]}>
                 {mainTab === 'orders'
                   ? t('orderEarningsFeed', 'Delivered Orders & Compensation')
                   : t('payoutHistory', 'Payout History')}
               </Text>
-              <Text style={styles.feedCount}>
+              <Text style={[styles.feedCount, { color: colors.textMuted }]}>
                 {mainTab === 'orders'
                   ? filteredEarnings.length === 1
                     ? t('ordersCount_one', { count: 1, defaultValue: '1 Order' })
@@ -1003,24 +1033,24 @@ export default function EarningsScreen() {
         ListEmptyComponent={
           loading ? (
             <View style={styles.centerBox}>
-              <ActivityIndicator size="large" color="#6750A4" />
-              <Text style={styles.loadingText}>{t('loadingEarnings', 'Loading earning records...')}</Text>
+              <ActivityIndicator size="large" color={brand} />
+              <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('loadingEarnings', 'Loading earning records...')}</Text>
             </View>
           ) : (
             <View style={styles.emptyBox}>
-              <View style={styles.emptyIconCircle}>
+              <View style={[styles.emptyIconCircle, { backgroundColor: isDark ? surfaceMuted : '#F1F5F9' }]}>
                 <MaterialCommunityIcons
                   name={mainTab === 'orders' ? 'wallet-outline' : 'cash-remove'}
                   size={36}
-                  color="#94A3B8"
+                  color={colors.textMuted}
                 />
               </View>
-              <Text style={styles.emptyTitle}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {mainTab === 'orders'
                   ? t('noEarningsFound', 'No Earning History Yet')
                   : t('noPayoutsFound', 'No Payouts Yet')}
               </Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
                 {mainTab === 'orders'
                   ? t('noEarningsSub', 'Completed delivered orders will appear here with transparent delivery fees.')
                   : t('noPayoutsSub', 'When companies issue your payouts, they will appear here.')}
@@ -1098,7 +1128,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    // backgroundColor: '#F3E8FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1219,7 +1248,6 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
-  // In-Hero Settlement Row Styles
   heroSettlementRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1542,7 +1570,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 18,
   },
-  // Pending Action Banner
   pendingActionBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1618,7 +1645,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
   },
-  // Settlement Overview Card
   settlementOverviewCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -1668,7 +1694,6 @@ const styles = StyleSheet.create({
     height: 36,
     backgroundColor: '#E2E8F0',
   },
-  // Main Tabs Switcher (Orders vs Payouts)
   mainTabSwitch: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
@@ -1711,7 +1736,6 @@ const styles = StyleSheet.create({
     top: 8,
     right: 12,
   },
-  // Order Payout Status Pill
   payoutStatusPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1724,7 +1748,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
-  // Payout Batch Cards
   payoutCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
