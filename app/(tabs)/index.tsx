@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -10,49 +16,60 @@ import {
   RefreshControl,
   Animated,
   AppState,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
-import { useDelivery } from '@/context/DeliveryContext';
-import { Ionicons, MaterialCommunityIcons, FontAwesome6, Feather } from '@expo/vector-icons';
-import ToggleSwitch from '@/components/ToggleButton';
-import { STATUS_CONFIG, STATUS_ORDER } from '@/constants/deliveryConstants';
-import { useTranslation } from 'react-i18next';
-import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
-import { driverLocationService } from '@/services/driverLocationService';
-import IncomingOrderModal from '@/components/IncomingOrderModal';
-import { updateDeliveryStatus } from '@/services/api';
-import { useAppTheme } from '@/context/ThemeContext';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
+import { useDelivery } from "@/context/DeliveryContext";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  FontAwesome6,
+  Feather,
+} from "@expo/vector-icons";
+import ToggleSwitch from "@/components/ToggleButton";
+import { STATUS_CONFIG, STATUS_ORDER } from "@/constants/deliveryConstants";
+import { useTranslation } from "react-i18next";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
+import { driverLocationService } from "@/services/driverLocationService";
+import IncomingOrderModal from "@/components/IncomingOrderModal";
+import { updateDeliveryStatus } from "@/services/api";
+import { useAppTheme } from "@/context/ThemeContext";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
   const { unread: unreadCount } = useUnreadNotifications();
   const { user, toggleOnlineStatus } = useAuth();
-  const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
+  const {
+    deliveries,
+    driverStats,
+    isLoading: loading,
+    isRefreshing: refreshing,
+    refreshAll,
+  } = useDelivery();
   const [isToggling, setIsToggling] = useState(false);
-  const { t, i18n } = useTranslation('deliveryHome');
-  const isAmharic = i18n.language?.startsWith('am');
+  const { t, i18n } = useTranslation("deliveryHome");
+  const isAmharic = i18n.language?.startsWith("am");
 
   // ─── Dark-mode aware design tokens ───────────────────────────────
   // LIGHT MODE: Unchanged (Purple). DARK MODE: Neutral grays/black (NO PURPLE)
-  const brand = isDark ? '#FFFFFF' : '#6750A4';
-  const brandBg = isDark ? '#222222' : '#FAF5FF';
-  const brandSoftBg = isDark ? '#1A1A1A' : '#F5F0FF';
-  const brandBorder = isDark ? '#333333' : '#E8DFF5';
-  const brandText = isDark ? '#E5E5E5' : '#4C1D95';
-  const surfaceAlt = isDark ? '#1A1A1A' : '#F8FAFC';
-  const lightBorder = isDark ? '#2A2A2A' : '#F0F2F5';
-  const summaryBorder = isDark ? '#2A2A2A' : '#F0F2F5';
-  
+  const brand = isDark ? "#FFFFFF" : "#6750A4";
+  const brandBg = isDark ? "#222222" : "#FAF5FF";
+  const brandSoftBg = isDark ? "#1A1A1A" : "#F5F0FF";
+  const brandBorder = isDark ? "#333333" : "#E8DFF5";
+  const brandText = isDark ? "#E5E5E5" : "#4C1D95";
+  const surfaceAlt = isDark ? "#1A1A1A" : "#F8FAFC";
+  const lightBorder = isDark ? "#2A2A2A" : "#F0F2F5";
+  const summaryBorder = isDark ? "#2A2A2A" : "#cbd4e2";
+
   // Dark mode uses pure black to match header, light mode uses brand purple
-  const heroBg = isDark ? '#000000' : '#6750A4';
-  const heroShadow = isDark ? '#000000' : '#6750A4';
-  const heroBorder = isDark ? '#222222' : '#EDE9FE';
+  const heroBg = isDark ? "#000000" : "#6750A4";
+  const heroShadow = isDark ? "#000000" : "#6750A4";
+  const heroBorder = isDark ? "#222222" : "#EDE9FE";
 
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -75,12 +92,12 @@ export default function HomeScreen() {
           useNativeDriver: true,
         }),
       ]).start();
-    }, [refreshAll, fadeAnim, slideAnim])
+    }, [refreshAll, fadeAnim, slideAnim]),
   );
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
         refreshAll();
       }
     });
@@ -98,7 +115,9 @@ export default function HomeScreen() {
     }
   };
 
-  const isOnline = user?.memberships?.some(m => m.role === 'delivery' && m.is_active);
+  const isOnline = user?.memberships?.some(
+    (m) => m.role === "delivery" && m.is_active,
+  );
 
   useEffect(() => {
     if (user?.id) {
@@ -123,35 +142,47 @@ export default function HomeScreen() {
 
   const isDeliveryFailed = useCallback((delivery: any): boolean => {
     if (!delivery) return false;
-    if (delivery.status === 'failed') return true;
-    const orderStatus = delivery?.vendor_order_detail?.status?.toLowerCase?.() || '';
-    return ['cancelled', 'rejected'].includes(orderStatus);
+    if (delivery.status === "failed") return true;
+    const orderStatus =
+      delivery?.vendor_order_detail?.status?.toLowerCase?.() || "";
+    return ["cancelled", "rejected"].includes(orderStatus);
   }, []);
 
-  const getDisplayStatus = useCallback((delivery: any): string => {
-    if (!delivery) return 'pending';
-    return isDeliveryFailed(delivery) ? 'failed' : delivery.status;
-  }, [isDeliveryFailed]);
+  const getDisplayStatus = useCallback(
+    (delivery: any): string => {
+      if (!delivery) return "pending";
+      return isDeliveryFailed(delivery) ? "failed" : delivery.status;
+    },
+    [isDeliveryFailed],
+  );
 
-  const inTransitDeliveries = deliveries.filter(d => d.status === 'out_for_delivery');
-  const pendingOffer = deliveries.find(d => d.status === 'pending');
+  const inTransitDeliveries = deliveries.filter(
+    (d) => d.status === "out_for_delivery",
+  );
+  const pendingOffer = deliveries.find((d) => d.status === "pending");
 
   const storeBatchGroups = useMemo(() => {
-    const candidates = deliveries.filter(d => ['accepted', 'picked_up'].includes(d.status));
-    const map = new Map<string, { storeName: string; orders: typeof deliveries }>();
+    const candidates = deliveries.filter((d) =>
+      ["accepted", "picked_up"].includes(d.status),
+    );
+    const map = new Map<
+      string,
+      { storeName: string; orders: typeof deliveries }
+    >();
 
     for (const d of candidates) {
       const storeId = String(
         d.vendor_order_detail?.company?.id ||
-        d.company_slug ||
-        d.company_name ||
-        'unknown'
+          d.company_slug ||
+          d.company_name ||
+          "unknown",
       );
       const storeName =
-        (isAmharic && (d.company_name_am || d.vendor_order_detail?.company?.name_am)) ||
+        (isAmharic &&
+          (d.company_name_am || d.vendor_order_detail?.company?.name_am)) ||
         d.company_name ||
         d.vendor_order_detail?.company?.name ||
-        t('store', 'Store');
+        t("store", "Store");
 
       if (!map.has(storeId)) {
         map.set(storeId, { storeName, orders: [] });
@@ -159,54 +190,67 @@ export default function HomeScreen() {
       map.get(storeId)!.orders.push(d);
     }
 
-    return Array.from(map.values()).filter(group => group.orders.length > 1);
+    return Array.from(map.values()).filter((group) => group.orders.length > 1);
   }, [deliveries, isAmharic, t]);
 
   const activeDelivery = inTransitDeliveries[0];
 
   const latestPendingAttempt = pendingOffer?.attempts?.[0];
-  const isEnRouteOffer = inTransitDeliveries.length > 0 && !!latestPendingAttempt?.expires_at;
+  const isEnRouteOffer =
+    inTransitDeliveries.length > 0 && !!latestPendingAttempt?.expires_at;
 
   const handleAcceptOffer = async (id: number) => {
     try {
-      await updateDeliveryStatus(id, 'accepted');
+      await updateDeliveryStatus(id, "accepted");
       refreshAll();
     } catch (e) {
-      console.error('Failed to accept delivery', e);
+      console.error("Failed to accept delivery", e);
     }
   };
 
   const handleDeclineOffer = async (
     id: number,
-    reason: string = 'Declined by driver',
-    action: 'declined' | 'expired' = 'declined'
+    reason: string = "Declined by driver",
+    action: "declined" | "expired" = "declined",
   ) => {
     try {
-      const statusToSend = action === 'expired' ? 'expired' : 'declined';
+      const statusToSend = action === "expired" ? "expired" : "declined";
       await updateDeliveryStatus(id, statusToSend, reason, action);
       refreshAll();
     } catch (e) {
-      console.error('Failed to decline delivery', e);
+      console.error("Failed to decline delivery", e);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#F59E0B';
-      case 'accepted': return '#6366F1';
-      case 'picked_up': return '#8B5CF6';
-      case 'out_for_delivery': return '#10B981';
-      case 'delivered': return '#10B981';
-      case 'failed': return '#EF4444';
-      default: return '#64748B';
+      case "pending":
+        return "#F59E0B";
+      case "accepted":
+        return "#6366F1";
+      case "picked_up":
+        return "#8B5CF6";
+      case "out_for_delivery":
+        return "#10B981";
+      case "delivered":
+        return "#10B981";
+      case "failed":
+        return "#EF4444";
+      default:
+        return "#64748B";
     }
   };
 
-  const currentIndex = STATUS_ORDER.indexOf(activeDelivery?.status.toLowerCase() as any);
+  const currentIndex = STATUS_ORDER.indexOf(
+    activeDelivery?.status.toLowerCase() as any,
+  );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top", "left", "right"]}
+    >
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Animated.View
         style={{
           flex: 1,
@@ -217,20 +261,36 @@ export default function HomeScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? '#FFF' : colors.primary} colors={[isDark ? '#FFF' : colors.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={isDark ? "#FFF" : colors.primary}
+              colors={[isDark ? "#FFF" : colors.primary]}
+            />
           }
-          contentContainerStyle={styles.scrollContent}>
-
+          contentContainerStyle={styles.scrollContent}
+        >
           {/* --- SECTION 1: HEADER WITH CURVED BOTTOM RIGHT --- */}
-          <View style={{ position: 'relative', marginBottom: 15, marginHorizontal: -20 }}>
-            <View style={[styles.headerGradient, {
-              backgroundColor: isDark ? '#000000' : '#6750A4',
-              shadowColor: isDark ? '#000' : '#6750A4',
-            }]}>
+          <View
+            style={{
+              position: "relative",
+              marginBottom: 15,
+              marginHorizontal: -20,
+            }}
+          >
+            <View
+              style={[
+                styles.headerGradient,
+                {
+                  backgroundColor: isDark ? "#000000" : "#6750A4",
+                  shadowColor: isDark ? "#000" : "#6750A4",
+                },
+              ]}
+            >
               <View style={styles.header}>
                 <View style={styles.headerLeft}>
                   <TouchableOpacity
-                    onPress={() => router.push('/profile')}
+                    onPress={() => router.push("/profile")}
                     activeOpacity={0.8}
                     style={styles.avatarTouchable}
                   >
@@ -243,7 +303,11 @@ export default function HomeScreen() {
                       ) : (
                         <View style={styles.avatarPlaceholder}>
                           <Text style={styles.avatarText}>
-                            {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
+                            {(
+                              user?.first_name?.[0] ||
+                              user?.username?.[0] ||
+                              "D"
+                            ).toUpperCase()}
                           </Text>
                         </View>
                       )}
@@ -252,9 +316,11 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                   <View style={styles.headerTextContainer}>
                     <Text style={styles.greetingText}>
-                      {t('helloUser', { name: user?.first_name || t('deliveryFallback') })}
+                      {t("helloUser", {
+                        name: user?.first_name || t("deliveryFallback"),
+                      })}
                     </Text>
-                    <Text style={styles.userName}>{t('goodAfternoon')}</Text>
+                    <Text style={styles.userName}>{t("goodAfternoon")}</Text>
                   </View>
                 </View>
                 <View style={styles.headerActions}>
@@ -263,18 +329,35 @@ export default function HomeScreen() {
                     onToggle={handleToggleOnline}
                     isLoading={isToggling}
                   />
-                  <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notifButton}>
+                  <TouchableOpacity
+                    onPress={() => router.push("/notifications")}
+                    style={styles.notifButton}
+                  >
                     <View style={styles.notifIconWrapper}>
-                      <Ionicons name="notifications-outline" size={20} color="#fff" />
+                      <Ionicons
+                        name="notifications-outline"
+                        size={20}
+                        color="#fff"
+                      />
                       {unreadCount > 0 && (
-                        <View style={[styles.notificationBadge, {
-                          backgroundColor: isDark ? '#FFFFFF' : '#ffffff',
-                          borderColor: isDark ? '#000000' : '#6750A4',
-                        }]}>
-                          <Text style={[styles.notificationBadgeText, {
-                            color: isDark ? '#000000' : '#6750A4',
-                          }]}>
-                            {unreadCount > 99 ? '99+' : unreadCount}
+                        <View
+                          style={[
+                            styles.notificationBadge,
+                            {
+                              backgroundColor: isDark ? "#FFFFFF" : "#ffffff",
+                              borderColor: isDark ? "#000000" : "#6750A4",
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.notificationBadgeText,
+                              {
+                                color: isDark ? "#000000" : "#6750A4",
+                              },
+                            ]}
+                          >
+                            {unreadCount > 99 ? "99+" : unreadCount}
                           </Text>
                         </View>
                       )}
@@ -285,64 +368,68 @@ export default function HomeScreen() {
             </View>
 
             {/* Curved bottom right corner effect - FIXED to match pure black header */}
-            <View style={{
-              position: 'absolute',
-              bottom: -30,
-              right: 0,
-              width: 50,
-              height: 30,
-              backgroundColor: colors.background,
-              borderTopRightRadius: 150,
-              zIndex: 1,
-            }} />
-            <View style={{
-              position: 'absolute',
-              bottom: -30,
-              right: 0,
-              width: 50,
-              height: 30,
-              backgroundColor: isDark ? '#000000' : '#6750A4',
-              zIndex: 0,
-            }} />
+            <View
+              style={{
+                position: "absolute",
+                bottom: -30,
+                right: 0,
+                width: 50,
+                height: 30,
+                backgroundColor: colors.background,
+                borderTopRightRadius: 150,
+                zIndex: 1,
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                bottom: -30,
+                right: 0,
+                width: 50,
+                height: 30,
+                backgroundColor: isDark ? "#000000" : "#6750A4",
+                zIndex: 0,
+              }}
+            />
           </View>
 
           {/* --- SECTION 2: STATS --- */}
           <View style={styles.statsGrid}>
             {[
               {
-                label: t('earnings', 'Earnings'),
-                value: `${driverStats.earnings || '0.00'} ${t('etb')}`,
-                icon: 'wallet-outline',
-                color: '#6750A4',
-                type: 'ion',
+                label: t("earnings", "Earnings"),
+                value: `${driverStats.earnings || "0.00"} ${t("etb")}`,
+                icon: "wallet-outline",
+                color: "#6750A4",
+                type: "ion",
                 onPress: () => {
-                  router.push('/(tabs)/earnings');
-                }
+                  router.push("/(tabs)/earnings");
+                },
               },
               {
-                label: t('cashOnHand'),
-                value: `${driverStats.cash_on_hand || '0.00'} ${t('etb')}`,
-                icon: 'wallet-outline',
-                color: '#10B981',
-                type: 'ion',
+                label: t("cashOnHand"),
+                value: `${driverStats.cash_on_hand || "0.00"} ${t("etb")}`,
+                icon: "wallet-outline",
+                color: "#10B981",
+                type: "ion",
                 onPress: () => {
-                  router.push('/cash-on-hand');
-                }
+                  router.push("/cash-on-hand");
+                },
               },
               {
-                label: t('assignedOrders'),
+                label: t("assignedOrders"),
                 value: driverStats.pending_orders.toString(),
-                icon: 'package-variant-closed',
-                color: '#6366F1',
-                type: 'material',
+                icon: "package-variant-closed",
+                color: "#6366F1",
+                type: "material",
                 onPress: () => {
                   setTimeout(() => {
                     router.push({
-                      pathname: '/orders',
-                      params: { filter: 'pending' }
+                      pathname: "/orders",
+                      params: { filter: "pending" },
                     });
                   }, 100);
-                }
+                },
               },
             ].map((stat, index) => (
               <TouchableOpacity
@@ -352,25 +439,54 @@ export default function HomeScreen() {
                   {
                     backgroundColor: colors.card,
                     // Dark mode: neutral border, Light mode: colored border
-                    borderColor: isDark ? '#222222' : stat.color + '20',
-                    shadowColor: isDark ? 'transparent' : stat.color, // No shadow in dark
-                    zIndex: 10
-                  }
+                    borderColor: isDark ? "#222222" : stat.color + "20",
+                    shadowColor: isDark ? "transparent" : stat.color, // No shadow in dark
+                    zIndex: 10,
+                  },
                 ]}
                 onPress={stat.onPress}
                 disabled={!stat.onPress}
                 activeOpacity={0.7}
               >
                 {/* Dark mode: neutral icon bg, Light mode: colored tint */}
-                <View style={[styles.statIconCircle, { backgroundColor: isDark ? '#1A1A1A' : stat.color + '15' }]}>
-                  {stat.type === 'ion' ? (
-                    <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+                <View
+                  style={[
+                    styles.statIconCircle,
+                    { backgroundColor: isDark ? "#1A1A1A" : stat.color + "15" },
+                  ]}
+                >
+                  {stat.type === "ion" ? (
+                    <Ionicons
+                      name={stat.icon as any}
+                      size={20}
+                      color={stat.color}
+                    />
                   ) : (
-                    <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
+                    <MaterialCommunityIcons
+                      name={stat.icon as any}
+                      size={20}
+                      color={stat.color}
+                    />
                   )}
                 </View>
-                <Text style={[styles.statValue, { color: colors.text, textAlign: 'center', fontSize: 15 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted, textAlign: 'center' }]}>{stat.label}</Text>
+                <Text
+                  style={[
+                    styles.statValue,
+                    { color: colors.text, textAlign: "center", fontSize: 15 },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {stat.value}
+                </Text>
+                <Text
+                  style={[
+                    styles.statLabel,
+                    { color: colors.textMuted, textAlign: "center" },
+                  ]}
+                >
+                  {stat.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -379,33 +495,54 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleWrapper}>
               {/* Dark mode: White accent, Light mode: Purple accent */}
-              <View style={[styles.sectionAccentBar, { backgroundColor: isDark ? '#FFFFFF' : '#6750A4' }]} />
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.text : colors.primary }]}>{t('currentShipment')}</Text>
+              <View
+                style={[
+                  styles.sectionAccentBar,
+                  { backgroundColor: isDark ? "#FFFFFF" : "#6750A4" },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? colors.text : colors.primary },
+                ]}
+              >
+                {t("currentShipment")}
+              </Text>
             </View>
             <TouchableOpacity
-              onPress={() => router.push({
-                pathname: '/orders',
-                params: { filter: 'out_for_delivery' },
-              })}
+              onPress={() =>
+                router.push({
+                  pathname: "/orders",
+                  params: { filter: "out_for_delivery" },
+                })
+              }
               style={{
                 paddingLeft: 14,
                 paddingRight: 8,
                 paddingVertical: 3,
-                backgroundColor: isDark ? '#1A1A1A' : '#FAF5FF',
-                borderColor: isDark ? '#333333' : 'transparent',
+                backgroundColor: isDark ? "#1A1A1A" : "#FAF5FF",
+                borderColor: isDark ? "#333333" : "transparent",
                 borderWidth: isDark ? 1 : 0,
                 borderRadius: 70,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
               }}
             >
-              <Text style={[styles.seeAllText, { color: isDark ? '#FFFFFF' : '#6750A4' }]}>{t('viewAll')}</Text>
+              <Text
+                style={[
+                  styles.seeAllText,
+                  { color: isDark ? "#FFFFFF" : "#6750A4" },
+                ]}
+              >
+                {t("viewAll")}
+              </Text>
               <Feather
                 name="chevron-right"
                 size={14}
-                color={isDark ? '#FFFFFF' : '#6750A4'}
+                color={isDark ? "#FFFFFF" : "#6750A4"}
               />
             </TouchableOpacity>
           </View>
@@ -415,28 +552,51 @@ export default function HomeScreen() {
             <View
               key={`${group.storeName}-${index}`}
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: isDark ? colors.card : '#F5F3FF',
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: isDark ? colors.card : "#F5F3FF",
                 borderWidth: 1,
-                borderColor: isDark ? '#222222' : '#DDD6FE',
+                borderColor: isDark ? "#222222" : "#DDD6FE",
                 borderRadius: 14,
                 padding: 12,
                 marginBottom: 12,
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                <MaterialCommunityIcons name="layers-triple-outline" size={20} color={isDark ? '#FFFFFF' : '#6750A4'} />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  flex: 1,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="layers-triple-outline"
+                  size={20}
+                  color={isDark ? "#FFFFFF" : "#6750A4"}
+                />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? colors.text : '#4C1D95' }}>
-                    {t('ordersReadyToBatch', {
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "700",
+                      color: isDark ? colors.text : "#4C1D95",
+                    }}
+                  >
+                    {t("ordersReadyToBatch", {
                       count: group.orders.length,
                       defaultValue: `${group.orders.length} Orders Ready to Batch`,
                     })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: isDark ? colors.textMuted : '#6D28D9' }} numberOfLines={1}>
-                    {t('atStorePickUpTogether', {
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: isDark ? colors.textMuted : "#6D28D9",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {t("atStorePickUpTogether", {
                       store: group.storeName,
                       defaultValue: `At ${group.storeName} · Pick up together`,
                     })}
@@ -444,50 +604,99 @@ export default function HomeScreen() {
                 </View>
               </View>
               <TouchableOpacity
-                onPress={() => router.push({ pathname: '/orders', params: { filter: 'accepted' } })}
+                onPress={() =>
+                  router.push({
+                    pathname: "/orders",
+                    params: { filter: "accepted" },
+                  })
+                }
                 style={{
-                  backgroundColor: isDark ? '#333333' : '#6750A4',
+                  backgroundColor: isDark ? "#333333" : "#6750A4",
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 8,
                 }}
               >
-                <Text style={{ color: isDark ? '#FFFFFF' : '#fff', fontSize: 11, fontWeight: '700' }}>{t('viewAll', 'View All')}</Text>
+                <Text
+                  style={{
+                    color: isDark ? "#FFFFFF" : "#fff",
+                    fontSize: 11,
+                    fontWeight: "700",
+                  }}
+                >
+                  {t("viewAll", "View All")}
+                </Text>
               </TouchableOpacity>
             </View>
           ))}
 
           {activeDelivery ? (
             <TouchableOpacity
-              style={[styles.heroCard, {
-                backgroundColor: heroBg,
-                shadowColor: heroShadow,
-                borderColor: heroBorder,
-                borderWidth: isDark ? 1 : 0, // subtle border in dark to separate from bg
-              }]}
+              style={[
+                styles.heroCard,
+                {
+                  backgroundColor: heroBg,
+                  shadowColor: heroShadow,
+                  borderColor: heroBorder,
+                  borderWidth: isDark ? 1 : 0, // subtle border in dark to separate from bg
+                },
+              ]}
               onPress={() => router.push(`/delivery/${activeDelivery.id}`)}
               activeOpacity={0.85}
             >
-              <View style={[styles.heroCardHeader, { borderBottomColor: isDark ? '#222222' : 'rgba(255,255,255,0.08)' }]}>
+              <View
+                style={[
+                  styles.heroCardHeader,
+                  {
+                    borderBottomColor: isDark
+                      ? "#222222"
+                      : "rgba(255,255,255,0.08)",
+                  },
+                ]}
+              >
                 <View style={styles.heroOrderInfo}>
                   <View style={styles.heroOrderIcon}>
-                    <MaterialCommunityIcons name="receipt-text-outline" size={16} color="#fff" />
+                    <MaterialCommunityIcons
+                      name="receipt-text-outline"
+                      size={16}
+                      color="#fff"
+                    />
                   </View>
                   <Text style={styles.heroOrderText}>
-                    {t('orderNumber', { id: `${activeDelivery.vendor_order_detail.master_order_id}-${activeDelivery.vendor_order}` || 'Customer' })}
+                    {t("orderNumber", {
+                      id:
+                        `${activeDelivery.vendor_order_detail.master_order_id}-${activeDelivery.vendor_order}` ||
+                        "Customer",
+                    })}
                   </Text>
                 </View>
                 {(() => {
                   const displayStatus = getDisplayStatus(activeDelivery);
-                  const config = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
+                  const config =
+                    STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
                   return (
-                    <View style={[styles.heroStatusBadge, { backgroundColor: config.bg }]}>
-                      <View style={[styles.heroStatusDot, { backgroundColor: config.text }]} />
-                      <Text style={[styles.heroStatusText, { color: config.text }]}>
-                        {displayStatus === 'pending' ? t('assigned') :
-                          displayStatus === 'out_for_delivery' ? t('inTransit') :
-                            displayStatus === 'failed' ? t('failed') :
-                              t(`status.${displayStatus}`).toUpperCase()}
+                    <View
+                      style={[
+                        styles.heroStatusBadge,
+                        { backgroundColor: config.bg },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.heroStatusDot,
+                          { backgroundColor: config.text },
+                        ]}
+                      />
+                      <Text
+                        style={[styles.heroStatusText, { color: config.text }]}
+                      >
+                        {displayStatus === "pending"
+                          ? t("assigned")
+                          : displayStatus === "out_for_delivery"
+                            ? t("inTransit")
+                            : displayStatus === "failed"
+                              ? t("failed")
+                              : t(`status.${displayStatus}`).toUpperCase()}
                       </Text>
                     </View>
                   );
@@ -497,25 +706,45 @@ export default function HomeScreen() {
               <View style={styles.heroCustomerSection}>
                 <View style={styles.heroCustomerAvatarWrapper}>
                   {activeDelivery?.customer_image ? (
-                    <Image source={{ uri: activeDelivery?.customer_image }} style={styles.heroCustomerAvatar} />
+                    <Image
+                      source={{ uri: activeDelivery?.customer_image }}
+                      style={styles.heroCustomerAvatar}
+                    />
                   ) : (
                     <View style={styles.heroCustomerAvatarPlaceholder}>
                       <Text style={styles.heroCustomerAvatarText}>
-                        {activeDelivery.customer_name?.charAt(0) || 'C'}
+                        {activeDelivery.customer_name?.charAt(0) || "C"}
                       </Text>
                     </View>
                   )}
                 </View>
                 <View style={styles.heroCustomerDetails}>
-                  <Text style={styles.heroCustomerName}>{activeDelivery.customer_name || t('customer')}</Text>
+                  <Text style={styles.heroCustomerName}>
+                    {activeDelivery.customer_name || t("customer")}
+                  </Text>
                   <View style={styles.heroCustomerPhone}>
-                    <Ionicons name="call-outline" size={12} color="rgba(255,255,255,0.6)" />
-                    <Text style={styles.heroCustomerPhoneText}>{activeDelivery.customer_phone}</Text>
+                    <Ionicons
+                      name="call-outline"
+                      size={12}
+                      color="rgba(255,255,255,0.6)"
+                    />
+                    <Text style={styles.heroCustomerPhoneText}>
+                      {activeDelivery.customer_phone}
+                    </Text>
                   </View>
                 </View>
               </View>
 
-              <View style={[styles.heroProgressContainer, { borderTopColor: isDark ? '#222222' : 'rgba(255,255,255,0.08)' }]}>
+              <View
+                style={[
+                  styles.heroProgressContainer,
+                  {
+                    borderTopColor: isDark
+                      ? "#222222"
+                      : "rgba(255,255,255,0.08)",
+                  },
+                ]}
+              >
                 {STATUS_ORDER.map((status, index) => {
                   const isCompleted = index < currentIndex;
                   const isCurrent = index === currentIndex;
@@ -530,34 +759,61 @@ export default function HomeScreen() {
                             style={[
                               styles.heroProgressLine,
                               {
-                                backgroundColor: isCompleted ? '#16A34A' : (isDark ? '#333333' : 'rgba(255,255,255,0.15)'),
-                              }
+                                backgroundColor: isCompleted
+                                  ? "#16A34A"
+                                  : isDark
+                                    ? "#333333"
+                                    : "rgba(255,255,255,0.15)",
+                              },
                             ]}
                           />
                         )}
-                        <View style={[
-                          styles.heroStepIndicator,
-                          isCompleted && styles.heroIndicatorCompleted,
-                          isCurrent && styles.heroIndicatorCurrent,
-                          isFuture && styles.heroIndicatorFuture
-                        ]}>
+                        <View
+                          style={[
+                            styles.heroStepIndicator,
+                            isCompleted && styles.heroIndicatorCompleted,
+                            isCurrent && styles.heroIndicatorCurrent,
+                            isFuture && styles.heroIndicatorFuture,
+                          ]}
+                        >
                           <MaterialCommunityIcons
-                            name={isCompleted ? 'check-bold' : STATUS_CONFIG[status].icon}
+                            name={
+                              isCompleted
+                                ? "check-bold"
+                                : STATUS_CONFIG[status].icon
+                            }
                             size={isCurrent ? 14 : 12}
-                            color={isFuture ? (isDark ? '#666666' : 'rgba(255,255,255,0.4)') : '#fff'}
+                            color={
+                              isFuture
+                                ? isDark
+                                  ? "#666666"
+                                  : "rgba(255,255,255,0.4)"
+                                : "#fff"
+                            }
                           />
                           {isCurrent && <View style={styles.heroPulseRing} />}
                         </View>
                       </View>
-                      <Text style={[
-                        styles.heroStepLabel,
-                        isCompleted && styles.heroStepCompleted,
-                        isCurrent && styles.heroStepCurrent,
-                        isFuture && [styles.heroStepFuture, { color: isDark ? '#666666' : 'rgba(255,255,255,0.3)' }]
-                      ]}>
-                        {status === 'pending' ? t('status.assigned').toUpperCase() :
-                          status === 'out_for_delivery' ? t('status.inTransit').toUpperCase() :
-                            t(`status.${status}`).toUpperCase()}
+                      <Text
+                        style={[
+                          styles.heroStepLabel,
+                          isCompleted && styles.heroStepCompleted,
+                          isCurrent && styles.heroStepCurrent,
+                          isFuture && [
+                            styles.heroStepFuture,
+                            {
+                              color: isDark
+                                ? "#666666"
+                                : "rgba(255,255,255,0.3)",
+                            },
+                          ],
+                        ]}
+                      >
+                        {status === "pending"
+                          ? t("status.assigned").toUpperCase()
+                          : status === "out_for_delivery"
+                            ? t("status.inTransit").toUpperCase()
+                            : t(`status.${status}`).toUpperCase()}
                       </Text>
                     </View>
                   );
@@ -565,41 +821,89 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
           ) : loading ? (
-            <View style={[styles.emptyHeroCard, {
-              backgroundColor: colors.card,
-              borderColor: isDark ? '#222222' : colors.border,
-              shadowColor: isDark ? 'transparent' : '#6750A4',
-            }]}>
+            <View
+              style={[
+                styles.emptyHeroCard,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: isDark ? "#222222" : colors.border,
+                  shadowColor: isDark ? "transparent" : "#6750A4",
+                },
+              ]}
+            >
               <View style={styles.emptyIconWrap}>
-                <MaterialCommunityIcons name="radar" size={32} color={isDark ? '#FFFFFF' : '#6750A4'} />
-                <View style={[styles.emptyPulseDot, { borderColor: isDark ? '#FFFFFF' : '#6750A4' }]} />
+                <MaterialCommunityIcons
+                  name="radar"
+                  size={32}
+                  color={isDark ? "#FFFFFF" : "#6750A4"}
+                />
+                <View
+                  style={[
+                    styles.emptyPulseDot,
+                    { borderColor: isDark ? "#FFFFFF" : "#6750A4" },
+                  ]}
+                />
               </View>
-              <Text style={[styles.emptyTitle, { color: isDark ? colors.text : '#6750A4' }]}>{t('searchingForOrders')}</Text>
-              <Text style={[styles.emptySub, { color: colors.textMuted }]}>{t('lookingForDeliveries')}</Text>
+              <Text
+                style={[
+                  styles.emptyTitle,
+                  { color: isDark ? colors.text : "#6750A4" },
+                ]}
+              >
+                {t("searchingForOrders")}
+              </Text>
+              <Text style={[styles.emptySub, { color: colors.textMuted }]}>
+                {t("lookingForDeliveries")}
+              </Text>
             </View>
           ) : (
-            <View style={[styles.emptyHeroCard, {
-              backgroundColor: colors.card,
-              borderColor: isDark ? '#222222' : colors.border,
-              shadowColor: isDark ? 'transparent' : '#6750A4',
-            }]}>
+            <View
+              style={[
+                styles.emptyHeroCard,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: isDark ? "#222222" : colors.border,
+                  shadowColor: isDark ? "transparent" : "#6750A4",
+                },
+              ]}
+            >
               <View style={styles.emptyIconWrap}>
-                <View style={[styles.emptyIconBg, { backgroundColor: brandSoftBg }]}>
-                  <MaterialCommunityIcons name="package-variant-closed" size={32} color={brand} />
+                <View
+                  style={[styles.emptyIconBg, { backgroundColor: brandSoftBg }]}
+                >
+                  <MaterialCommunityIcons
+                    name="package-variant-closed"
+                    size={32}
+                    color={brand}
+                  />
                 </View>
               </View>
-              <Text style={[styles.emptyTitle, { color: isDark ? colors.text : '#6750A4' }]}>{t('noActiveDelivery')}</Text>
-              <Text style={[styles.emptySub, { color: colors.textMuted }]}>{t('newOrdersWillAppear')}</Text>
+              <Text
+                style={[
+                  styles.emptyTitle,
+                  { color: isDark ? colors.text : "#6750A4" },
+                ]}
+              >
+                {t("noActiveDelivery")}
+              </Text>
+              <Text style={[styles.emptySub, { color: colors.textMuted }]}>
+                {t("newOrdersWillAppear")}
+              </Text>
               <TouchableOpacity
-                style={[styles.emptyRefreshBtn, {
-                  backgroundColor: isDark ? '#1A1A1A' : brandSoftBg,
-                  borderColor: isDark ? '#333333' : brandBorder,
-                }]}
+                style={[
+                  styles.emptyRefreshBtn,
+                  {
+                    backgroundColor: isDark ? "#1A1A1A" : brandSoftBg,
+                    borderColor: isDark ? "#333333" : brandBorder,
+                  },
+                ]}
                 onPress={onRefresh}
                 activeOpacity={0.8}
               >
                 <Ionicons name="refresh-outline" size={16} color={brand} />
-                <Text style={[styles.emptyRefreshText, { color: brand }]}>{t('check')}</Text>
+                <Text style={[styles.emptyRefreshText, { color: brand }]}>
+                  {t("check")}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -607,94 +911,189 @@ export default function HomeScreen() {
           {/* --- SECTION 4: DELIVERY SUMMARY --- */}
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleWrapper}>
-              <View style={[styles.sectionAccentBar, { backgroundColor: isDark ? '#FFFFFF' : '#6750A4' }]} />
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.text : colors.primary }]}>{t('deliverySummary')}</Text>
+              <View
+                style={[
+                  styles.sectionAccentBar,
+                  { backgroundColor: isDark ? "#FFFFFF" : "#6750A4" },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? colors.text : colors.primary },
+                ]}
+              >
+                {t("deliverySummary")}
+              </Text>
             </View>
             <TouchableOpacity
               style={{
                 paddingLeft: 14,
                 paddingRight: 8,
                 paddingVertical: 3,
-                backgroundColor: isDark ? '#1A1A1A' : '#FAF5FF',
-                borderColor: isDark ? '#333333' : 'transparent',
+                backgroundColor: isDark ? "#1A1A1A" : "#FAF5FF",
+                borderColor: isDark ? "#333333" : "transparent",
                 borderWidth: isDark ? 1 : 0,
                 borderRadius: 70,
-                flexDirection: 'row',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 4
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 4,
               }}
-              onPress={() => router.push('/orders')}>
-              <Text style={[styles.seeAllText, { color: isDark ? '#FFFFFF' : '#6750A4' }]}>{t('seeAll')}</Text>
+              onPress={() => router.push("/orders")}
+            >
+              <Text
+                style={[
+                  styles.seeAllText,
+                  { color: isDark ? "#FFFFFF" : "#6750A4" },
+                ]}
+              >
+                {t("seeAll")}
+              </Text>
               <Feather
                 name="chevron-right"
                 size={14}
-                color={isDark ? '#FFFFFF' : '#6750A4'}
+                color={isDark ? "#FFFFFF" : "#6750A4"}
               />
             </TouchableOpacity>
           </View>
 
           <View style={styles.summaryList}>
             {deliveries.length > 0 ? (
-              deliveries.sort((a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()).slice(0, 5).map((delivery) => (
-                <TouchableOpacity
-                  key={delivery.id}
-                  style={[styles.summaryItem, {
-                    backgroundColor: colors.card,
-                    borderColor: summaryBorder,
-                  }]}
-                  onPress={() => router.push(`/delivery/${delivery.id}`)}
-                >
-                  <View style={styles.summaryItemWrapper}>
-                    <View style={styles.summaryLeft}>
-                      {delivery.customer_image ? (
-                        <Image source={{ uri: delivery.customer_image }} style={styles.customerAvatar} />
-                      ) : (
-                        <View style={[styles.avatarPlaceholder, {
-                          backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9',
-                        }]}>
-                          <Text style={[styles.avatarPlaceholderText, { color: brand }]}>
-                            {delivery.customer_name?.charAt(0) || 'C'}
+              deliveries
+                .sort(
+                  (a, b) =>
+                    new Date(b.assigned_at).getTime() -
+                    new Date(a.assigned_at).getTime(),
+                )
+                .slice(0, 5)
+                .map((delivery) => (
+                  <TouchableOpacity
+                    key={delivery.id}
+                    style={[
+                      styles.summaryItem,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: summaryBorder,
+                      },
+                    ]}
+                    onPress={() => router.push(`/delivery/${delivery.id}`)}
+                  >
+                    <View style={styles.summaryItemWrapper}>
+                      <View style={styles.summaryLeft}>
+                        {delivery.customer_image ? (
+                          <Image
+                            source={{ uri: delivery.customer_image }}
+                            style={styles.customerAvatar}
+                          />
+                        ) : (
+                          <View
+                            style={[
+                              styles.avatarPlaceholder,
+                              {
+                                backgroundColor: isDark ? "#1A1A1A" : "#F1F5F9",
+                                borderColor: isDark ? "#333333" : "#E5E7EB",
+                                
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.avatarPlaceholderText,
+                                { color: brand },
+                              ]}
+                            >
+                              {delivery.customer_name?.charAt(0) || "C"}
+                            </Text>
+                          </View>
+                        )}
+                        <View
+                          style={[
+                            styles.summaryAccentBar,
+                            {
+                              backgroundColor: isDark ? "#FFFFFF" : "#6750A4",
+                              opacity: isDark ? 0.7 : 0.5,
+                            },
+                          ]}
+                        />
+                        <View style={styles.customerInfo}>
+                          <Text
+                            style={[
+                              styles.summaryCustomerName,
+                              { color: colors.text },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {delivery.customer_name || t("customer")}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.summaryCustomerEmail,
+                              { color: colors.textMuted },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {delivery.customer_email || t("noEmailProvided")}
                           </Text>
                         </View>
-                      )}
-                      <View style={[styles.summaryAccentBar, {
-                        backgroundColor: isDark ? '#FFFFFF' : '#6750A4',
-                        opacity: isDark ? 0.7 : 0.5,
-                      }]} />
-                      <View style={styles.customerInfo}>
-                        <Text style={[styles.summaryCustomerName, { color: colors.text }]} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
-                        <Text style={[styles.summaryCustomerEmail, { color: colors.textMuted }]} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                       </View>
-                    </View>
-                    {
-                      (() => {
+                      {(() => {
                         const displayStatus = getDisplayStatus(delivery);
-                        const config = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
+                        const config =
+                          STATUS_CONFIG[displayStatus] || STATUS_CONFIG.pending;
                         return (
-                          <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-                            <MaterialCommunityIcons name={config.icon} size={14} color={config.text} />
-                            <Text style={[styles.statusText, { color: config.text }]}>
-                              {displayStatus === 'pending' ? t('assigned') :
-                                displayStatus === 'out_for_delivery' ? t('inTransit') :
-                                  displayStatus === 'delivered' ? t('completed') :
-                                    displayStatus === 'failed' ? t('failed') :
-                                      displayStatus === 'declined' ? t('declined') :
-                                        t(`status.${displayStatus}`).toUpperCase()}
+                          <View
+                            style={[
+                              styles.statusBadge,
+                              { backgroundColor: config.bg },
+                            ]}
+                          >
+                            <MaterialCommunityIcons
+                              name={config.icon}
+                              size={14}
+                              color={config.text}
+                            />
+                            <Text
+                              style={[
+                                styles.statusText,
+                                { color: config.text },
+                              ]}
+                            >
+                              {displayStatus === "pending"
+                                ? t("assigned")
+                                : displayStatus === "out_for_delivery"
+                                  ? t("inTransit")
+                                  : displayStatus === "delivered"
+                                    ? t("completed")
+                                    : displayStatus === "failed"
+                                      ? t("failed")
+                                      : displayStatus === "declined"
+                                        ? t("declined")
+                                        : t(
+                                            `status.${displayStatus}`,
+                                          ).toUpperCase()}
                             </Text>
                           </View>
                         );
-                      })()
-                    }
-                  </View>
-                </TouchableOpacity>
-              ))
+                      })()}
+                    </View>
+                  </TouchableOpacity>
+                ))
             ) : (
-              <View style={[styles.emptySummary, {
-                backgroundColor: surfaceAlt,
-                borderColor: lightBorder,
-              }]}>
-                <Text style={[styles.emptySummaryText, { color: colors.textMuted }]}>{t('noRecentActivities')}</Text>
+              <View
+                style={[
+                  styles.emptySummary,
+                  {
+                    backgroundColor: surfaceAlt,
+                    borderColor: lightBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.emptySummaryText, { color: colors.textMuted }]}
+                >
+                  {t("noRecentActivities")}
+                </Text>
               </View>
             )}
           </View>
@@ -718,7 +1117,15 @@ export default function HomeScreen() {
 }
 
 // Sub-component for Quick Actions (unused, but kept as is)
-const ActionButton = ({ icon, label, color }: { icon: any, label: string, color: string }) => (
+const ActionButton = ({
+  icon,
+  label,
+  color,
+}: {
+  icon: any;
+  label: string;
+  color: string;
+}) => (
   <TouchableOpacity style={styles.actionCard}>
     <View style={[styles.actionIconBox, { backgroundColor: color }]}>
       <Ionicons name={icon} size={24} color="#fff" />
@@ -728,148 +1135,148 @@ const ActionButton = ({ icon, label, color }: { icon: any, label: string, color:
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#ffffff' },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   // Modern Header with Curved Bottom Right
   headerGradient: {
-    backgroundColor: '#6750A4',
+    backgroundColor: "#6750A4",
     paddingHorizontal: 20,
     paddingTop: 4,
     paddingBottom: 16,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 0,
-    shadowColor: '#6750A4',
+    shadowColor: "#6750A4",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 6,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingBottom: 0,
   },
   headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   headerTextContainer: {
     marginLeft: 4,
   },
   avatarTouchable: {
-    position: 'relative',
+    position: "relative",
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarImage: {
     width: 48,
     height: 48,
     borderRadius: 24,
     borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: "rgba(255,255,255,0.5)",
   },
   avatarPlaceholder: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: "rgba(255,255,255,0.3)",
   },
   avatarText: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#fff',
+    fontWeight: "800",
+    color: "#fff",
   },
   avatarRing: {
-    position: 'absolute',
+    position: "absolute",
     top: -2,
     left: -2,
     right: -2,
     bottom: -2,
     borderRadius: 26,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: "rgba(255,255,255,0.15)",
   },
 
   greetingText: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: "500",
     letterSpacing: 0.2,
   },
   userName: {
     fontSize: 17,
-    color: '#fff',
-    fontWeight: '700',
+    color: "#fff",
+    fontWeight: "700",
     marginTop: -1,
     letterSpacing: -0.2,
   },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 10 },
   notifButton: {
-    position: 'relative',
+    position: "relative",
   },
   notifIconWrapper: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: "rgba(255,255,255,0.1)",
   },
   iconButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: "#F1F5F9",
   },
   notificationBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: -4,
     right: -4,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderWidth: 1.5,
-    borderColor: '#6750A4',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#6750A4",
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 4,
   },
   notificationBadgeText: {
-    color: '#6750A4',
+    color: "#6750A4",
     fontSize: 10,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
   },
 
   // Stats Grid
   statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 25,
   },
   statCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     width: (width - 60) / 3,
     padding: 10,
     borderRadius: 20,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1.5,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -877,42 +1284,52 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   statIconCircle: { padding: 8, borderRadius: 12, marginBottom: 8 },
-  statValue: { fontSize: 16, fontWeight: '800', color: '#1E293B' },
-  statLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '600', marginTop: 2 },
+  statValue: { fontSize: 16, fontWeight: "800", color: "#1E293B" },
+  statLabel: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "600",
+    marginTop: 2,
+  },
 
   // Section Headers
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   sectionTitleWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   sectionAccentBar: {
     width: 2.5,
     height: 20,
     borderRadius: 1.5,
-    backgroundColor: '#6750A4',
-    shadowColor: '#6750A4',
+    backgroundColor: "#6750A4",
+    shadowColor: "#6750A4",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 1,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#6750A4', marginBottom: 0 },
-  seeAllText: { color: '#6750A4', fontWeight: '600', fontSize: 10 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#6750A4",
+    marginBottom: 0,
+  },
+  seeAllText: { color: "#6750A4", fontWeight: "600", fontSize: 10 },
 
   // Hero Card - Professional Style
   heroCard: {
-    backgroundColor: '#6750A4',
+    backgroundColor: "#6750A4",
     borderRadius: 20,
     padding: 18,
     marginBottom: 25,
-    shadowColor: '#6750A4',
+    shadowColor: "#6750A4",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -920,36 +1337,36 @@ const styles = StyleSheet.create({
   },
   // Card Header
   heroCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: "rgba(255,255,255,0.08)",
   },
   heroOrderInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   heroOrderIcon: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   heroOrderText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.2,
   },
   heroStatusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
@@ -962,242 +1379,252 @@ const styles = StyleSheet.create({
   },
   heroStatusText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.5,
   },
   // Customer Section
   heroCustomerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 14,
     marginBottom: 18,
   },
   heroCustomerAvatarWrapper: {
-    position: 'relative',
+    position: "relative",
   },
   heroCustomerAvatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: "rgba(255,255,255,0.3)",
   },
   heroCustomerAvatarPlaceholder: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: "rgba(255,255,255,0.2)",
   },
   heroCustomerAvatarText: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontWeight: "700",
+    color: "#fff",
   },
   heroCustomerDetails: {
     flex: 1,
     gap: 2,
   },
   heroCustomerName: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: -0.2,
   },
   heroCustomerPhone: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   heroCustomerPhoneText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: "rgba(255,255,255,0.6)",
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   // Progress Tracker
   heroProgressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginTop: 4,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: "rgba(255,255,255,0.08)",
     paddingHorizontal: 2,
   },
   heroStepWrapper: {
     flex: 1,
-    alignItems: 'center',
-    position: 'relative',
+    alignItems: "center",
+    position: "relative",
   },
   heroNodeZone: {
     height: 36,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
     marginBottom: 4,
     paddingHorizontal: 0,
   },
   heroProgressLine: {
-    position: 'absolute',
+    position: "absolute",
     height: 2.5,
-    top: '50%',
+    top: "50%",
     marginTop: -1.25,
-    left: '50%',
-    width: '80%',
+    left: "50%",
+    width: "80%",
     zIndex: -1,
   },
   heroStepIndicator: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderColor: "rgba(255,255,255,0.15)",
     zIndex: 2,
   },
   heroIndicatorCompleted: {
-    backgroundColor: '#16A34A',
-    borderColor: '#16A34A',
+    backgroundColor: "#16A34A",
+    borderColor: "#16A34A",
   },
   heroIndicatorCurrent: {
-    backgroundColor: '#F59E0B',
-    borderColor: '#F59E0B',
+    backgroundColor: "#F59E0B",
+    borderColor: "#F59E0B",
     transform: [{ scale: 1.1 }],
-    shadowColor: '#F59E0B',
+    shadowColor: "#F59E0B",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 4,
   },
   heroIndicatorFuture: {
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: "rgba(255,255,255,0.15)",
   },
   heroPulseRing: {
-    position: 'absolute',
+    position: "absolute",
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 1.5,
-    borderColor: '#F59E0B',
+    borderColor: "#F59E0B",
     opacity: 0.3,
   },
   heroStepLabel: {
     fontSize: 7,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.3,
-    color: 'rgba(255,255,255,0.4)',
-    fontWeight: '600',
+    color: "rgba(255,255,255,0.4)",
+    fontWeight: "600",
   },
   heroStepCompleted: {
-    color: '#fff',
-    fontWeight: '700',
+    color: "#fff",
+    fontWeight: "700",
   },
   heroStepCurrent: {
-    color: '#F59E0B',
-    fontWeight: '800',
+    color: "#F59E0B",
+    fontWeight: "800",
   },
   heroStepFuture: {
-    color: 'rgba(255,255,255,0.3)',
+    color: "rgba(255,255,255,0.3)",
   },
-  heroAddress: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
-  progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3 },
-  progressBarFill: { height: '100%', backgroundColor: '#fff', borderRadius: 3 },
+  heroAddress: { color: "rgba(255,255,255,0.7)", fontSize: 14 },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 3,
+  },
+  progressBarFill: { height: "100%", backgroundColor: "#fff", borderRadius: 3 },
 
   // Empty Hero State - Compact
   emptyHeroCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#F0EAF8',
+    borderColor: "#F0EAF8",
     marginBottom: 20,
-    shadowColor: '#6750A4',
+    shadowColor: "#6750A4",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
   },
   emptyIconWrap: {
-    position: 'relative',
+    position: "relative",
     width: 64,
     height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   emptyIconBg: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#F5F0FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F5F0FF",
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyPulseDot: {
-    position: 'absolute',
+    position: "absolute",
     top: -4,
     left: -4,
     right: -4,
     bottom: -4,
     borderRadius: 36,
     borderWidth: 1.5,
-    borderColor: '#6750A4',
+    borderColor: "#6750A4",
     opacity: 0.2,
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: '#6750A4',
+    fontWeight: "700",
+    color: "#6750A4",
     marginBottom: 2,
   },
   emptySub: {
     fontSize: 13,
-    color: '#9B8BB5',
-    textAlign: 'center',
+    color: "#9B8BB5",
+    textAlign: "center",
     marginBottom: 12,
   },
   emptyRefreshBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#F5F0FF',
+    backgroundColor: "#F5F0FF",
     borderWidth: 1,
-    borderColor: '#E8DFF5',
+    borderColor: "#E8DFF5",
   },
   emptyRefreshText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#6750A4',
+    fontWeight: "600",
+    color: "#6750A4",
   },
 
   // Quick Action Grid
   actionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 15,
   },
   actionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     width: (width - 55) / 2,
     padding: 16,
     borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
-  actionIconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  actionLabel: { fontSize: 14, fontWeight: '700', color: '#475569' },
+  actionIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  actionLabel: { fontSize: 14, fontWeight: "700", color: "#475569" },
 
   // Delivery Summary
   summaryList: {
@@ -1205,133 +1632,139 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   summaryItem: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 0,
     borderWidth: 1,
-    borderColor: '#F0F2F5',
-    overflow: 'hidden',
+    borderColor: "#F0F2F5",
+    overflow: "hidden",
   },
   summaryItemWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 14,
     paddingLeft: 14,
   },
   summaryAccentBar: {
     width: 2.5,
     height: 30,
-    backgroundColor: '#6750A4',
+    backgroundColor: "#6750A4",
     borderRadius: 2,
     marginHorizontal: 8,
     opacity: 0.5,
   },
   summaryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   customerAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
   },
   avatarPlaceholderText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#6750A4',
+    fontWeight: "700",
+    color: "#6750A4",
   },
   customerInfo: {
     flex: 1,
   },
   summaryCustomerName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: "700",
+    color: "#1E293B",
   },
   summaryCustomerEmail: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: "#94A3B8",
     marginTop: 2,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     gap: 4,
   },
-  statusText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  statusText: { fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
   statusBadgeText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   emptySummary: {
     padding: 30,
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: "#F1F5F9",
   },
   emptySummaryText: {
-    color: '#94A3B8',
+    color: "#94A3B8",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   // Footer
-  footerNote: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 30, gap: 6 },
-  footerNoteText: { fontSize: 12, color: '#94A3B8', fontWeight: '500' },
+  footerNote: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 30,
+    gap: 6,
+  },
+  footerNoteText: { fontSize: 12, color: "#94A3B8", fontWeight: "500" },
 
   progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   stepWrapper: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   // This container creates a safe "structural bay" for the node and line
   nodeZone: {
     height: 44, // Matches the pulseRing height
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center', // This is the secret to perfect vertical centering
-    position: 'relative',
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center", // This is the secret to perfect vertical centering
+    position: "relative",
     marginBottom: 4,
   },
   progressLine: {
-    position: 'absolute',
+    position: "absolute",
     height: 4,
     // Using top: '50%' and a negative margin of half the height (2)
     // ensures it stays in the mathematical center of the nodeZone
-    top: '50%',
+    top: "50%",
     marginTop: -2,
-    width: '100%',
+    width: "100%",
     zIndex: -1,
   },
   stepIndicator: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: "rgba(255,255,255,0.1)",
     zIndex: 2, // Ensure node is above the line
   },
   indicatorCompleted: {
-    backgroundColor: '#16A34A',
-    borderColor: '#16A34A',
+    backgroundColor: "#16A34A",
+    borderColor: "#16A34A",
   },
   indicatorCurrent: {
-    backgroundColor: '#F59E0B',
-    borderColor: '#F59E0B',
+    backgroundColor: "#F59E0B",
+    borderColor: "#F59E0B",
     transform: [{ scale: 1.2 }],
     shadowColor: "#F59E0B",
     shadowOffset: { width: 0, height: 0 },
@@ -1340,20 +1773,20 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   indicatorFuture: {
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: "rgba(255,255,255,0.3)",
   },
   pulseRing: {
-    position: 'absolute',
+    position: "absolute",
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#F59E0B',
+    borderColor: "#F59E0B",
     opacity: 0.4,
   },
   stepLabel: {
     fontSize: 8,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
 });
