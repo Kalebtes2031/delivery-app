@@ -12,6 +12,7 @@ import {
   AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useDelivery } from '@/context/DeliveryContext';
@@ -23,12 +24,14 @@ import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { driverLocationService } from '@/services/driverLocationService';
 import IncomingOrderModal from '@/components/IncomingOrderModal';
 import { updateDeliveryStatus } from '@/services/api';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { unread: unreadCount } = useUnreadNotifications();
   const { user, toggleOnlineStatus } = useAuth();
   const { deliveries, driverStats, isLoading: loading, isRefreshing: refreshing, refreshAll } = useDelivery();
@@ -204,7 +207,8 @@ export default function HomeScreen() {
   const currentIndex = STATUS_ORDER.indexOf(activeDelivery?.status.toLowerCase() as any);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Animated.View
         style={{
           flex: 1,
@@ -215,7 +219,7 @@ export default function HomeScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
           }
           contentContainerStyle={styles.scrollContent}>
 
@@ -281,7 +285,7 @@ export default function HomeScreen() {
               right: 0,
               width: 50,
               height: 30,
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.background,
               borderTopRightRadius: 150,
               zIndex: 1,
             }} />
@@ -341,8 +345,10 @@ export default function HomeScreen() {
                 style={[
                   styles.statCard,
                   {
-                    borderColor: stat.color + '20',
-                    shadowColor: stat.color,
+                    backgroundColor: colors.card,
+                    borderColor: isDark ? colors.border : stat.color + '20',
+                    shadowColor: isDark ? '#000' : stat.color,
+
                     zIndex: 10
                   }
                 ]}
@@ -357,8 +363,8 @@ export default function HomeScreen() {
                     <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
                   )}
                 </View>
-                <Text style={[styles.statValue, { textAlign: "center", fontSize: 15 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
-                <Text style={[styles.statLabel, { textAlign: "center" }]}>{stat.label}</Text>
+                <Text style={[styles.statValue, { color: colors.text, textAlign: "center", fontSize: 15 }]} numberOfLines={1} adjustsFontSizeToFit>{stat.value}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted, textAlign: "center" }]}>{stat.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -367,7 +373,7 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleWrapper}>
               <View style={styles.sectionAccentBar} />
-              <Text style={styles.sectionTitle}>{t('currentShipment')}</Text>
+              <Text style={[styles.sectionTitle, { color: isDark ? colors.text : colors.primary }]}>{t('currentShipment')}</Text>
             </View>
             <TouchableOpacity
               onPress={() => router.push({
@@ -378,7 +384,9 @@ export default function HomeScreen() {
                 paddingLeft: 14,
                 paddingRight: 8,
                 paddingVertical: 3,
-                backgroundColor: "#FAF5FF",
+                backgroundColor: isDark ? colors.card : "#FAF5FF",
+                borderColor: isDark ? colors.border : 'transparent',
+                borderWidth: isDark ? 1 : 0,
                 borderRadius: 70,
                 flexDirection: "row",
                 alignItems: "center",
@@ -386,7 +394,7 @@ export default function HomeScreen() {
                 gap: 4
               }}
             >
-              <Text style={[styles.seeAllText, { color: "#6750A4" }]}>{t('viewAll')}</Text>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>{t('viewAll')}</Text>
               <Feather
                 name="chevron-right"
                 size={14}
@@ -404,9 +412,9 @@ export default function HomeScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                backgroundColor: '#F5F3FF',
+                backgroundColor: isDark ? colors.card : '#F5F3FF',
                 borderWidth: 1,
-                borderColor: '#DDD6FE',
+                borderColor: isDark ? colors.border : '#DDD6FE',
                 borderRadius: 14,
                 padding: 12,
                 marginBottom: 12,
@@ -415,13 +423,13 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                 <MaterialCommunityIcons name="layers-triple-outline" size={20} color="#6750A4" />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#4C1D95' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? colors.text : '#4C1D95' }}>
                     {t('ordersReadyToBatch', {
                       count: group.orders.length,
                       defaultValue: `${group.orders.length} Orders Ready to Batch`,
                     })}
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#6D28D9' }} numberOfLines={1}>
+                  <Text style={{ fontSize: 11, color: isDark ? colors.textMuted : '#6D28D9' }} numberOfLines={1}>
                     {t('atStorePickUpTogether', {
                       store: group.storeName,
                       defaultValue: `At ${group.storeName} · Pick up together`,
@@ -551,7 +559,7 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
           ) : loading ? (
-            <View style={styles.emptyHeroCard}>
+            <View style={[styles.emptyHeroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.emptyIconWrap}>
                 <MaterialCommunityIcons name="radar" size={32} color="#6750A4" />
                 <View style={styles.emptyPulseDot} />
@@ -560,7 +568,7 @@ export default function HomeScreen() {
               <Text style={styles.emptySub}>{t('lookingForDeliveries')}</Text>
             </View>
           ) : (
-            <View style={styles.emptyHeroCard}>
+            <View style={[styles.emptyHeroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.emptyIconWrap}>
                 <View style={styles.emptyIconBg}>
                   <MaterialCommunityIcons name="package-variant-closed" size={32} color="#6750A4" />
@@ -586,7 +594,9 @@ export default function HomeScreen() {
                 paddingLeft: 14,
                 paddingRight: 8,
                 paddingVertical: 3,
-                backgroundColor: "#FAF5FF",
+                backgroundColor: isDark ? colors.card : "#FAF5FF",
+                borderColor: isDark ? colors.border : 'transparent',
+                borderWidth: isDark ? 1 : 0,
                 borderRadius: 70,
                 flexDirection: "row",
                 justifyContent: "center",
@@ -609,7 +619,7 @@ export default function HomeScreen() {
               deliveries.sort((a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()).slice(0, 5).map((delivery) => (
                 <TouchableOpacity
                   key={delivery.id}
-                  style={styles.summaryItem}
+                  style={[styles.summaryItem, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => router.push(`/delivery/${delivery.id}`)}
                 >
                   <View style={styles.summaryItemWrapper}>
@@ -625,8 +635,8 @@ export default function HomeScreen() {
                       )}
                       <View style={styles.summaryAccentBar} />
                       <View style={styles.customerInfo}>
-                        <Text style={styles.summaryCustomerName} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
-                        <Text style={styles.summaryCustomerEmail} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
+                        <Text style={[styles.summaryCustomerName, { color: colors.text }]} numberOfLines={1}>{delivery.customer_name || t('customer')}</Text>
+                        <Text style={[styles.summaryCustomerEmail, { color: colors.textMuted }]} numberOfLines={1}>{delivery.customer_email || t('noEmailProvided')}</Text>
                       </View>
                     </View>
                     {
@@ -653,8 +663,8 @@ export default function HomeScreen() {
                 </TouchableOpacity >
               ))
             ) : (
-              <View style={styles.emptySummary}>
-                <Text style={styles.emptySummaryText}>{t('noRecentActivities')}</Text>
+              <View style={[styles.emptySummary, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.emptySummaryText, { color: colors.textMuted }]}>{t('noRecentActivities')}</Text>
               </View>
             )
             }

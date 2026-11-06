@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppTheme } from "@/context/ThemeContext";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -23,6 +24,7 @@ export default function ResetPassword() {
   const router = useRouter();
   const { t } = useTranslation("auth");
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useAppTheme();
   const { email, otp } = useLocalSearchParams<{ email: string; otp: string }>();
 
   const [newPassword, setNewPassword] = useState("");
@@ -85,35 +87,35 @@ export default function ResetPassword() {
 
    if (showSuccess) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#ffffff', justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <View style={{ alignItems: 'center', width: '100%' }}>
           <View style={{
             width: 80,
             height: 80,
             borderRadius: 40,
-            backgroundColor: BRAND_COLOR,
+            backgroundColor: colors.primary,
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 24,
-            shadowColor: BRAND_COLOR,
+            shadowColor: colors.primary,
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.3,
             shadowRadius: 8,
             elevation: 6,
           }}>
-            <Ionicons name="checkmark" size={48} color="white" />
+            <Ionicons name="checkmark" size={48} color={colors.onPrimary} />
           </View>
           <Text style={{
             fontSize: 24,
             fontWeight: '900',
-            color: '#1E293B',
+            color: colors.text,
             textAlign: 'center',
           }}>
             {t("resetPassword.successTitle")}
           </Text>
           <Text style={{
             fontSize: 14,
-            color: '#64748B',
+            color: colors.textMuted,
             textAlign: 'center',
             marginTop: 8,
             marginBottom: 32,
@@ -123,7 +125,7 @@ export default function ResetPassword() {
           <TouchableOpacity
             onPress={handleSuccessClose}
             style={{
-              backgroundColor: BRAND_COLOR,
+              backgroundColor: colors.primary,
               borderRadius: 20,
               paddingVertical: 14,
               paddingHorizontal: 32,
@@ -132,7 +134,7 @@ export default function ResetPassword() {
               alignSelf: 'center',
             }}
           >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>
+            <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
               {t("resetPassword.signIn")}
             </Text>
           </TouchableOpacity>
@@ -142,8 +144,8 @@ export default function ResetPassword() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: insets.top }}>
-      <StatusBar barStyle="dark-content" />
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -162,15 +164,17 @@ export default function ResetPassword() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              backgroundColor: 'rgba(103, 80, 164, 0.1)',
+              backgroundColor: isDark ? colors.card : 'rgba(103, 80, 164, 0.1)',
+              borderWidth: isDark ? 1 : 0,
+              borderColor: colors.border,
               paddingHorizontal: 16,
               paddingVertical: 8,
               borderRadius: 20,
             }}
             activeOpacity={0.8}
           >
-            <Ionicons name="arrow-back" size={20} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: '600', fontSize: 14 }}>
+            <Ionicons name="arrow-back" size={20} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>
               {t("resetPassword.back")}
             </Text>
           </TouchableOpacity>
@@ -186,7 +190,7 @@ export default function ResetPassword() {
               style={{
                 fontSize: 24,
                 fontWeight: '900',
-                color: BRAND_COLOR,
+                color: isDark ? colors.text : colors.primary,
                 letterSpacing: 1,
                 marginTop: 16,
               }}
@@ -196,7 +200,7 @@ export default function ResetPassword() {
             <Text
               style={{
                 fontSize: 14,
-                color: '#64748B',
+                color: colors.textMuted,
                 textAlign: 'center',
                 marginTop: 8,
                 paddingHorizontal: 16,
@@ -211,16 +215,16 @@ export default function ResetPassword() {
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#FEF2F2',
+              backgroundColor: isDark ? colors.surface : '#FEF2F2',
               borderWidth: 1,
-              borderColor: '#FCA5A5',
+              borderColor: isDark ? colors.danger : '#FCA5A5',
               borderRadius: 12,
               paddingHorizontal: 16,
               paddingVertical: 12,
               marginBottom: 16,
             }}>
-              <Ionicons name="alert-circle" size={20} color="#DC2626" />
-              <Text style={{ color: '#DC2626', fontSize: 14, flex: 1, marginLeft: 8 }}>
+              <Ionicons name="alert-circle" size={20} color={colors.danger} />
+              <Text style={{ color: colors.danger, fontSize: 14, flex: 1, marginLeft: 8 }}>
                 {apiError}
               </Text>
             </View>
@@ -231,7 +235,7 @@ export default function ResetPassword() {
             <Text style={{
               fontSize: 11,
               fontWeight: '700',
-              color: BRAND_COLOR,
+              color: isDark ? colors.textMuted : colors.primary,
               textTransform: 'uppercase',
               letterSpacing: 2,
               marginBottom: 8,
@@ -242,18 +246,18 @@ export default function ResetPassword() {
             <View style={{ position: 'relative' }}>
               <TextInput
                 style={{
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.card,
                   borderRadius: 101,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   paddingRight: 50,
-                  color: BRAND_COLOR,
+                  color: colors.text,
                   fontSize: 14,
                   borderWidth: 1,
-                  borderColor: errors.newPassword ? '#DC2626' : BRAND_COLOR,
+                  borderColor: errors.newPassword ? colors.danger : (isDark ? colors.border : colors.primary),
                 }}
                 placeholder={t("resetPassword.newPasswordPlaceholder")}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={newPassword}
                 onChangeText={(text) => {
                   setNewPassword(text);
@@ -273,13 +277,13 @@ export default function ResetPassword() {
                 <Ionicons
                   name={showNewPassword ? "eye-off" : "eye"}
                   size={24}
-                  color={BRAND_COLOR}
+                  color={isDark ? colors.textMuted : colors.primary}
                 />
               </TouchableOpacity>
             </View>
             {errors.newPassword && (
               <Text style={{
-                color: '#DC2626',
+                color: colors.danger,
                 fontSize: 12,
                 marginTop: 6,
                 marginLeft: 4,
@@ -294,7 +298,7 @@ export default function ResetPassword() {
             <Text style={{
               fontSize: 11,
               fontWeight: '700',
-              color: BRAND_COLOR,
+              color: isDark ? colors.textMuted : colors.primary,
               textTransform: 'uppercase',
               letterSpacing: 2,
               marginBottom: 8,
@@ -305,18 +309,18 @@ export default function ResetPassword() {
             <View style={{ position: 'relative' }}>
               <TextInput
                 style={{
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.card,
                   borderRadius: 101,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   paddingRight: 50,
-                  color: BRAND_COLOR,
+                  color: colors.text,
                   fontSize: 14,
                   borderWidth: 1,
-                  borderColor: errors.confirmPassword ? '#DC2626' : BRAND_COLOR,
+                  borderColor: errors.confirmPassword ? colors.danger : (isDark ? colors.border : colors.primary),
                 }}
                 placeholder={t("resetPassword.confirmPasswordPlaceholder")}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={confirmPassword}
                 onChangeText={(text) => {
                   setConfirmPassword(text);
@@ -336,13 +340,13 @@ export default function ResetPassword() {
                 <Ionicons
                   name={showConfirmPassword ? "eye-off" : "eye"}
                   size={24}
-                  color={BRAND_COLOR}
+                  color={isDark ? colors.textMuted : colors.primary}
                 />
               </TouchableOpacity>
             </View>
             {errors.confirmPassword && (
               <Text style={{
-                color: '#DC2626',
+                color: colors.danger,
                 fontSize: 12,
                 marginTop: 6,
                 marginLeft: 4,
@@ -357,7 +361,7 @@ export default function ResetPassword() {
             onPress={handleReset}
             disabled={loading}
             style={{
-              backgroundColor: BRAND_COLOR,
+              backgroundColor: colors.primary,
               borderRadius: 116,
               padding: 18,
               alignItems: 'center',
@@ -368,9 +372,9 @@ export default function ResetPassword() {
             activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="white" size="small" />
+              <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
                 {t("resetPassword.button")}
               </Text>
             )}

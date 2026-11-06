@@ -16,10 +16,12 @@ import { useTranslation } from "react-i18next";
 import StarRating from "@/components/StarRating";
 import { getMyDeliveryReviews } from "@/services/api";
 import type { DeliveryReview, DeliveryReviewsResponse } from "@/types";
+import { useAppTheme } from "@/context/ThemeContext";
 
 export default function ReviewsScreen() {
   const router = useRouter();
   const { t } = useTranslation("driverProfile");
+  const { colors, isDark } = useAppTheme();
 
   const [data, setData] = useState<DeliveryReviewsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,26 +64,26 @@ export default function ReviewsScreen() {
     const initial = (item.customer_name?.[0] || "C").toUpperCase();
 
     return (
-      <View style={styles.reviewCard}>
+      <View style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.reviewHeader}>
           {item.customer_image ? (
             <Image source={{ uri: item.customer_image }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>{initial}</Text>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primarySoft }]}>
+              <Text style={[styles.avatarInitial, { color: colors.primary }]}>{initial}</Text>
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text style={styles.reviewerName} numberOfLines={1}>
+            <Text style={[styles.reviewerName, { color: colors.text }]} numberOfLines={1}>
               {item.customer_name || t("customerLabel")}
             </Text>
             <View style={styles.reviewMetaRow}>
               <StarRating rating={item.rating} size={13} gap={1} />
-              {!!date && <Text style={styles.reviewDate}>{date}</Text>}
+              {!!date && <Text style={[styles.reviewDate, { color: colors.textMuted }]}>{date}</Text>}
             </View>
           </View>
         </View>
-        {!!item.comment && <Text style={styles.reviewComment}>{item.comment}</Text>}
+        {!!item.comment && <Text style={[styles.reviewComment, { color: colors.text }]}>{item.comment}</Text>}
       </View>
     );
   };
@@ -89,61 +91,49 @@ export default function ReviewsScreen() {
   const Header = () => (
     <View>
       {/* Summary hero */}
-      <View style={styles.summaryCard}>
+      <View
+        style={[
+          styles.summaryCard,
+          isDark && { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+        ]}
+      >
         <Text style={styles.summaryAverage}>{avg.toFixed(1)}</Text>
-        <StarRating rating={avg} size={22} color="#FBBF24" emptyColor="rgba(255,255,255,0.3)" />
+        <StarRating rating={avg} size={22} color="#FBBF24" emptyColor={isDark ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.3)"} />
         <Text style={styles.summaryCount}>
           {total > 0 ? t("reviewsCount", { count: total }) : t("noRatingYet")}
         </Text>
       </View>
 
-      {/* Distribution bars 
-      {total > 0 && (
-        <View style={styles.distributionCard}>
-          {[5, 4, 3, 2, 1].map((star) => {
-            const count = distribution[String(star)] || 0;
-            const pct = total > 0 ? (count / total) * 100 : 0;
-            return (
-              <View key={star} style={styles.distRow}>
-                <Text style={styles.distStar}>{star}</Text>
-                <Ionicons name="star" size={12} color="#FBBF24" />
-                <View style={styles.distTrack}>
-                  <View style={[styles.distFill, { width: `${pct}%` }]} />
-                </View>
-                <Text style={styles.distCount}>{count}</Text>
-              </View>
-            );
-          })}
-        </View>
-      )}*/}
-
       {reviews.length > 0 && (
-        <Text style={styles.sectionLabel}>{t("recentReviews")}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text }]}>{t("recentReviews")}</Text>
       )}
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#6750A4" />
+      <View style={[styles.topBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[styles.backButton, { borderColor: isDark ? colors.border : colors.primary }]}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>{t("ratingsAndReviews")}</Text>
+        <Text style={[styles.topBarTitle, { color: isDark ? colors.text : colors.primary }]}>{t("ratingsAndReviews")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6750A4" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.center}>
-          <MaterialCommunityIcons name="wifi-off" size={56} color="#CBD5E1" />
-          <Text style={styles.emptyMessage}>{t("reviewsError")}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchReviews}>
-            <Text style={styles.retryText}>{t("retry")}</Text>
+          <MaterialCommunityIcons name="wifi-off" size={56} color={colors.textMuted} />
+          <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>{t("reviewsError")}</Text>
+          <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={fetchReviews}>
+            <Text style={[styles.retryText, { color: colors.onPrimary }]}>{t("retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -155,15 +145,15 @@ export default function ReviewsScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6750A4" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.emptyWrapper}>
-              <View style={styles.emptyIconCircle}>
-                <MaterialCommunityIcons name="star-outline" size={56} color="#6750A4" />
+              <View style={[styles.emptyIconCircle, { backgroundColor: colors.primarySoft }]}>
+                <MaterialCommunityIcons name="star-outline" size={56} color={colors.primary} />
               </View>
-              <Text style={styles.emptyTitle}>{t("noReviewsTitle")}</Text>
-              <Text style={styles.emptyMessage}>{t("noReviewsMessage")}</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t("noReviewsTitle")}</Text>
+              <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>{t("noReviewsMessage")}</Text>
             </View>
           }
         />

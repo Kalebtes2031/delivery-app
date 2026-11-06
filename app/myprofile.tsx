@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { updateProfile, changePassword as changePasswordApi } from '@/services/api';
 import BackButton from '@/components/BackButton';
 import { useTranslation } from 'react-i18next';
+import { useAppTheme } from '@/context/ThemeContext';
 
 // --- Modern Success Modal Component ---
 interface SuccessModalProps {
@@ -33,6 +34,7 @@ interface SuccessModalProps {
 }
 
 const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalProps) => {
+  const { colors, isDark } = useAppTheme();
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -62,7 +64,7 @@ const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalPr
   return (
     <Modal transparent visible={visible} animationType="none">
       <TouchableOpacity 
-        style={styles.modalOverlay} 
+        style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} 
         activeOpacity={1} 
         onPress={onClose}
       >
@@ -70,6 +72,9 @@ const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalPr
           style={[
             styles.modalContainer,
             {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: isDark ? 1 : 0,
               opacity: opacityAnim,
               transform: [{ scale: scaleAnim }],
             }
@@ -83,12 +88,12 @@ const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalPr
           </View>
 
           {/* Content */}
-          <Text style={styles.modalTitle}>{message}</Text>
-          {subtitle && <Text style={styles.modalSubtitle}>{subtitle}</Text>}
+          <Text style={[styles.modalTitle, { color: colors.text }]}>{message}</Text>
+          {subtitle && <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
 
           {/* Action Button */}
           <TouchableOpacity onPress={onClose} style={styles.modalButton}>
-<View style={[styles.modalButtonGradient, { backgroundColor: '#6750A4' }]}>
+<View style={[styles.modalButtonGradient, { backgroundColor: colors.primary }]}>
 <Text style={styles.modalButtonText}>{t ? t('gotIt') : 'Got it'}</Text>
 </View>
           </TouchableOpacity>
@@ -100,6 +105,7 @@ const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalPr
 
 export default function MyProfileScreen() {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { user, refreshUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const { t } = useTranslation("profile"); 
@@ -257,8 +263,8 @@ showSuccess(
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       
       <BackButton title={t('edit_profile')} color='white' />
 
@@ -284,8 +290,8 @@ showSuccess(
           {errors.profile_image && <Text  style={styles.errorTextCenter}>{errors.profile_image}</Text>}
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('personal_information')}</Text>
-            <View style={styles.card}>
+            <Text style={[styles.sectionLabel, { color: isDark ? colors.text : colors.primary }]}>{t('personal_information')}</Text>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
               <InputGroup 
                 label={t('first_name')} 
                 value={profileForm.first_name} 
@@ -329,8 +335,8 @@ showSuccess(
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('change_password')}</Text>
-            <View style={styles.card}>
+            <Text style={[styles.sectionLabel, { color: isDark ? colors.text : colors.primary }]}>{t('change_password')}</Text>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
               <InputGroup 
                 label={t('current_password')} 
                 secureTextEntry 
@@ -391,17 +397,26 @@ showSuccess(
 
 // Sub‑component remains the same, just using t() for label/placeholder
 const InputGroup = ({ label, secureTextEntry, error, ...props }: any) => {
+  const { colors, isDark } = useAppTheme();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPassword = secureTextEntry;
 
   return (
     <View style={styles.inputBox}>
-      <Text style={styles.inputLabel}>{label}</Text>
+      <Text style={[styles.inputLabel, { color: isDark ? colors.text : colors.primary }]}>{label}</Text>
       <View style={styles.inputWrapper}>
         <TextInput 
-          style={[styles.input, error && styles.inputErrorBorder]} 
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDark ? colors.surface : '#fff',
+              color: colors.text,
+              borderColor: isDark ? colors.border : colors.primary,
+            },
+            error && styles.inputErrorBorder
+          ]} 
           placeholder={label}
-          placeholderTextColor="#94A3B8" 
+          placeholderTextColor={colors.textMuted} 
           secureTextEntry={isPassword && !isPasswordVisible}
           {...props} 
         />
@@ -413,7 +428,7 @@ const InputGroup = ({ label, secureTextEntry, error, ...props }: any) => {
             <Ionicons 
               name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
               size={20} 
-              color="#6750A4" 
+              color={colors.primary} 
             />
           </TouchableOpacity>
         )}

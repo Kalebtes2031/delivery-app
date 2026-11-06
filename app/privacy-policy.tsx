@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppTheme } from "@/context/ThemeContext";
 
 const BRAND_COLOR = "#6750A4";
 
@@ -15,6 +16,7 @@ type Section = {
 
 export default function PrivacyPolicyScreen() {
   const { t } = useTranslation("privacy");
+  const { colors, isDark } = useAppTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -35,17 +37,19 @@ export default function PrivacyPolicyScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
-      <StatusBar barStyle="light-content" backgroundColor={BRAND_COLOR} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
+      <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={isDark ? colors.card : BRAND_COLOR} />
 
       <Animated.View
         style={{
           paddingHorizontal: 24,
           paddingBottom: 24,
           paddingTop: 16,
-          backgroundColor: BRAND_COLOR,
+          backgroundColor: isDark ? colors.card : BRAND_COLOR,
           borderBottomLeftRadius: 24,
           borderBottomRightRadius: 24,
+          borderBottomWidth: isDark ? 1 : 0,
+          borderBottomColor: colors.border,
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
         }}
@@ -55,19 +59,19 @@ export default function PrivacyPolicyScreen() {
             onPress={() => router.back()}
             style={{
               width: 44, height: 44, borderRadius: 22,
-              backgroundColor: "rgba(255,255,255,0.2)",
+              backgroundColor: isDark ? colors.surface : "rgba(255,255,255,0.2)",
               alignItems: "center", justifyContent: "center",
             }}
             activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={22} color="white" />
+            <Ionicons name="arrow-back" size={22} color={isDark ? colors.text : "white"} />
           </TouchableOpacity>
-          <Text style={{ color: "white", fontSize: 18, fontWeight: "700" }}>
+          <Text style={{ color: isDark ? colors.text : "white", fontSize: 18, fontWeight: "700" }}>
             {t("title")}
           </Text>
           <View style={{ width: 44 }} />
         </View>
-        <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 12 }}>
+        <Text style={{ color: isDark ? colors.textMuted : "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 12 }}>
           {t("lastUpdated")}
         </Text>
       </Animated.View>
@@ -79,17 +83,17 @@ export default function PrivacyPolicyScreen() {
       >
         <View
           style={{
-            backgroundColor: "#F5F0FF", borderRadius: 16, padding: 20, marginBottom: 24,
-            borderWidth: 1, borderColor: "#E8DFF5",
+            backgroundColor: isDark ? colors.card : "#F5F0FF", borderRadius: 16, padding: 20, marginBottom: 24,
+            borderWidth: 1, borderColor: colors.border,
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Ionicons name="shield-checkmark" size={22} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: "700", fontSize: 16 }}>
+            <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
+            <Text style={{ color: isDark ? colors.text : BRAND_COLOR, fontWeight: "700", fontSize: 16 }}>
               {t("introductionTitle")}
             </Text>
           </View>
-          <Text style={{ color: "#6B7280", lineHeight: 24 }}>{t("introductionBody")}</Text>
+          <Text style={{ color: colors.textMuted, lineHeight: 24 }}>{t("introductionBody")}</Text>
         </View>
 
         {sections.map((section, index) => (
@@ -98,17 +102,17 @@ export default function PrivacyPolicyScreen() {
               <View
                 style={{
                   width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: "rgba(103,80,164,0.1)",
+                  backgroundColor: colors.primarySoft,
                   alignItems: "center", justifyContent: "center",
                 }}
               >
-                <Ionicons name={section.icon} size={18} color={BRAND_COLOR} />
+                <Ionicons name={section.icon} size={18} color={colors.primary} />
               </View>
-              <Text style={{ color: BRAND_COLOR, fontWeight: "700", fontSize: 17, flex: 1 }}>
+              <Text style={{ color: isDark ? colors.text : BRAND_COLOR, fontWeight: "700", fontSize: 17, flex: 1 }}>
                 {index + 1}. {t(section.titleKey)}
               </Text>
             </View>
-            <Text style={{ color: "#6B7280", lineHeight: 24, marginLeft: 46 }}>
+            <Text style={{ color: colors.textMuted, lineHeight: 24, marginLeft: 46 }}>
               {t(section.bodyKey)}
             </Text>
           </View>
@@ -116,29 +120,29 @@ export default function PrivacyPolicyScreen() {
 
         <View
           style={{
-            backgroundColor: "#F9FAFB", borderRadius: 16, padding: 20,
-            marginBottom: 24, borderWidth: 1, borderColor: "#E5E7EB",
+            backgroundColor: isDark ? colors.card : "#F9FAFB", borderRadius: 16, padding: 20,
+            marginBottom: 24, borderWidth: 1, borderColor: colors.border,
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Ionicons name="mail-outline" size={20} color={BRAND_COLOR} />
-            <Text style={{ color: BRAND_COLOR, fontWeight: "600" }}>{t("contactTitle")}</Text>
+            <Ionicons name="mail-outline" size={20} color={colors.primary} />
+            <Text style={{ color: isDark ? colors.text : BRAND_COLOR, fontWeight: "600" }}>{t("contactTitle")}</Text>
           </View>
-          <Text style={{ color: "#6B7280", fontSize: 14 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 14 }}>
             {t("contactBody")}{" "}
-            <Text style={{ color: BRAND_COLOR, fontWeight: "600" }}>privacy@elilitapp.com</Text>
+            <Text style={{ color: colors.primary, fontWeight: "600" }}>privacy@elilitapp.com</Text>
           </Text>
         </View>
 
         <TouchableOpacity
           onPress={() => router.back()}
           style={{
-            backgroundColor: BRAND_COLOR, paddingVertical: 16, borderRadius: 16,
+            backgroundColor: colors.primary, paddingVertical: 16, borderRadius: 16,
             alignItems: "center", marginBottom: 20,
           }}
           activeOpacity={0.85}
         >
-          <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
+          <Text style={{ color: colors.onPrimary, fontWeight: "700", fontSize: 16 }}>
             {t("acceptButton")}
           </Text>
         </TouchableOpacity>

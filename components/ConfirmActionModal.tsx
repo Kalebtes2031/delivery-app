@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useAppTheme } from '@/context/ThemeContext';
 
 interface ConfirmActionModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ export default function ConfirmActionModal({
   info = false,
 }: ConfirmActionModalProps) {
   const { t } = useTranslation(['ConfirmActionModal']);
+  const { colors, isDark } = useAppTheme();
   
   // Use translated default values if not provided by parent
   const finalTitle = title || t('defaultTitle');
@@ -39,22 +41,22 @@ export default function ConfirmActionModal({
   const isDanger = variant === 'danger';
   const isSuccess = variant === 'success';
 
-  let iconColor = '#6750A4';
-  let iconBg = '#F5F3FF';
-  let confirmBtnBg = '#6750A4';
+  let iconColor: string = colors.primary;
+  let iconBg: string = colors.primarySoft;
+  let confirmBtnBg: string = colors.primary;
   let iconName: any = 'check-circle';
 
   if (info) {
     iconName = 'info';
   } else if (isDanger) {
-    iconColor = '#dc2626';
-    iconBg = '#FEF2F2';
-    confirmBtnBg = '#dc2626';
+    iconColor = colors.danger;
+    iconBg = isDark ? 'rgba(248, 113, 113, 0.15)' : '#FEF2F2';
+    confirmBtnBg = colors.danger;
     iconName = 'alert-triangle';
   } else if (isSuccess) {
-    iconColor = '#059669';
-    iconBg = '#F0FDF4';
-    confirmBtnBg = '#059669';
+    iconColor = colors.success;
+    iconBg = isDark ? 'rgba(74, 222, 128, 0.15)' : '#F0FDF4';
+    confirmBtnBg = colors.success;
     iconName = 'check-circle';
   }
 
@@ -65,34 +67,55 @@ export default function ConfirmActionModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
+      <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={onClose}>
+        <Pressable
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: isDark ? 1 : 0,
+            },
+          ]}
+          onPress={(e) => e.stopPropagation()}
+        >
           {/* Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerTitleRow}>
               <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
                 <Feather name={iconName} size={20} color={iconColor} />
               </View>
-              <Text style={styles.titleText}>{finalTitle}</Text>
+              <Text style={[styles.titleText, { color: colors.text }]}>{finalTitle}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Feather name="x" size={20} color="#6b7280" />
+              <Feather name="x" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* Body */}
           <View style={styles.body}>
-            <Text style={styles.descriptionText}>{finalDescription}</Text>
+            <Text style={[styles.descriptionText, { color: colors.textMuted }]}>{finalDescription}</Text>
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View
+            style={[
+              styles.footer,
+              {
+                backgroundColor: isDark ? colors.surface : '#f8fafc',
+                borderTopColor: colors.border,
+              },
+            ]}
+          >
             <TouchableOpacity
               onPress={onClose}
               disabled={isLoading}
-              style={styles.cancelBtn}
+              style={[
+                styles.cancelBtn,
+                { backgroundColor: isDark ? colors.card : '#e2e8f0' },
+              ]}
             >
-              <Text style={styles.cancelBtnText}>{finalCancelText}</Text>
+              <Text style={[styles.cancelBtnText, { color: colors.text }]}>{finalCancelText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -115,12 +138,10 @@ export default function ConfirmActionModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#fff',
     borderRadius: 20,
     width: '90%',
     maxWidth: 400,
@@ -137,7 +158,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -151,7 +171,6 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1e293b',
   },
   closeBtn: {
     padding: 4,
@@ -162,27 +181,22 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748b',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 12,
     padding: 20,
-    backgroundColor: '#f8fafc',
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
   },
   cancelBtn: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: '#e2e8f0',
   },
   cancelBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#475569',
   },
   confirmBtn: {
     flexDirection: 'row',

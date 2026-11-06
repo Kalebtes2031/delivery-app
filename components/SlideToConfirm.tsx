@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Dimensions, Animated, Easing } from 'react-nati
 import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const SLIDER_WIDTH = width - 40;
@@ -18,6 +19,7 @@ interface SlideToConfirmProps {
 }
 
 export default function SlideToConfirm({ onConfirm, label, color, icon, isLoading }: SlideToConfirmProps) {
+  const { colors, isDark } = useAppTheme();
   const [isCompleted, setIsCompleted] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -125,7 +127,16 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
     outputRange: [0, 1, 1, 0],
   });
   return (
-    <View style={[styles.container, { backgroundColor: color + '20' }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : color + '20',
+          borderColor: isDark ? colors.border : 'transparent',
+          borderWidth: isDark ? 1 : 0,
+        },
+      ]}
+    >
       {/* Label + animated hint arrows */}
       <Animated.View style={[styles.textContainer, { opacity: labelOpacity }]}>
         <View style={styles.labelRow}>
@@ -137,19 +148,10 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
                 opacity: arrowOpacity,
                 marginLeft: 8,
               }}>
-                <MaterialCommunityIcons name="chevron-double-right" size={20} color={color} />
+                <MaterialCommunityIcons name="chevron-double-right" size={20} color={isDark ? colors.primary : color} />
               </Animated.View>
-              {/* <Animated.View style={{
-                transform: [{ translateX: arrowTranslateX2 }],
-                opacity: arrowOpacity2,
-                marginLeft: 8,
-                position: 'absolute', 
-              }}>
-                <MaterialCommunityIcons name="chevron-double-right" size={20} color={color} />
-              </Animated.View> */}
             </>
-
-          )}<Text style={[styles.label, { color: color + '50' }]}>{label}</Text>
+          )}<Text style={[styles.label, { color: isDark ? colors.textMuted : color + '60' }]}>{label}</Text>
         </View>
       </Animated.View>
 

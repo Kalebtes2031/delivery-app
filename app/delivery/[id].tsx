@@ -32,12 +32,14 @@ import {
 } from "@/constants/deliveryConstants";
 import { useTranslation } from "react-i18next";
 import { updateDeliveryStatus } from "@/services/api"; 
+import { useAppTheme } from "@/context/ThemeContext"; 
 
 const { width } = Dimensions.get("window");
 
 export default function DeliveryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { getDeliveryById, advanceStatus } = useDelivery();
   const [delivery, setDelivery] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,7 +155,7 @@ export default function DeliveryDetailScreen() {
 
   if (loading)
     return (
-      <View style={styles.loaderContainer}>
+      <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color="#6750A4" />
       </View>
     );
@@ -194,7 +196,7 @@ export default function DeliveryDetailScreen() {
   const subCategoryName = isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
 
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       {/* --- HERO HEADER --- */}
@@ -238,11 +240,11 @@ export default function DeliveryDetailScreen() {
             fontWeight: "bold",
             textTransform: "uppercase"
           }}>
-            {isDeclined
+            {String(isDeclined
               ? t('status.declined', 'Declined')
               : isExpired
                 ? t('status.expired', 'Expired')
-                : t(`orderStatus.${orderDetail?.status}`, orderDetail?.status || '')}
+                : t(`orderStatus.${orderDetail?.status}`, orderDetail?.status || ''))}
           </Text>
         </View>
       </View>
@@ -258,7 +260,7 @@ export default function DeliveryDetailScreen() {
         }}
       >
         {/* --- STATUS PIPELINE --- */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           <View style={styles.progressContainer}>
             {STATUS_ORDER.map((status, index) => {
               const isCompleted = index < currentIndex;
@@ -395,11 +397,12 @@ export default function DeliveryDetailScreen() {
           <View
             style={[
               styles.miniCard,
+              { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 },
               { borderLeftColor: "#6750A4", borderLeftWidth: 4 },
             ]}
           >
             <Text style={styles.miniLabel}>{t('pickupFrom')}</Text>
-            <Text style={styles.miniTitle} numberOfLines={1}>
+            <Text style={[styles.miniTitle, { color: colors.text }]} numberOfLines={1}>
               {companyName}
             </Text>
             <TouchableOpacity style={styles.miniAction}>
@@ -411,6 +414,7 @@ export default function DeliveryDetailScreen() {
           <View
             style={[
               styles.miniCard,
+              { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 },
               {
                 borderLeftColor: "#10B981",
                 borderLeftWidth: 4,
@@ -437,7 +441,7 @@ export default function DeliveryDetailScreen() {
                   <MaterialIcons name="person" size={24} color="#10B981" />
                 </View>
               )}
-              <Text style={styles.miniTitle} numberOfLines={1}>
+              <Text style={[styles.miniTitle, { color: colors.text }]} numberOfLines={1}>
                 {customerName}
               </Text>
             </View>
@@ -461,7 +465,7 @@ export default function DeliveryDetailScreen() {
         </View>
 
         {/* --- ITEM LIST --- */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardLabel}>
               {t('orderItems', { count: orderDetail?.items?.length || 0 })}
@@ -492,10 +496,10 @@ export default function DeliveryDetailScreen() {
                 style={styles.itemImage}
               />
               <View style={styles.itemInfo}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
+                <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
                 <View style={styles.itemPriceRow}>
                   <Text style={styles.itemQty}>{t('qty')}: {item.qty}</Text>
-                  <Text style={styles.itemPrice}>
+                  <Text style={[styles.itemPrice, { color: colors.text }]}>
                     {item.unit_price} {orderDetail?.tax_invoice?.currency}
                   </Text>
                 </View>
@@ -506,20 +510,20 @@ export default function DeliveryDetailScreen() {
           {/* --- BILLING SUMMARY --- */}
           <View style={styles.billingSection}>
             <View style={styles.billingRow}>
-              <Text style={styles.billingText}>{t('subtotal')}</Text>
-              <Text style={styles.billingValue}>
+              <Text style={[styles.billingText, { color: colors.textMuted }]}>{t('subtotal')}</Text>
+              <Text style={[styles.billingValue, { color: colors.text }]}>
                 {orderDetail?.subtotal} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
             <View style={styles.billingRow}>
-              <Text style={styles.billingText}>{t('deliveryFee')}</Text>
-              <Text style={styles.billingValue}>
+              <Text style={[styles.billingText, { color: colors.textMuted }]}>{t('deliveryFee')}</Text>
+              <Text style={[styles.billingValue, { color: colors.text }]}>
                 {orderDetail?.delivery_fee ?? delivery?.delivery_fee ?? "0.00"} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
             <View style={[styles.billingRow, styles.totalRow]}>
-              <Text style={styles.totalText}>{t('totalAmount')}</Text>
-              <Text style={styles.totalValue}>
+              <Text style={[styles.totalText, { color: colors.text }]}>{t('totalAmount')}</Text>
+              <Text style={[styles.totalValue, { color: colors.primary }]}>
                 {orderDetail?.amount} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
@@ -551,6 +555,9 @@ export default function DeliveryDetailScreen() {
       {/* --- BOTTOM ACTION HUB --- */}
       {hasBottomActions && (
         <View style={[styles.bottomHub, {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          borderTopWidth: isDark ? 1 : 0,
           paddingBottom: 20 + insets.bottom,
           paddingTop: 20
         }]}>
@@ -573,25 +580,25 @@ export default function DeliveryDetailScreen() {
         animationType="fade"
         onRequestClose={() => setDeclineModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
             <View style={styles.modalIconWrapper}>
               <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
             </View>
             
             {/* ✅ Applied translation keys */}
-            <Text style={styles.modalTitle}>{t('declineModalTitle')}</Text>
-            <Text style={styles.modalMessage}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('declineModalTitle')}</Text>
+            <Text style={[styles.modalMessage, { color: colors.textMuted }]}>
               {t('declineModalMessage')}
             </Text>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancelBtn}
+                style={[styles.modalCancelBtn, { backgroundColor: isDark ? colors.surface : '#F1F5F9', borderColor: colors.border }]}
                 onPress={() => setDeclineModalVisible(false)}
                 disabled={isDeclining}
               >
-                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
+                <Text style={[styles.modalCancelText, { color: colors.text }]}>{t('cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

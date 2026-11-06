@@ -12,6 +12,8 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { useAppTheme } from '@/context/ThemeContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +34,7 @@ type MainTabType = 'orders' | 'payouts';
 
 export default function EarningsScreen() {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { t, i18n } = useTranslation('deliveryHome');
   const isAmharic = i18n.language?.startsWith('am');
 
@@ -336,7 +339,7 @@ export default function EarningsScreen() {
 
     return (
       <TouchableOpacity
-        style={styles.orderCard}
+        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         activeOpacity={0.85}
         onPress={() => {
           setSelectedOrder(item);
@@ -350,7 +353,7 @@ export default function EarningsScreen() {
               <MaterialCommunityIcons name="moped" size={18} color="#6750A4" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.orderNumberText}>#{orderId}</Text>
+              <Text style={[styles.orderNumberText, { color: colors.text }]}>#{orderId}</Text>
               <Text style={styles.storeNameText} numberOfLines={1}>
                 {companyName}
               </Text>
@@ -437,7 +440,7 @@ export default function EarningsScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.payoutCard, isAwaiting && styles.payoutCardAwaiting]}
+        style={[styles.payoutCard, { backgroundColor: colors.card, borderColor: colors.border }, isAwaiting && styles.payoutCardAwaiting]}
         activeOpacity={0.85}
         onPress={() => {
           setSelectedPayout(item);
@@ -606,14 +609,15 @@ export default function EarningsScreen() {
   const currentListData = mainTab === 'orders' ? filteredEarnings : (payouts as any[]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       {/* Top App Header */}
-      <View style={styles.screenHeader}>
+      <View style={[styles.screenHeader, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={styles.screenTitle}>{t('driverEarningsTitle', 'Earning History')}</Text>
+          <Text style={[styles.screenTitle, { color: isDark ? colors.text : colors.primary }]}>{t('driverEarningsTitle', 'Earning History')}</Text>
         </View>
         <TouchableOpacity style={styles.headerActionBtn} onPress={onRefresh} activeOpacity={0.7}>
-          <Ionicons name="refresh" size={26} color="#6750A4" />
+          <Ionicons name="refresh" size={26} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -633,7 +637,7 @@ export default function EarningsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6750A4']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />
         }
         ListHeaderComponent={
           <View style={styles.headerComponent}>

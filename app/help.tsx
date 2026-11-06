@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { useAppTheme } from "@/context/ThemeContext";
 // import SuccessModal from "@/components/SuccessModal";
 
 const BRAND_COLOR = "#6750A4";
@@ -42,6 +43,14 @@ export default function HelpScreen() {
   const { t } = useTranslation("help");
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const { colors, isDark } = useAppTheme();
+
+  const brandColor = colors.primary;
+  const bgColor = colors.background;
+  const textPrimary = colors.text;
+  const textSecondary = colors.textMuted;
+  const borderColor = colors.border;
+  const cardBg = colors.card;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -162,7 +171,7 @@ export default function HelpScreen() {
             key={item.titleKey}
             style={{
               overflow: "hidden", borderRadius: 12, borderWidth: 1,
-              borderColor: BORDER_COLOR, backgroundColor: "#fff",
+              borderColor: borderColor, backgroundColor: cardBg,
               shadowColor: "#000", shadowOpacity: 0.03, shadowRadius: 6,
               shadowOffset: { width: 0, height: 2 }, elevation: 1,
             }}
@@ -175,35 +184,35 @@ export default function HelpScreen() {
               <View
                 style={{
                   width: 40, height: 40, borderRadius: 20,
-                  backgroundColor: "rgba(103,80,164,0.08)",
+                  backgroundColor: colors.primarySoft,
                   alignItems: "center", justifyContent: "center",
                 }}
               >
-                <Ionicons name={item.icon} size={20} color={BRAND_COLOR} />
+                <Ionicons name={item.icon} size={20} color={brandColor} />
               </View>
-              <Text style={{ marginHorizontal: 12, flex: 1, fontSize: 14, fontWeight: "600", color: TEXT_PRIMARY, lineHeight: 20 }}>
+              <Text style={{ marginHorizontal: 12, flex: 1, fontSize: 14, fontWeight: "600", color: textPrimary, lineHeight: 20 }}>
                 {t(item.titleKey)}
               </Text>
               <View
                 style={{
                   width: 32, height: 32, borderRadius: 16,
-                  backgroundColor: isOpen ? "rgba(103,80,164,0.12)" : BG_COLOR,
+                  backgroundColor: isOpen ? colors.primarySoft : colors.surface,
                   alignItems: "center", justifyContent: "center",
                 }}
               >
                 <Ionicons
                   name={isOpen ? "chevron-up" : "chevron-down"}
                   size={16}
-                  color={isOpen ? BRAND_COLOR : TEXT_SECONDARY}
+                  color={isOpen ? brandColor : textSecondary}
                 />
               </View>
             </TouchableOpacity>
             {isOpen && (
               <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-                <View style={{ height: 1, backgroundColor: BORDER_COLOR, marginBottom: 16 }} />
+                <View style={{ height: 1, backgroundColor: borderColor, marginBottom: 16 }} />
                 <View style={{ flexDirection: "row" }}>
-                  <View style={{ width: 3, borderRadius: 2, backgroundColor: BRAND_COLOR, marginRight: 12 }} />
-                  <Text style={{ flex: 1, fontSize: 14, lineHeight: 24, color: TEXT_SECONDARY }}>
+                  <View style={{ width: 3, borderRadius: 2, backgroundColor: brandColor, marginRight: 12 }} />
+                  <Text style={{ flex: 1, fontSize: 14, lineHeight: 24, color: textSecondary }}>
                     {t(item.bodyKey)}
                   </Text>
                 </View>
@@ -234,8 +243,8 @@ export default function HelpScreen() {
           overflow: "hidden",
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: BORDER_COLOR,
-          backgroundColor: "#fff",
+          borderColor: borderColor,
+          backgroundColor: cardBg,
           shadowColor: "#000",
           shadowOpacity: 0.05,
           shadowRadius: 8,
@@ -334,8 +343,8 @@ export default function HelpScreen() {
         )}
 
         <View style={{ padding: 16 }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: TEXT_PRIMARY }}>{t(video.titleKey)}</Text>
-          <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 20, color: TEXT_SECONDARY }}>
+          <Text style={{ fontSize: 14, fontWeight: "700", color: textPrimary }}>{t(video.titleKey)}</Text>
+          <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 20, color: textSecondary }}>
             {t(video.descriptionKey)}
           </Text>
           <TouchableOpacity
@@ -349,17 +358,17 @@ export default function HelpScreen() {
               justifyContent: "center",
               borderRadius: 8,
               paddingVertical: 10,
-              backgroundColor: "rgba(103,80,164,0.08)",
+              backgroundColor: colors.primarySoft,
             }}
             accessibilityRole="button"
             accessibilityState={{ disabled: isPreparing, busy: isPreparing }}
           >
             {isPreparing ? (
-              <ActivityIndicator size="small" color={BRAND_COLOR} />
+              <ActivityIndicator size="small" color={brandColor} />
             ) : (
-              <Ionicons name="logo-youtube" size={18} color={BRAND_COLOR} />
+              <Ionicons name="logo-youtube" size={18} color={brandColor} />
             )}
-            <Text style={{ marginLeft: 8, fontSize: 12, fontWeight: "600", color: BRAND_COLOR }}>
+            <Text style={{ marginLeft: 8, fontSize: 12, fontWeight: "600", color: brandColor }}>
               {t("videoTutorials.watchOnYouTube")}
             </Text>
           </TouchableOpacity>
@@ -369,46 +378,48 @@ export default function HelpScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: BG_COLOR }}>
-      <StatusBar barStyle="light-content" backgroundColor={BRAND_COLOR} />
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
+      <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={isDark ? colors.card : BRAND_COLOR} />
 
       <LinearGradient
-        colors={[BRAND_COLOR, BRAND_LIGHT]}
+        colors={isDark ? [colors.card, colors.surface] : [BRAND_COLOR, BRAND_LIGHT]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
           paddingHorizontal: 20, paddingBottom: 24,
           paddingTop: Math.max(insets.top, 20) + 16,
           borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+          borderBottomWidth: isDark ? 1 : 0,
+          borderBottomColor: colors.border,
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <TouchableOpacity
             onPress={() => router.back()}
             activeOpacity={0.7}
-            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
+            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? colors.surface : "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
           >
-            <Ionicons name="arrow-back" size={22} color="white" />
+            <Ionicons name="arrow-back" size={22} color={isDark ? colors.text : "white"} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "white" }}>{t("title")}</Text>
+          <Text style={{ fontSize: 18, fontWeight: "700", color: isDark ? colors.text : "white" }}>{t("title")}</Text>
           <TouchableOpacity
             onPress={() => setShowVideosModal(true)}
             activeOpacity={0.7}
             style={{
               flexDirection: "row", alignItems: "center", justifyContent: "center",
-              borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)",
+              borderRadius: 20, backgroundColor: isDark ? colors.surface : "rgba(255,255,255,0.2)",
               paddingHorizontal: 14, paddingVertical: 8,
             }}
           >
-            <Ionicons name="videocam" size={16} color="white" />
-            <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: "700", color: "white" }}>
+            <Ionicons name="videocam" size={16} color={isDark ? colors.text : "white"} />
+            <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: "700", color: isDark ? colors.text : "white" }}>
               {t("videoTutorials.sectionTitle") || "Videos"}
             </Text>
           </TouchableOpacity>
         </View>
         <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 24, fontWeight: "700", color: "white" }}>{t("subtitle")}</Text>
-          <Text style={{ marginTop: 8, fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.8)" }}>
+          <Text style={{ fontSize: 24, fontWeight: "700", color: isDark ? colors.text : "white" }}>{t("subtitle")}</Text>
+          <Text style={{ marginTop: 8, fontSize: 14, lineHeight: 20, color: isDark ? colors.textMuted : "rgba(255,255,255,0.8)" }}>
             {t("headerDescription")}
           </Text>
         </View>
@@ -431,12 +442,12 @@ export default function HelpScreen() {
 
         {/* GUIDES */}
         <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center" }}>
-          <View style={{ marginRight: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(103,80,164,0.08)", alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="book" size={20} color={BRAND_COLOR} />
+          <View style={{ marginRight: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="book" size={20} color={brandColor} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: TEXT_PRIMARY }}>{t("guideTitle")}</Text>
-            <Text style={{ marginTop: 2, fontSize: 12, color: TEXT_SECONDARY }}>{t("guideSubtitle")}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: textPrimary }}>{t("guideTitle")}</Text>
+            <Text style={{ marginTop: 2, fontSize: 12, color: textSecondary }}>{t("guideSubtitle")}</Text>
           </View>
         </View>
         <View style={{ marginBottom: 32 }}>
@@ -445,12 +456,12 @@ export default function HelpScreen() {
 
         {/* CONTACT SUPPORT */}
         <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center" }}>
-          <View style={{ marginRight: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(103,80,164,0.08)", alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="headset" size={20} color={BRAND_COLOR} />
+          <View style={{ marginRight: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="headset" size={20} color={brandColor} />
           </View>
           <View>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: TEXT_PRIMARY }}>{t("contactSupport")}</Text>
-            <Text style={{ marginTop: 2, fontSize: 12, color: TEXT_SECONDARY }}>{t("contactSubtitle")}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: textPrimary }}>{t("contactSupport")}</Text>
+            <Text style={{ marginTop: 2, fontSize: 12, color: textSecondary }}>{t("contactSubtitle")}</Text>
           </View>
         </View>
 
@@ -460,7 +471,7 @@ export default function HelpScreen() {
               key={option.key}
               style={{
                 overflow: "hidden", borderRadius: 12, borderWidth: 1,
-                borderColor: BORDER_COLOR, backgroundColor: "#fff",
+                borderColor: borderColor, backgroundColor: cardBg,
                 shadowColor: "#000", shadowOpacity: 0.03, shadowRadius: 6,
                 shadowOffset: { width: 0, height: 2 }, elevation: 1,
               }}
@@ -476,27 +487,27 @@ export default function HelpScreen() {
                     <Ionicons name={option.icon} size={20} color="white" />
                   </LinearGradient>
                   <View style={{ marginLeft: 12, flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: "700", color: TEXT_PRIMARY }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: textPrimary }}>
                       {t(`contactOptions.${option.key}.title`)}
                     </Text>
-                    <Text style={{ marginTop: 4, fontSize: 12, color: TEXT_SECONDARY }}>
+                    <Text style={{ marginTop: 4, fontSize: 12, color: textSecondary }}>
                       {t(`contactOptions.${option.key}.description`)}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color="#C4C4D4" />
+                  <Ionicons name="chevron-forward" size={18} color={isDark ? colors.border : "#C4C4D4"} />
                 </View>
               </TouchableOpacity>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: BORDER_COLOR, paddingHorizontal: 16, paddingVertical: 12 }}>
-                <Text numberOfLines={1} style={{ marginRight: 12, flex: 1, fontSize: 12, fontWeight: "600", color: TEXT_PRIMARY }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: borderColor, paddingHorizontal: 16, paddingVertical: 12 }}>
+                <Text numberOfLines={1} style={{ marginRight: 12, flex: 1, fontSize: 12, fontWeight: "600", color: textPrimary }}>
                   {option.contactInfo}
                 </Text>
                 <TouchableOpacity
                   onPress={() => copyContact(option)}
                   activeOpacity={0.7}
-                  style={{ flexDirection: "row", alignItems: "center", borderRadius: 6, backgroundColor: "rgba(103,80,164,0.08)", paddingHorizontal: 12, paddingVertical: 6 }}
+                  style={{ flexDirection: "row", alignItems: "center", borderRadius: 6, backgroundColor: colors.primarySoft, paddingHorizontal: 12, paddingVertical: 6 }}
                 >
-                  <Ionicons name="copy-outline" size={14} color={BRAND_COLOR} />
-                  <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: "600", color: BRAND_COLOR }}>{t("copyButton")}</Text>
+                  <Ionicons name="copy-outline" size={14} color={brandColor} />
+                  <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: "600", color: brandColor }}>{t("copyButton")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -505,12 +516,12 @@ export default function HelpScreen() {
 
         {/* FAQ */}
         <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center" }}>
-          <View style={{ marginRight: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(103,80,164,0.08)", alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="help-circle" size={20} color={BRAND_COLOR} />
+          <View style={{ marginRight: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="help-circle" size={20} color={brandColor} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: TEXT_PRIMARY }}>{t("faqTitle")}</Text>
-            <Text style={{ marginTop: 2, fontSize: 12, color: TEXT_SECONDARY }}>{t("faqSubtitle")}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: textPrimary }}>{t("faqTitle")}</Text>
+            <Text style={{ marginTop: 2, fontSize: 12, color: textSecondary }}>{t("faqSubtitle")}</Text>
           </View>
         </View>
         <View style={{ marginBottom: 32 }}>
@@ -518,26 +529,26 @@ export default function HelpScreen() {
         </View>
 
         {/* SUPPORT HOURS */}
-        <View style={{ marginBottom: 32, borderRadius: 12, borderWidth: 1, borderColor: "rgba(103,80,164,0.15)", backgroundColor: "rgba(103,80,164,0.03)", padding: 20 }}>
+        <View style={{ marginBottom: 32, borderRadius: 12, borderWidth: 1, borderColor: isDark ? colors.border : "rgba(103,80,164,0.15)", backgroundColor: isDark ? colors.card : "rgba(103,80,164,0.03)", padding: 20 }}>
           <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center" }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(103,80,164,0.1)", alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="time-outline" size={20} color={BRAND_COLOR} />
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+              <Ionicons name="time-outline" size={20} color={brandColor} />
             </View>
-            <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: "700", color: BRAND_COLOR }}>
+            <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: "700", color: brandColor }}>
               {t("supportHours.title")}
             </Text>
           </View>
-          <Text style={{ fontSize: 14, lineHeight: 24, color: TEXT_SECONDARY }}>{t("supportHours.weekday")}</Text>
-          <Text style={{ fontSize: 14, lineHeight: 24, color: TEXT_SECONDARY }}>{t("supportHours.saturday")}</Text>
-          <Text style={{ fontSize: 14, lineHeight: 24, color: TEXT_SECONDARY }}>{t("supportHours.sunday")}</Text>
-          <View style={{ height: 1, backgroundColor: "rgba(103,80,164,0.2)", marginVertical: 16 }} />
+          <Text style={{ fontSize: 14, lineHeight: 24, color: textSecondary }}>{t("supportHours.weekday")}</Text>
+          <Text style={{ fontSize: 14, lineHeight: 24, color: textSecondary }}>{t("supportHours.saturday")}</Text>
+          <Text style={{ fontSize: 14, lineHeight: 24, color: textSecondary }}>{t("supportHours.sunday")}</Text>
+          <View style={{ height: 1, backgroundColor: isDark ? colors.border : "rgba(103,80,164,0.2)", marginVertical: 16 }} />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="flash-outline" size={14} color={BRAND_COLOR} />
-            <Text style={{ marginLeft: 8, fontSize: 12, color: TEXT_SECONDARY }}>{t("supportHours.responseTime")}</Text>
+            <Ionicons name="flash-outline" size={14} color={brandColor} />
+            <Text style={{ marginLeft: 8, fontSize: 12, color: textSecondary }}>{t("supportHours.responseTime")}</Text>
           </View>
         </View>
 
-        <Text style={{ marginTop: 8, textAlign: "center", fontSize: 12, color: TEXT_SECONDARY }}>
+        <Text style={{ marginTop: 8, textAlign: "center", fontSize: 12, color: textSecondary }}>
           {t("footer")}
         </Text>
       </Animated.ScrollView>
@@ -551,21 +562,23 @@ export default function HelpScreen() {
           setShowVideosModal(false);
         }}
       >
-        <View style={{ flex: 1, backgroundColor: BG_COLOR }}>
-          <StatusBar barStyle="light-content" backgroundColor={BRAND_COLOR} />
+        <View style={{ flex: 1, backgroundColor: bgColor }}>
+          <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={isDark ? colors.card : BRAND_COLOR} />
           <LinearGradient
-            colors={[BRAND_COLOR, BRAND_LIGHT]}
+            colors={isDark ? [colors.card, colors.surface] : [BRAND_COLOR, BRAND_LIGHT]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
               paddingHorizontal: 20, paddingBottom: 24,
               paddingTop: Math.max(insets.top, 20) + 16,
               borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+              borderBottomWidth: isDark ? 1 : 0,
+              borderBottomColor: colors.border,
             }}
           >
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View style={{ width: 40 }} />
-              <Text style={{ fontSize: 18, fontWeight: "700", color: "white" }}>
+              <Text style={{ fontSize: 18, fontWeight: "700", color: isDark ? colors.text : "white" }}>
                 {t("videoTutorials.sectionTitle")}
               </Text>
               <TouchableOpacity
@@ -574,12 +587,12 @@ export default function HelpScreen() {
                   setShowVideosModal(false);
                 }}
                 activeOpacity={0.7}
-                style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
+                style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? colors.surface : "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
               >
-                <Ionicons name="close" size={22} color="white" />
+                <Ionicons name="close" size={22} color={isDark ? colors.text : "white"} />
               </TouchableOpacity>
             </View>
-            <Text style={{ marginTop: 16, fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.8)" }}>
+            <Text style={{ marginTop: 16, fontSize: 14, lineHeight: 20, color: isDark ? colors.textMuted : "rgba(255,255,255,0.8)" }}>
               {t("videoTutorials.sectionSubtitle")}
             </Text>
           </LinearGradient>
@@ -588,7 +601,7 @@ export default function HelpScreen() {
             contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 24, paddingBottom: Math.max(insets.bottom, 24) + 20 }}
           >
             {videoTutorials.map((video) => renderVideoCard(video))}
-            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 12, color: TEXT_SECONDARY }}>
+            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 12, color: textSecondary }}>
               {t("videoTutorials.fallbackNote")}
             </Text>
           </ScrollView>

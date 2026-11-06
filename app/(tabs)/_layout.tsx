@@ -3,18 +3,22 @@ import React from 'react';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppTheme } from '@/context/ThemeContext';
 
 export default function TabLayout() {
   const { t } = useTranslation('deliveryHome'); 
-    const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#6750A4',
-        tabBarInactiveTintColor: '#999999',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
           height: 55 + insets.bottom,
           paddingBottom: insets.bottom + 5,
         },

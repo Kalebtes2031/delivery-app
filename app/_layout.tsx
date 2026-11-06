@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DeliveryProvider } from '@/context/DeliveryContext';
+import { AppThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initI18n } from '@/i18n';
@@ -13,6 +14,7 @@ import { toastConfig } from '@/components/toast/toastConfig';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isDark, colors } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -30,8 +32,8 @@ function RootLayoutNav() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-        <ActivityIndicator size="large" color="#6750A4" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -39,7 +41,11 @@ function RootLayoutNav() {
   return (
     <>
       <PushRegistrar />
-      <Stack>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
@@ -54,7 +60,7 @@ function RootLayoutNav() {
         <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
         <Stack.Screen name="terms" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Toast config={toastConfig} position="top" topOffset={60} visibilityTime={3500} />
     </>
   );
@@ -76,11 +82,13 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <DeliveryProvider>
-          <RootLayoutNav />
-        </DeliveryProvider>
-      </AuthProvider>
+      <AppThemeProvider>
+        <AuthProvider>
+          <DeliveryProvider>
+            <RootLayoutNav />
+          </DeliveryProvider>
+        </AuthProvider>
+      </AppThemeProvider>
     </GestureHandlerRootView>
   );
 }

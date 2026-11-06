@@ -17,6 +17,7 @@ import * as Location from 'expo-location';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import type { DeliveryAssignment } from '@/types';
 import { fetchOSRMRoute, RouteResult, Coordinate } from '@/services/routingService';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const {
   MapView,
@@ -58,6 +59,7 @@ export default function IncomingOrderModal({
   const [isDismissed, setIsDismissed] = useState(false);
 
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useAppTheme();
   const progressAnim = useRef(new Animated.Value(1)).current;
   const handledRef = useRef<Record<number, boolean>>({});
 
@@ -303,8 +305,8 @@ export default function IncomingOrderModal({
 
   return (
     <Modal visible={visible && !isDismissed} transparent animationType="fade" onRequestClose={handleClose}>
-      <Pressable style={styles.overlay} onPress={handleClose}>
-        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+      <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={handleClose}>
+        <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]} onPress={(e) => e.stopPropagation()}>
           {/* Progress bar at top (only shown for expiring offers) */}
           {hasExpiry && (
             <View style={styles.progressBarContainer}>
@@ -358,7 +360,7 @@ export default function IncomingOrderModal({
               </View>
             </View>
 
-            <Text style={styles.orderTitle}>{orderNum}</Text>
+            <Text style={[styles.orderTitle, { color: colors.text }]}>{orderNum}</Text>
           </View>
 
           {/* Metrics Row: Payout + Driving Distance */}
@@ -596,7 +598,12 @@ export default function IncomingOrderModal({
           <View
             style={[
               styles.bottomSheet,
-              { paddingBottom: Math.max(insets.bottom + 12, 24) },
+              {
+                backgroundColor: colors.card,
+                borderTopColor: colors.border,
+                borderTopWidth: isDark ? 1 : 0,
+                paddingBottom: Math.max(insets.bottom + 12, 24),
+              },
             ]}
           >
             {/* Clean Handle */}

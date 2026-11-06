@@ -13,6 +13,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { DriverEarningItem } from '@/types';
 import { useRouter } from 'expo-router';
+import { useAppTheme } from '@/context/ThemeContext';
 
 interface OrderEarningDetailModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export default function OrderEarningDetailModal({
 }: OrderEarningDetailModalProps) {
   const { t, i18n } = useTranslation('deliveryHome');
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const isAmharic = i18n.language?.startsWith('am');
 
   if (!order) return null;
@@ -105,9 +107,9 @@ export default function OrderEarningDetailModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           {/* Header Bar */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -115,8 +117,8 @@ export default function OrderEarningDetailModal({
                 <MaterialCommunityIcons name="wallet-giftcard" size={22} color="#6750A4" />
               </View>
               <View>
-                <Text style={styles.orderNumberText}>{displayOrderNumber}</Text>
-                <Text style={styles.subHeaderText}>{t('earningBreakdownTitle', 'Order Earning Breakdown')}</Text>
+                <Text style={[styles.orderNumberText, { color: colors.text }]}>{displayOrderNumber}</Text>
+                <Text style={[styles.subHeaderText, { color: colors.textMuted }]}>{t('earningBreakdownTitle', 'Order Earning Breakdown')}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
@@ -146,7 +148,7 @@ export default function OrderEarningDetailModal({
             </View>
 
             {/* Payout Settlement Status Section */}
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <Text style={styles.sectionTitle}>{t('payoutSettlementTitle', 'Payout Settlement')}</Text>
                 {order.payout_status === 'confirmed' ? (
@@ -241,7 +243,7 @@ export default function OrderEarningDetailModal({
             </View>
 
             {/* Financial Summary Table */}
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
               <Text style={styles.sectionTitle}>{t('financialDetails', 'Financial Details')}</Text>
               
               <View style={styles.tableRow}>
@@ -272,7 +274,7 @@ export default function OrderEarningDetailModal({
             </View>
 
             {/* Route & Fulfillment Details */}
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
               <Text style={styles.sectionTitle}>{t('routeDetails', 'Delivery Route')}</Text>
 
               {/* Pickup / Store */}
@@ -280,7 +282,7 @@ export default function OrderEarningDetailModal({
                 <View style={[styles.routeDot, { backgroundColor: '#6750A4' }]} />
                 <View style={styles.routeInfo}>
                   <Text style={styles.routeLabel}>{t('pickupFrom', 'Pickup Store')}</Text>
-                  <Text style={styles.routeName}>{companyName}</Text>
+                  <Text style={[styles.routeName, { color: colors.text }]}>{companyName}</Text>
                   {!!order.company_address && (
                     <Text style={styles.routeAddress} numberOfLines={2}>{order.company_address}</Text>
                   )}
@@ -295,7 +297,7 @@ export default function OrderEarningDetailModal({
                 <View style={[styles.routeDot, { backgroundColor: '#10B981' }]} />
                 <View style={styles.routeInfo}>
                   <Text style={styles.routeLabel}>{t('deliveredTo', 'Delivered To')}</Text>
-                  <Text style={styles.routeName}>{order.customer_name || t('customer', 'Customer')}</Text>
+                  <Text style={[styles.routeName, { color: colors.text }]}>{order.customer_name || t('customer', 'Customer')}</Text>
                   {!!order.shipping_address && (
                     <Text style={styles.routeAddress} numberOfLines={2}>{order.shipping_address}</Text>
                   )}

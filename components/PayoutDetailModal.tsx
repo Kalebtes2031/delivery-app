@@ -17,6 +17,7 @@ import Toast from 'react-native-toast-message'; // ✅ Added Toast import
 import type { DriverPayout } from '@/types';
 import { confirmDriverPayout, disputeDriverPayout } from '@/services/api';
 import ConfirmActionModal from './ConfirmActionModal';
+import { useAppTheme } from '@/context/ThemeContext';
 
 interface PayoutDetailModalProps {
   visible: boolean;
@@ -90,6 +91,7 @@ export default function PayoutDetailModal({
   onPayoutUpdated,
 }: PayoutDetailModalProps) {
   const { t, i18n } = useTranslation('deliveryHome');
+  const { colors, isDark } = useAppTheme();
   const isAmharic = i18n.language?.startsWith('am');
 
   const [confirming, setConfirming] = useState(false);
@@ -242,9 +244,9 @@ export default function PayoutDetailModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
           {/* Header Handle */}
           <View style={styles.handleContainer}>
             <View style={styles.handle} />
@@ -253,8 +255,8 @@ export default function PayoutDetailModal({
           {/* Modal Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.headerTitle}>{payout.payout_number}</Text>
-              <Text style={styles.headerSubtitle}>{companyName}</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>{payout.payout_number}</Text>
+              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>{companyName}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Ionicons name="close" size={20} color="#64748B" />

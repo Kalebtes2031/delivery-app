@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import { Ionicons, Feather, Entypo, MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
@@ -41,6 +43,7 @@ function MenuItem({
   onPress,
   style,
 }: MenuItemProps) {
+  const { isDark } = useAppTheme();
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -53,7 +56,7 @@ function MenuItem({
           justifyContent: "space-between",
           paddingVertical: 16,
           borderBottomWidth: danger ? 0 : 1,
-          borderBottomColor: "rgba(255,255,255,0.1)",
+          borderBottomColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)",
         },
         style,
       ]}
@@ -67,7 +70,11 @@ function MenuItem({
             borderRadius: 12,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: danger ? "rgba(239, 68, 68, 0.2)" : "rgba(255, 255, 255, 0.1)",
+            backgroundColor: danger
+              ? "rgba(239, 68, 68, 0.2)"
+              : isDark
+              ? "rgba(255, 255, 255, 0.08)"
+              : "rgba(255, 255, 255, 0.15)",
           }}
         >
           {icon}
@@ -86,7 +93,7 @@ function MenuItem({
       {/* RIGHT SIDE */}
       {!danger && (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
-          <Entypo name="chevron-right" size={20} color="#fff" />
+          <Entypo name="chevron-right" size={20} color={isDark ? "rgba(255,255,255,0.5)" : "#fff"} />
         </View>
       )}
     </TouchableOpacity>
@@ -95,6 +102,7 @@ function MenuItem({
 
 export default function ProfileScreen() {
   const { user, logout, refreshUser } = useAuth();
+  const { colors, isDark } = useAppTheme();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { t, i18n } = useTranslation(['driverProfile', 'common']);
@@ -261,8 +269,8 @@ export default function ProfileScreen() {
   const avgRating = parseFloat(user?.average_rating || '0') || 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Animated.View
         style={{
           flex: 1,
@@ -270,6 +278,11 @@ export default function ProfileScreen() {
           transform: [{ translateY: slideAnim }],
         }}
       >
+        {/* --- TOP BAR: UPPER RIGHT ACTIONS (SPACE-SAVING THEME TOGGLE) --- */}
+        <View style={styles.topBar}>
+          <View style={{ flex: 1 }} />
+          <ThemeToggle />
+        </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
@@ -279,53 +292,74 @@ export default function ProfileScreen() {
               {user?.profile_image ? (
                 <Image source={{ uri: user.profile_image }} style={styles.avatarImage} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarInitial}>
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    {
+                      backgroundColor: colors.primary,
+                      shadowColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.avatarInitial, { color: colors.onPrimary }]}>
                     {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
                   </Text>
                 </View>
               )}
             </View>
 
-            <Text style={styles.userName}>
+            <Text style={[styles.userName, { color: isDark ? colors.text : colors.primary }]}>
               {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
             </Text>
-            <Text style={styles.userHandle}>
+            <Text style={[styles.userHandle, { color: colors.textMuted }]}>
               {user?.email || t('deliveryDriver')}
             </Text>
           </View>
 
-
           {/* --- RATING CARD --- */}
           <TouchableOpacity
-            style={styles.ratingCard}
+            style={[
+              styles.ratingCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                shadowColor: isDark ? '#000' : colors.primary,
+              },
+            ]}
             activeOpacity={0.85}
             onPress={() => router.push('/reviews')}
           >
-            <View style={styles.ratingScoreBox}>
-              <Text style={styles.ratingScore}>{avgRating.toFixed(1)}</Text>
+            <View style={[styles.ratingScoreBox, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.ratingScore, { color: colors.onPrimary }]}>{avgRating.toFixed(1)}</Text>
               <Ionicons name="star" size={14} color="#FBBF24" />
             </View>
 
             <View style={styles.ratingMiddle}>
-              <Text style={styles.ratingTitle}>{t('yourRating')}</Text>
+              <Text style={[styles.ratingTitle, { color: colors.text }]}>{t('yourRating')}</Text>
               <StarRating rating={avgRating} size={16} />
-              <Text style={styles.ratingCount}>
+              <Text style={[styles.ratingCount, { color: colors.textMuted }]}>
                 {totalReviews > 0 ? t('reviewsCount', { count: totalReviews }) : t('noRatingYet')}
               </Text>
             </View>
 
-            <View style={styles.ratingChevron}>
-              <Entypo name="chevron-right" size={20} color="#6750A4" />
+            <View style={[styles.ratingChevron, { backgroundColor: colors.primarySoft }]}>
+              <Entypo name="chevron-right" size={20} color={colors.primary} />
             </View>
           </TouchableOpacity>
 
           {/* --- MENU OPTIONS --- */}
           <LinearGradient
-            colors={[BRAND_COLOR, "#6750A4"]}
+            colors={isDark ? ["#16161C", "#1F1F27"] : [BRAND_COLOR, "#6750A4"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.menuContainer}
+            style={[
+              styles.menuContainer,
+              isDark && {
+                borderWidth: 1,
+                borderColor: colors.border,
+                shadowOpacity: 0.1,
+              },
+            ]}
           >
             <MenuItem
               icon={<Ionicons name="person-outline" size={18} color="#fff" />}
@@ -371,14 +405,14 @@ export default function ProfileScreen() {
             />
           </LinearGradient>
 
-          <Text style={styles.versionText}>{t('activeDeliveryApp')}</Text>
+          <Text style={[styles.versionText, { color: colors.textMuted }]}>{t('activeDeliveryApp')}</Text>
 
           <View style={{ alignItems: "center", marginTop: 24 }}>
             <Text
               style={{
                 textAlign: "center",
                 fontSize: 10,
-                color: "#1f2937",
+                color: colors.textMuted,
               }}
             >
               {t("app.poweredBy")}{" "}
@@ -386,7 +420,7 @@ export default function ProfileScreen() {
             <Text
               style={{
                 fontWeight: "bold",
-                color: "#8F3C01",
+                color: isDark ? "#F59E0B" : "#8F3C01",
                 fontSize: 10,
               }}
               onPress={() => Linking.openURL("https://activetechet.com")}
@@ -411,29 +445,34 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 40, },
-  header: { alignItems: 'center', marginTop: 8, marginBottom: 16 },
+  container: { flex: 1 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 2,
+  },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  header: { alignItems: 'center', marginTop: 4, marginBottom: 16 },
   avatarWrapper: { marginBottom: 8 },
   avatarPlaceholder: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: '#6750A4',
+    width: 80, height: 80, borderRadius: 40,
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#6750A4', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6,
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6,
   },
   avatarImage: { width: 80, height: 80, borderRadius: 40 },
-  avatarInitial: { fontSize: 32, color: '#fff', fontWeight: '800' },
-  userName: { fontSize: 22, fontWeight: '700', color: '#6750A4', letterSpacing: -0.3 },
-  userHandle: { fontSize: 14, color: '#9B8BB5', fontWeight: '500' },
+  avatarInitial: { fontSize: 32, fontWeight: '800' },
+  userName: { fontSize: 22, fontWeight: '700', letterSpacing: -0.3 },
+  userHandle: { fontSize: 14, fontWeight: '500' },
   ratingCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 22,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#6750A4',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 14,
@@ -443,20 +482,18 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 18,
-    backgroundColor: '#6750A4',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
-  ratingScore: { fontSize: 24, fontWeight: '900', color: '#fff' },
+  ratingScore: { fontSize: 24, fontWeight: '900' },
   ratingMiddle: { flex: 1, gap: 4 },
-  ratingTitle: { fontSize: 15, fontWeight: '800', color: '#1E293B' },
-  ratingCount: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
+  ratingTitle: { fontSize: 15, fontWeight: '800' },
+  ratingCount: { fontSize: 12, fontWeight: '600' },
   ratingChevron: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#6750A415',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -469,5 +506,5 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 5,
   },
-  versionText: { textAlign: 'center', color: '#CBD5E1', fontSize: 12, marginTop: 40, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  versionText: { textAlign: 'center', fontSize: 12, marginTop: 40, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
 });

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   StyleSheet,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -14,11 +15,13 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { getCashOnHandOrders } from "@/services/api";
 import type { DeliveryAssignment } from "@/types";
+import { useAppTheme } from "@/context/ThemeContext";
 
 type TabType = "all" | "pending" | "settled";
 
 export default function CashOnHandScreen() {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { t } = useTranslation("deliveryHome");
 
   const [activeTab, setActiveTab] = useState<TabType>("all");
@@ -179,7 +182,7 @@ export default function CashOnHandScreen() {
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
         activeOpacity={0.9}
         onPress={() => router.push(`/delivery/${item.id}`)}
       >
@@ -212,7 +215,7 @@ export default function CashOnHandScreen() {
 
           </View>
 
-          <Text style={styles.cardCustomer} numberOfLines={1}>
+          <Text style={[styles.cardCustomer, { color: colors.text }]} numberOfLines={1}>
             {customerName}
           </Text>
 
@@ -241,7 +244,7 @@ export default function CashOnHandScreen() {
           <Text
             style={[
               styles.cardAmount,
-              { color: isSettled ? "#6750A4" : "#6750A4" },
+              { color: isDark ? colors.text : colors.primary },
             ]}
           >
             {amount}
@@ -253,25 +256,26 @@ export default function CashOnHandScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       {/* Top Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#6750A4" />
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={[styles.backButton, { borderColor: isDark ? colors.border : colors.primary }]} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t("cashTitle", "Cash on Hand")}</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? colors.text : colors.primary }]}>{t("cashTitle", "Cash on Hand")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Segmented Tabs (Order: All -> Cash on Hand -> Completed) */}
-      <View style={styles.tabsContainer}>
+      <View style={[styles.tabsContainer, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         {/* Tab 1: All */}
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === "all" && styles.tabButtonActiveAll]}
+          style={[styles.tabButton, { backgroundColor: isDark ? colors.card : '#F1F5F9' }, activeTab === "all" && styles.tabButtonActiveAll]}
           onPress={() => setActiveTab("all")}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, activeTab === "all" && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.textMuted }, activeTab === "all" && styles.tabTextActive]}>
             {t("tabAll", "All")}
           </Text>
           <View style={[styles.badge, activeTab === "all" ? styles.badgeActiveAll : styles.badgeInactive]}>
@@ -283,11 +287,11 @@ export default function CashOnHandScreen() {
 
         {/* Tab 2: Cash on Hand */}
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === "pending" && styles.tabButtonActivePending]}
+          style={[styles.tabButton, { backgroundColor: isDark ? colors.card : '#F1F5F9' }, activeTab === "pending" && styles.tabButtonActivePending]}
           onPress={() => setActiveTab("pending")}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, activeTab === "pending" && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.textMuted }, activeTab === "pending" && styles.tabTextActive]}>
             {t("tabCashOnHand", "Cash on Hand")}
           </Text>
           <View style={[styles.badge, activeTab === "pending" ? styles.badgeActivePending : styles.badgeInactive]}>
@@ -299,11 +303,11 @@ export default function CashOnHandScreen() {
 
         {/* Tab 3: Completed */}
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === "settled" && styles.tabButtonActiveSettled]}
+          style={[styles.tabButton, { backgroundColor: isDark ? colors.card : '#F1F5F9' }, activeTab === "settled" && styles.tabButtonActiveSettled]}
           onPress={() => setActiveTab("settled")}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, activeTab === "settled" && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.textMuted }, activeTab === "settled" && styles.tabTextActive]}>
             {t("tabCompleted", "Completed")}
           </Text>
           <View style={[styles.badge, activeTab === "settled" ? styles.badgeActiveSettled : styles.badgeInactive]}>

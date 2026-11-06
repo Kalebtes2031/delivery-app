@@ -18,6 +18,7 @@ import { getNotifications, markNotificationsRead } from '@/services/api';
 import { useDelivery } from '@/context/DeliveryContext';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { useTranslation } from 'react-i18next';
+import { useAppTheme } from '@/context/ThemeContext';
 
 interface Notif {
   id: number;
@@ -135,8 +136,9 @@ function timeAgo(iso: string, t?: (key: string) => string): string {
 }
 
 export default function NotificationsScreen() {
-const { t, i18n } = useTranslation('notification');
+  const { t, i18n } = useTranslation('notification');
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { deliveries, refreshDeliveries } = useDelivery();
   const { refetch: refetchUnread } = useUnreadNotifications();
   const [items, setItems] = useState<Notif[]>([]);
@@ -282,28 +284,31 @@ const { t, i18n } = useTranslation('notification');
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, isDark && { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={isDark ? colors.text : '#fff'} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 8 }}>
-        <Text style={styles.headerTitle}>{t('notifications')}</Text>
-<Text style={styles.headerSub}>
-  {unread > 0 ? `${unread} ${t('unread')}` : t('allCaughtUp')}
-</Text>
+          <Text style={[styles.headerTitle, isDark && { color: colors.text }]}>{t('notifications')}</Text>
+          <Text style={[styles.headerSub, isDark && { color: colors.textMuted }]}>
+            {unread > 0 ? `${unread} ${t('unread')}` : t('allCaughtUp')}
+          </Text>
         </View>
         {unread > 0 && (
-          <TouchableOpacity onPress={markAll} style={styles.markAll}>
-            <Ionicons name="checkmark-done" size={14} color="#fff" />
-<Text style={styles.markAllText}>{t('markAll')}</Text>
+          <TouchableOpacity
+            onPress={markAll}
+            style={[styles.markAll, isDark && { backgroundColor: colors.surface }]}
+          >
+            <Ionicons name="checkmark-done" size={14} color={isDark ? colors.primary : '#fff'} />
+            <Text style={[styles.markAllText, isDark && { color: colors.text }]}>{t('markAll')}</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6750A4" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -311,73 +316,80 @@ const { t, i18n } = useTranslation('notification');
           keyExtractor={(n) => String(n.id)}
           contentContainerStyle={{ padding: 16, flexGrow: 1 }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6750A4" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.2}
           ListFooterComponent={
             loadingMore ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color="#6750A4" />
-                <Text style={styles.footerLoaderText}>Loading more...</Text>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={[styles.footerLoaderText, { color: colors.textMuted }]}>Loading more...</Text>
               </View>
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="notifications-outline" size={28} color="#cbd5e1" />
+              <View style={[styles.emptyIcon, { backgroundColor: colors.surface }]}>
+                <Ionicons name="notifications-outline" size={28} color={colors.textMuted} />
               </View>
-<Text style={styles.emptyTitle}>{t('noNotifications')}</Text>
-<Text style={styles.emptySub}>{t('newAssignmentsHere')}</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noNotifications')}</Text>
+              <Text style={[styles.emptySub, { color: colors.textMuted }]}>{t('newAssignmentsHere')}</Text>
             </View>
           }
-renderItem={({ item }) => {
-  const m = meta(item.event);
-  const isAmharic = i18n.language?.startsWith('am');
-  
-  // Extract context from body for interpolation
-  const contextData = extractContextFromBody(item.event, item.body);
-  const cleanData = Object.fromEntries(
-    Object.entries(item.data ?? {}).filter(([_, v]) => v != null)
-  );
-  const mergedData = { ...contextData, ...cleanData };
+          renderItem={({ item }) => {
+            const m = meta(item.event);
+            const isAmharic = i18n.language?.startsWith('am');
+            
+            // Extract context from body for interpolation
+            const contextData = extractContextFromBody(item.event, item.body);
+            const cleanData = Object.fromEntries(
+              Object.entries(item.data ?? {}).filter(([_, v]) => v != null)
+            );
+            const mergedData = { ...contextData, ...cleanData };
 
-  // Override company name with Amharic version if language is Amharic and available
-  if (isAmharic && item.data?.company_name_am) {
-    mergedData.company = item.data.company_name_am;
-  }
+            // Override company name with Amharic version if language is Amharic and available
+            if (isAmharic && item.data?.company_name_am) {
+              mergedData.company = item.data.company_name_am;
+            }
 
-  // Get translated title and body using translation keys
-  const title = getTranslatedString(
-    `events.${item.event}.title`,
-    mergedData,
-    item.title
-  );
-  const body = getTranslatedString(
-    `events.${item.event}.body`,
-    mergedData,
-    item.body
-  );
+            // Get translated title and body using translation keys
+            const title = getTranslatedString(
+              `events.${item.event}.title`,
+              mergedData,
+              item.title
+            );
+            const body = getTranslatedString(
+              `events.${item.event}.body`,
+              mergedData,
+              item.body
+            );
 
             return (
               <TouchableOpacity
                 onPress={() => onPressItem(item)}
                 activeOpacity={0.7}
-                style={[styles.card, !item.is_read && styles.cardUnread]}
+                style={[
+                  styles.card,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  !item.is_read && (isDark
+                    ? { backgroundColor: colors.surface, borderColor: colors.primary }
+                    : styles.cardUnread
+                  ),
+                ]}
               >
-                <View style={[styles.iconWrap, { backgroundColor: m.bg }]}>
+                <View style={[styles.iconWrap, { backgroundColor: isDark ? colors.surface : m.bg }]}>
                   <Ionicons name={m.icon} size={20} color={m.color} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <View style={styles.titleRow}>
-                    <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-          {!item.is_read && <View style={styles.dot} />}
-        </View>
-        <Text style={styles.body}>{body}</Text>
-                 <Text style={styles.time}>{timeAgo(item.created_at, t)}</Text>
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                      {title}
+                    </Text>
+                    {!item.is_read && <View style={[styles.dot, { backgroundColor: colors.primary }]} />}
+                  </View>
+                  <Text style={[styles.body, { color: colors.textMuted }]}>{body}</Text>
+                  <Text style={[styles.time, { color: colors.textMuted }]}>{timeAgo(item.created_at, t)}</Text>
                 </View>
               </TouchableOpacity>
             );

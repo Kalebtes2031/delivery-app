@@ -1,41 +1,37 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Theme constants for qine_deliveryapp.
+ * Harmonized with ThemeContext and qine_frontend palettes.
  */
 
 import { Platform } from 'react-native';
+import { palettes } from '@/context/ThemeContext';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+export { palettes };
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: palettes.light.text,
+    background: palettes.light.background,
+    tint: palettes.light.primary,
+    icon: palettes.light.textMuted,
+    tabIconDefault: palettes.light.textMuted,
+    tabIconSelected: palettes.light.primary,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: palettes.dark.text,
+    background: palettes.dark.background,
+    tint: palettes.dark.primary,
+    icon: palettes.dark.textMuted,
+    tabIconDefault: palettes.dark.textMuted,
+    tabIconSelected: palettes.dark.primary,
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

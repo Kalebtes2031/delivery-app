@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
+import { useAppTheme } from "@/context/ThemeContext";
 
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 
@@ -10,11 +11,12 @@ const BRAND_COLOR = "#6750A4";
 export function LanguageSwitcher({ showText = true }: { showText?: boolean }) {
   const { t } = useTranslation("common");
   const { language, setLanguage, supportedLanguages } = useAppLanguage();
+  const { colors, isDark } = useAppTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: "transparent" }]}>
       {showText && (
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: colors.text }]}>
           {t("language.title")}
         </Text>
       )}
@@ -28,13 +30,17 @@ export function LanguageSwitcher({ showText = true }: { showText?: boolean }) {
               activeOpacity={0.8}
               style={[
                 styles.button,
-                selected ? styles.buttonSelected : styles.buttonUnselected
+                selected
+                  ? { borderColor: colors.primary, backgroundColor: colors.primarySoft }
+                  : { borderColor: colors.border, backgroundColor: isDark ? colors.surface : "#FFFFFF" }
               ]}
             >
               <Text
                 style={[
                   styles.buttonText,
-                  selected ? styles.buttonTextSelected : styles.buttonTextUnselected
+                  selected
+                    ? { color: colors.primary }
+                    : { color: isDark ? colors.text : "#475569" }
                 ]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
@@ -42,11 +48,11 @@ export function LanguageSwitcher({ showText = true }: { showText?: boolean }) {
                 {item.nativeLabel}
               </Text>
               {selected ? (
-                <View style={styles.radioSelected}>
-                  <View style={styles.radioInner} />
+                <View style={[styles.radioSelected, { borderColor: colors.primary }]}>
+                  <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
                 </View>
               ) : (
-                <View style={styles.radioUnselected} />
+                <View style={[styles.radioUnselected, { borderColor: colors.border }]} />
               )}
             </TouchableOpacity>
           );

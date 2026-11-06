@@ -17,11 +17,13 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useAppTheme } from '@/context/ThemeContext';
 
 export default function LoginScreen() {
-    const router = useRouter();
+  const router = useRouter();
   const { t } = useTranslation(['auth', 'common']);
   const { login } = useAuth();
+  const { colors, isDark } = useAppTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -76,8 +78,8 @@ const handleLogin = async () => {
 };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -105,39 +107,30 @@ const handleLogin = async () => {
               style={{
                 fontSize: 24,
                 fontWeight: '900',
-                color: '#6750A4',
+                color: isDark ? colors.text : colors.primary,
                 letterSpacing: 1,
               }}
             >
               {t('login.title')}
             </Text>
-            {/* <Text
-              style={{
-                fontSize: 14,
-                color: '#6750A4',
-                marginTop: 8,
-              }}
-            >
-              Sign in to manage your deliveries
-            </Text> */}
           </View>
 
           {/* General Error Banner */}
           {generalError ? (
             <View style={{
-              backgroundColor: '#FEF2F2',
+              backgroundColor: isDark ? colors.surface : '#FEF2F2',
               borderRadius: 8,
               paddingVertical: 8,
               paddingHorizontal: 12,
               marginBottom: 12,
               borderWidth: 1,
-              borderColor: '#FCA5A5',
+              borderColor: isDark ? colors.danger : '#FCA5A5',
               flexDirection: 'row',
               alignItems: 'center',
             }}>
-              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Ionicons name="alert-circle" size={16} color={colors.danger} />
               <Text style={{
-                color: '#DC2626',
+                color: colors.danger,
                 fontSize: 13,
                 fontWeight: '400',
                 flex: 1,
@@ -146,7 +139,7 @@ const handleLogin = async () => {
                 {generalError}
               </Text>
               <TouchableOpacity onPress={() => setGeneralError('')}>
-                <Ionicons name="close" size={16} color="#DC2626" />
+                <Ionicons name="close" size={16} color={colors.danger} />
               </TouchableOpacity>
             </View>
           ) : null}
@@ -158,7 +151,7 @@ const handleLogin = async () => {
                 style={{
                   fontSize: 11,
                   fontWeight: '700',
-                  color: '#6750A4',
+                  color: isDark ? colors.textMuted : colors.primary,
                   textTransform: 'uppercase',
                   letterSpacing: 2,
                   marginBottom: 8,
@@ -167,48 +160,48 @@ const handleLogin = async () => {
               >
                 {t('login.username')}
               </Text>
-<TextInput
-  value={username}
-  onChangeText={(text) => {
-    setUsername(text);
-    if (usernameError) setUsernameError('');
-    if (generalError) setGeneralError('');
-  }}
+              <TextInput
+                value={username}
+                onChangeText={(text) => {
+                  setUsername(text);
+                  if (usernameError) setUsernameError('');
+                  if (generalError) setGeneralError('');
+                }}
                 placeholder={t('login.usernamePlaceholder')}
-                placeholderTextColor="#6750A4"
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
                 style={{
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.card,
                   borderRadius: 101,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
-                  color: '#6750A4',
+                  color: colors.text,
                   fontSize: 14,
                   borderWidth: 1,
-  borderColor: usernameError ? '#DC2626' : '#6750A4',
-}}
-/>
-{usernameError ? (
-  <Text
-    style={{
-      color: '#DC2626',
-      fontSize: 12,
-      marginTop: 6,
-      marginLeft: 4,
-    }}
-  >
-    {usernameError}
-  </Text>
-) : null}
-</View>
+                  borderColor: usernameError ? colors.danger : (isDark ? colors.border : colors.primary),
+                }}
+              />
+              {usernameError ? (
+                <Text
+                  style={{
+                    color: colors.danger,
+                    fontSize: 12,
+                    marginTop: 6,
+                    marginLeft: 4,
+                  }}
+                >
+                  {usernameError}
+                </Text>
+              ) : null}
+            </View>
 
             <View>
               <Text
                 style={{
                   fontSize: 11,
                   fontWeight: '700',
-                  color: '#6750A4',
+                  color: isDark ? colors.textMuted : colors.primary,
                   textTransform: 'uppercase',
                   letterSpacing: 2,
                   marginBottom: 8,
@@ -218,26 +211,26 @@ const handleLogin = async () => {
                 {t('login.password')}
               </Text>
               <View>
-<TextInput
-  value={password}
-  onChangeText={(text) => {
-    setPassword(text);
-    if (passwordError) setPasswordError('');
-    if (generalError) setGeneralError('');
-  }}
+                <TextInput
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (passwordError) setPasswordError('');
+                    if (generalError) setGeneralError('');
+                  }}
                   placeholder={t('login.passwordPlaceholder')}
-                  placeholderTextColor="#6750A4"
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPassword}
                   style={{
-                    backgroundColor: '#fff',
+                    backgroundColor: colors.card,
                     borderRadius: 101,
                     paddingHorizontal: 16,
                     paddingVertical: 12,
-                    color: '#6750A4',
+                    color: colors.text,
                     fontSize: 14,
                     borderWidth: 1,
-  borderColor: passwordError ? '#DC2626' : '#6750A4',
-}}
+                    borderColor: passwordError ? colors.danger : (isDark ? colors.border : colors.primary),
+                  }}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -247,25 +240,25 @@ const handleLogin = async () => {
                     top: 10,
                   }}
                 >
-                  <Text style={{ color: '#6750A4', fontWeight: '700', fontSize: 14 }}>
+                  <Text style={{ color: isDark ? colors.textMuted : colors.primary, fontWeight: '700', fontSize: 14 }}>
                     {showPassword ?
-                      <Ionicons name="eye-off" size={24} color="#6750A4" /> :
-                      <Ionicons name="eye" size={24} color="#6750A4" />}
+                      <Ionicons name="eye-off" size={24} color={isDark ? colors.textMuted : colors.primary} /> :
+                      <Ionicons name="eye" size={24} color={isDark ? colors.textMuted : colors.primary} />}
                   </Text>
                 </TouchableOpacity>
               </View>
-{passwordError ? (
-  <Text
-    style={{
-      color: '#DC2626',
-      fontSize: 12,
-      marginTop: 6,
-      marginLeft: 4,
-    }}
-  >
-    {passwordError}
-  </Text>
-) : null}
+              {passwordError ? (
+                <Text
+                  style={{
+                    color: colors.danger,
+                    fontSize: 12,
+                    marginTop: 6,
+                    marginLeft: 4,
+                  }}
+                >
+                  {passwordError}
+                </Text>
+              ) : null}
             </View>
           </View>
 
@@ -274,7 +267,7 @@ const handleLogin = async () => {
             onPress={handleLogin}
             disabled={loading}
             style={{
-              backgroundColor: '#6750A4',
+              backgroundColor: colors.primary,
               borderRadius: 116,
               padding: 18,
               alignItems: 'center',
@@ -284,9 +277,9 @@ const handleLogin = async () => {
             }}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
                 {t('login.signIn')}
               </Text>
             )}
@@ -299,7 +292,7 @@ const handleLogin = async () => {
           >
             <Text
               style={{
-                color: '#6750A4',
+                color: colors.primary,
                 fontSize: 14,
                 fontWeight: '600',
               }}
@@ -312,7 +305,7 @@ const handleLogin = async () => {
           <Text
             style={{
               textAlign: 'center',
-              color: '#475569',
+              color: colors.textMuted,
               fontSize: 12,
               marginTop: 16,
             }}

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { TouchableOpacity, Animated, StyleSheet, ActivityIndicator, View } from "react-native";
+import { useAppTheme } from "@/context/ThemeContext";
 
 interface ToggleSwitchProps {
   isOn: boolean;
@@ -8,13 +9,14 @@ interface ToggleSwitchProps {
 }
 
 export default function ToggleSwitch({ isOn, onToggle, isLoading }: ToggleSwitchProps) {
+  const { isDark } = useAppTheme();
   const translateX = useRef(new Animated.Value(isOn ? 1 : 0)).current;
 
   useEffect(() => {
     Animated.timing(translateX, {
       toValue: isOn ? 1 : 0,
       duration: 250,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [isOn]);
 
@@ -23,9 +25,11 @@ export default function ToggleSwitch({ isOn, onToggle, isLoading }: ToggleSwitch
     outputRange: [2, 26], 
   });
 
+  const offColor = isDark ? "#374151" : "#CBD5E1";
+
   const backgroundColor = translateX.interpolate({
     inputRange: [0, 1],
-    outputRange: ["#CBD5E1", "#16A34A"], 
+    outputRange: [offColor, "#16A34A"], 
   });
 
   return (

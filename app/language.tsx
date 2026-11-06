@@ -5,36 +5,38 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppTheme } from "@/context/ThemeContext";
 
 const BRAND_COLOR = "#6750A4";
 
 export default function LanguageScreen() {
   const router = useRouter();
   const { t } = useTranslation(["common", "language"]);
+  const { colors, isDark } = useAppTheme();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={BRAND_COLOR} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={isDark ? colors.card : BRAND_COLOR} />
 
       {/* Header Section */}
       <View style={styles.headerWrapper}>
-        <View style={[styles.header, { backgroundColor: BRAND_COLOR }]}>
+        <View style={[styles.header, { backgroundColor: isDark ? colors.card : BRAND_COLOR }, isDark && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
           <View style={styles.headerContent}>
             {/* Back Button - LEFT SIDE */}
             <TouchableOpacity
               onPress={() => router.back()}
-              style={styles.backButton}
+              style={[styles.backButton, isDark && { backgroundColor: colors.surface }]}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={22} color="white" />
+              <Ionicons name="arrow-back" size={22} color={isDark ? colors.text : "white"} />
             </TouchableOpacity>
 
             {/* Title and Image Container - PUSHED TO RIGHT */}
             <View style={{ flexDirection: "row", gap: 10, alignItems:"center" }}>
 
               {/* Image - Pushed to far right */}
-              <View style={styles.logoWrapper}>
-                <View style={styles.logoContainer}>
+              <View style={[styles.logoWrapper, isDark && { backgroundColor: colors.surface }]}>
+                <View style={[styles.logoContainer, isDark && { backgroundColor: colors.surface }]}>
                   <Image
                     source={require("@/assets/images/elilita-delivery.jpg")}
                     style={styles.logoImage}
@@ -45,10 +47,10 @@ export default function LanguageScreen() {
               {/* Title Text - Left side of this container */}
 
               <View style={styles.headerTextContainer}>
-                <Text style={styles.headerTitle}>
+                <Text style={[styles.headerTitle, isDark && { color: colors.text }]}>
                   {t("common:app.name")}
                 </Text>
-                <Text style={styles.headerSubtitle}>
+                <Text style={[styles.headerSubtitle, isDark && { color: colors.textMuted }]}>
                   {t("language:chooseYourLanguage")}
                 </Text>
               </View>
@@ -61,12 +63,12 @@ export default function LanguageScreen() {
       {/* Main Content */}
       <View style={styles.content}>
         {/* Language Switcher Card */}
-        <View style={styles.languageCard}>
+        <View style={[styles.languageCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.cardHeader}>
-            <View style={styles.cardIcon}>
-              <Ionicons name="globe" size={20} color={BRAND_COLOR} />
+            <View style={[styles.cardIcon, { borderColor: colors.border, backgroundColor: colors.primarySoft }]}>
+              <Ionicons name="globe" size={20} color={colors.primary} />
             </View>
-            <Text style={styles.cardTitleSecondary}>
+            <Text style={[styles.cardTitleSecondary, { color: isDark ? colors.text : colors.primary }]}>
               {t("language:selectLanguage") || "Select Language"}
             </Text>
           </View>
@@ -77,15 +79,15 @@ export default function LanguageScreen() {
         </View>
 
         {/* Coming Soon Info Card */}
-        <View style={styles.comingSoonCard}>
-          <View style={styles.comingSoonIcon}>
+        <View style={[styles.comingSoonCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.comingSoonIcon, isDark && { backgroundColor: colors.surface }]}>
             <Ionicons name="time-outline" size={20} color="#D97706" />
           </View>
           <View style={styles.comingSoonContent}>
-            <Text style={styles.comingSoonTitle}>
+            <Text style={[styles.comingSoonTitle, isDark && { color: "#FBBF24" }]}>
               🚧 {t("language:comingSoon.title") || "More Languages Coming Soon"}
             </Text>
-            <Text style={styles.comingSoonMessage}>
+            <Text style={[styles.comingSoonMessage, isDark && { color: colors.textMuted }]}>
               {t("language:comingSoon.message") ||
                 "We're working on adding more languages to serve you better."}
             </Text>
@@ -94,7 +96,7 @@ export default function LanguageScreen() {
 
         {/* Supported Languages List */}
         <View style={styles.languageListContainer}>
-          <Text style={styles.languageListTitle}>
+          <Text style={[styles.languageListTitle, { color: colors.textMuted }]}>
             {t("language:supportLanguages") || "Supported Languages"}
           </Text>
           <View style={styles.languageList}>
@@ -135,8 +137,8 @@ export default function LanguageScreen() {
                 style={[
                   styles.languageTag,
                   lang.status === "available"
-                    ? styles.languageTagAvailable
-                    : styles.languageTagComing
+                    ? [styles.languageTagAvailable, isDark && { backgroundColor: colors.surface, borderColor: '#059669' }]
+                    : [styles.languageTagComing, isDark && { backgroundColor: colors.surface, borderColor: colors.border }]
                 ]}
               >
                 <Text style={styles.languageFlag}>{lang.flag}</Text>
@@ -144,8 +146,8 @@ export default function LanguageScreen() {
                   style={[
                     styles.languageName,
                     lang.status === "available"
-                      ? styles.languageNameAvailable
-                      : styles.languageNameComing
+                      ? [styles.languageNameAvailable, isDark && { color: '#34D399' }]
+                      : [styles.languageNameComing, isDark && { color: colors.textMuted }]
                   ]}
                 >
                   {lang.name}
@@ -167,7 +169,7 @@ export default function LanguageScreen() {
 
         {/* Footer Note */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>
             {t("language:footer") || "Select your preferred language"}
           </Text>
         </View>

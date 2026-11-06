@@ -11,7 +11,9 @@ import {
   Animated,
   Modal,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppTheme } from "@/context/ThemeContext";
 import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useDelivery } from "@/context/DeliveryContext";
@@ -42,6 +44,7 @@ const getStatusLabel = (status: string): string => {
 export default function OrdersScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { colors, isDark } = useAppTheme();
   const {
     deliveries: allDeliveries,
     isLoading,
@@ -363,15 +366,15 @@ export default function OrdersScreen() {
       <TouchableOpacity
         onPress={() => router.push(`/delivery/${item.id}`)}
         activeOpacity={0.9}
-        style={styles.card}
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
       >
-        <View style={styles.verticalLine} />
+        {/* <View style={[styles.verticalLine, { backgroundColor: colors.primary }]} /> */}
 
         <View style={styles.cardContent}>
           {/* Card Header */}
           <View style={styles.cardHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.orderIdText}>
+              <Text style={[styles.orderIdText, { color: colors.primary }]}>
                 {t("orderNumber", { id: `${item?.vendor_order_detail?.master_order_id}-${item?.vendor_order}` })}
               </Text>
               <Text style={styles.timeText}>
@@ -435,7 +438,7 @@ export default function OrdersScreen() {
             <View style={styles.addressContainer}>
               <View style={styles.addressBlock}>
                 <Text style={styles.addressLabel}>{t("pickupFrom")}</Text>
-                <Text style={{ flexShrink: 1 }}>{companyName}</Text>
+                <Text style={{ flexShrink: 1, color: colors.text, fontWeight: '600' }}>{companyName}</Text>
                 <Text style={styles.addressText} numberOfLines={1}>
                   {item.company_address}
                 </Text>
@@ -458,7 +461,7 @@ export default function OrdersScreen() {
                         <Text style={styles.locationIndicatorText}>{t('tapToTrack')}</Text>
                       </View>
                     </View>
-                    <Text style={styles.customerName} numberOfLines={1}>
+                    <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
                       {customerName}
                     </Text>
                     <Text style={styles.addressText} numberOfLines={2}>
@@ -471,7 +474,7 @@ export default function OrdersScreen() {
               ) : (
                 <View style={styles.addressBlock}>
                   <Text style={styles.addressLabel}>{t("deliverTo")}</Text>
-                  <Text style={styles.customerName} numberOfLines={1}>
+                  <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
                     {customerName}
                   </Text>
                   <Text style={styles.addressText} numberOfLines={2}>
@@ -484,9 +487,9 @@ export default function OrdersScreen() {
             </View>
           </View>
 
-          <View style={styles.cardFooter}>
-            <Text style={styles.tapHintText}>{t("viewDetails")}</Text>
-            <View style={styles.arrowCircle}>
+          <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
+            <Text style={[styles.tapHintText, { color: colors.primary }]}>{t("viewDetails")}</Text>
+            <View style={[styles.arrowCircle, { backgroundColor: colors.primary }]}>
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </View>
           </View>
@@ -496,7 +499,8 @@ export default function OrdersScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Animated.View
         style={{
           flex: 1,
@@ -514,14 +518,14 @@ export default function OrdersScreen() {
           ]}
         >
           <View>
-            <Text style={styles.titleText}>{t("allOrders")}</Text>
+            <Text style={[styles.titleText, { color: isDark ? colors.text : colors.primary }]}>{t("allOrders")}</Text>
           </View>
         </Animated.View>
 
         <Animated.View
           style={{
             marginBottom: 15,
-            backgroundColor: "white",
+            backgroundColor: colors.background,
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }]
           }}
@@ -538,12 +542,13 @@ export default function OrdersScreen() {
                 <TouchableOpacity
                   key={tab.value}
                   onPress={() => setActiveTab(tab.value)}
-                  style={[styles.tab, isActive && styles.activeTab]}
+                  style={[styles.tab, { backgroundColor: isDark ? colors.card : '#fff', borderColor: colors.border }, isActive && [styles.activeTab, { backgroundColor: colors.primary, borderColor: colors.primary }]]}
                 >
                   <Text
                     style={[
                       styles.tabText,
-                      isActive && styles.activeTabText,
+                      { color: colors.textMuted },
+                      isActive && [styles.activeTabText, { color: colors.onPrimary }],
                     ]}
                   >
                     {t(`tabs.${tab.value}`)}
@@ -608,25 +613,25 @@ export default function OrdersScreen() {
         animationType="fade"
         onRequestClose={() => setDeclineModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
             <View style={styles.modalIconWrapper}>
               <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
             </View>
             
             {/* ✅ Applied translation keys */}
-            <Text style={styles.modalTitle}>{t('declineModalTitle')}</Text>
-            <Text style={styles.modalMessage}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('declineModalTitle')}</Text>
+            <Text style={[styles.modalMessage, { color: colors.textMuted }]}>
               {t('declineModalMessage')}
             </Text>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancelBtn}
+                style={[styles.modalCancelBtn, { backgroundColor: isDark ? colors.surface : '#F1F5F9', borderColor: colors.border }]}
                 onPress={() => setDeclineModalVisible(false)}
                 disabled={isDeclining}
               >
-                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
+                <Text style={[styles.modalCancelText, { color: colors.text }]}>{t('cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

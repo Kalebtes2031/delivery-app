@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppTheme } from "@/context/ThemeContext";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -24,6 +25,7 @@ export default function ForgotPassword() {
   const router = useRouter();
   const { t } = useTranslation("auth");
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useAppTheme();
 
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<{
@@ -66,8 +68,8 @@ export default function ForgotPassword() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff', }}>
-      <StatusBar barStyle="dark-content" />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "padding"}
@@ -79,7 +81,6 @@ export default function ForgotPassword() {
             flexGrow: 1,
             justifyContent: 'center',
             paddingHorizontal: 32,
-            // paddingVertical: 24,
             paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
@@ -96,19 +97,16 @@ export default function ForgotPassword() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              backgroundColor: '#ffffff',
+              backgroundColor: isDark ? colors.card : '#ffffff',
               borderWidth: 1,
-              borderColor: "#6750A4",
+              borderColor: isDark ? colors.border : colors.primary,
               paddingHorizontal: 8,
               paddingVertical: 8,
               borderRadius: 20,
             }}
             activeOpacity={0.8}
           >
-            <Ionicons name="arrow-back" size={20} color={BRAND_COLOR} />
-            {/* <Text style={{ color: BRAND_COLOR, fontWeight: '600', fontSize: 14 }}>
-              {t("forgotPassword.back")}
-            </Text> */}
+            <Ionicons name="arrow-back" size={20} color={colors.primary} />
           </TouchableOpacity>
 
           {/* Header */}
@@ -124,7 +122,7 @@ export default function ForgotPassword() {
               style={{
                 fontSize: 24,
                 fontWeight: '900',
-                color: BRAND_COLOR,
+                color: isDark ? colors.text : colors.primary,
                 letterSpacing: 1,
                 marginTop: 16,
               }}
@@ -134,7 +132,7 @@ export default function ForgotPassword() {
             <Text
               style={{
                 fontSize: 14,
-                color: '#64748B',
+                color: colors.textMuted,
                 textAlign: 'center',
                 marginTop: 8,
                 paddingHorizontal: 16,
@@ -149,16 +147,16 @@ export default function ForgotPassword() {
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#FEF2F2',
+              backgroundColor: isDark ? colors.surface : '#FEF2F2',
               borderWidth: 1,
-              borderColor: '#FCA5A5',
+              borderColor: isDark ? colors.danger : '#FCA5A5',
               borderRadius: 12,
               paddingHorizontal: 16,
               paddingVertical: 12,
               marginBottom: 16,
             }}>
-              <Ionicons name="alert-circle" size={20} color="#DC2626" />
-              <Text style={{ color: '#DC2626', fontSize: 14, flex: 1, marginLeft: 8 }}>
+              <Ionicons name="alert-circle" size={20} color={colors.danger} />
+              <Text style={{ color: colors.danger, fontSize: 14, flex: 1, marginLeft: 8 }}>
                 {apiError}
               </Text>
             </View>
@@ -169,7 +167,7 @@ export default function ForgotPassword() {
             <Text style={{
               fontSize: 11,
               fontWeight: '700',
-              color: BRAND_COLOR,
+              color: isDark ? colors.textMuted : colors.primary,
               textTransform: 'uppercase',
               letterSpacing: 2,
               marginBottom: 8,
@@ -179,17 +177,17 @@ export default function ForgotPassword() {
             </Text>
             <TextInput
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: colors.card,
                 borderRadius: 101,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
-                color: BRAND_COLOR,
+                color: colors.text,
                 fontSize: 14,
                 borderWidth: 1,
-                borderColor: errors.email ? '#DC2626' : BRAND_COLOR,
+                borderColor: errors.email ? colors.danger : (isDark ? colors.border : colors.primary),
               }}
               placeholder={t("forgotPassword.emailPlaceholder")}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -200,7 +198,7 @@ export default function ForgotPassword() {
             />
             {errors.email && (
               <Text style={{
-                color: '#DC2626',
+                color: colors.danger,
                 fontSize: 12,
                 marginTop: 6,
                 marginLeft: 4,
@@ -215,7 +213,7 @@ export default function ForgotPassword() {
             onPress={handleRequestOtp}
             disabled={loading}
             style={{
-              backgroundColor: BRAND_COLOR,
+              backgroundColor: colors.primary,
               borderRadius: 116,
               padding: 18,
               alignItems: 'center',
@@ -226,9 +224,9 @@ export default function ForgotPassword() {
             activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="white" size="small" />
+              <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
                 {t("forgotPassword.sendCode")}
               </Text>
             )}
@@ -236,14 +234,14 @@ export default function ForgotPassword() {
 
           {/* Back to Sign In Link */}
           <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24 }}>
-            <Text style={{ color: '#64748B', fontSize: 14 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 14 }}>
               {t("forgotPassword.rememberedPassword")}{" "}
             </Text>
             <TouchableOpacity
               onPress={() => router.replace("/(auth)/login")}
               activeOpacity={0.7}
             >
-              <Text style={{ color: BRAND_COLOR, fontWeight: '800', fontSize: 14 }}>
+              <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 14 }}>
                 {t("forgotPassword.signIn")}
               </Text>
             </TouchableOpacity>

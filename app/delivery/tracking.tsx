@@ -28,6 +28,7 @@ import * as Haptics from "expo-haptics";
 import { STATUS_CONFIG } from "@/constants/deliveryConstants";
 import { useTranslation } from "react-i18next";
 import SlideToConfirm from "@/components/SlideToConfirm";
+import { useAppTheme } from "@/context/ThemeContext";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 async function checkConnectivity(): Promise<boolean> {
@@ -63,6 +64,7 @@ export default function DriverTrackingScreen() {
   const { id, order_id, viewOnly } = useLocalSearchParams();
   const isViewOnly = viewOnly === "true";
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
 
   // ── State ────────────────────────────────────────────────────────────────
   const [delivery, setDelivery] = useState<any>(null);
@@ -525,7 +527,9 @@ export default function DriverTrackingScreen() {
             paddingBottom: 16 + insets.bottom,
             paddingTop: 8,
             paddingHorizontal: 16,
-            backgroundColor: "#fff",
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            borderTopWidth: isDark ? 1 : 0,
           },
         ]}
       >
@@ -555,7 +559,7 @@ export default function DriverTrackingScreen() {
               <View style={styles.cleanRow}>
                 <View style={styles.cleanOrder}>
                   <Text style={styles.cleanOrderLabel}>{t("orderLabel")}</Text>
-                  <Text style={styles.cleanOrderNumber}>#{order_id}</Text>
+                  <Text style={[styles.cleanOrderNumber, { color: colors.text }]}>#{order_id}</Text>
                 </View>
                 <View
                   style={[
@@ -621,7 +625,7 @@ export default function DriverTrackingScreen() {
 
               <View style={styles.cleanCustomerRow}>
                 <TouchableOpacity
-                  style={styles.cleanCustomerNameCard}
+                  style={[styles.cleanCustomerNameCard, { backgroundColor: isDark ? colors.surface : '#FFFFFF', borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}
                   onPress={() => {
                     if (delivery?.customer_image) {
                       setZoomImageUri(delivery.customer_image);
@@ -651,7 +655,7 @@ export default function DriverTrackingScreen() {
                       </View>
                     )}
                   </View>
-                  <Text style={styles.cleanCustomerName} numberOfLines={1}>
+                  <Text style={[styles.cleanCustomerName, { color: colors.text }]} numberOfLines={1}>
                     {customerName}
                   </Text>
                 </TouchableOpacity>
@@ -681,7 +685,7 @@ export default function DriverTrackingScreen() {
               <View style={styles.orderInfo}>
                 <View style={styles.orderHeader}>
                   <View style={styles.orderTitleGroup}>
-                    <Text style={styles.orderTitleText}>
+                    <Text style={[styles.orderTitleText, { color: colors.text }]}>
                       {t("orderNumber", { id: order_id })}
                     </Text>
                     {(distance || estimatedTime) && (
