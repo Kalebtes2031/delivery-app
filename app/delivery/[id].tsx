@@ -1,38 +1,39 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  StatusBar,
-  Linking,
-  StyleSheet,
-  Image,
-  Dimensions,
-  Modal,
-} from "react-native";
-import Toast from "react-native-toast-message";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import SlideToConfirm from "@/components/SlideToConfirm";
-import { useDelivery } from "@/context/DeliveryContext";
-import type { DeliveryStatus } from "@/types";
 import {
-  Ionicons,
-  MaterialCommunityIcons,
-  FontAwesome6,
-  Feather,
-  MaterialIcons,
-} from "@expo/vector-icons";
-import {
-  STATUS_ORDER,
-  STATUS_CONFIG,
-  NEXT_ACTION,
+    NEXT_ACTION,
+    STATUS_CONFIG,
+    STATUS_ORDER,
 } from "@/constants/deliveryConstants";
+import { useDelivery } from "@/context/DeliveryContext";
+import { useAppTheme } from "@/context/ThemeContext";
+import { updateDeliveryStatus } from "@/services/api";
+import {
+    FontAwesome6,
+    Ionicons,
+    MaterialCommunityIcons,
+    MaterialIcons
+} from "@expo/vector-icons";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { updateDeliveryStatus } from "@/services/api"; 
-import { useAppTheme } from "@/context/ThemeContext"; 
+import {
+    ActivityIndicator,
+    Dimensions,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import {
+    SafeAreaView,
+    useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 const { width } = Dimensions.get("window");
 
@@ -54,31 +55,52 @@ export default function DeliveryDetailScreen() {
   const insets = useSafeAreaInsets();
 
   // ─── Dark-mode aware design tokens ───────────────────────────────
-  const brand = isDark ? '#FFFFFF' : '#6750A4';
-  const surfaceMuted = isDark ? '#1A1A1A' : '#F1F5F9';
-  const itemBorder = isDark ? '#222222' : '#F1F5F9';
-  const lightBorder = isDark ? '#2A2A2A' : '#E2E8F0';
+  const brand = isDark ? "#6750A4" : "#6750A4";
+  const surfaceMuted = isDark ? "#1A1A1A" : "#F1F5F9";
+  const itemBorder = isDark ? "#222222" : "#F1F5F9";
+  const lightBorder = isDark ? "#2A2A2A" : "#E2E8F0";
 
   const vendorStatusColors: Record<string, { bg: string; text: string }> = {
-    pending: { bg: isDark ? "#3D2A1A" : "#FFF7ED", text: isDark ? "#FDBA74" : "#EA580C" },
-    contacted: { bg: isDark ? "#1E3A5F" : "#EFF6FF", text: isDark ? "#93C5FD" : "#2563EB" },
-    confirmed: { bg: isDark ? "#1E3A5F" : "#EFF6FF", text: isDark ? "#93C5FD" : "#2563EB" },
-    processing: { bg: isDark ? "#2A1F3D" : "#FAF5FF", text: isDark ? "#C4B5FD" : "#6750A4" },
-    shipped: { bg: isDark ? "#1A3D2A" : "#F0FDF4", text: isDark ? "#86EFAC" : "#16A34A" },
+    pending: {
+      bg: isDark ? "#3D2A1A" : "#FFF7ED",
+      text: isDark ? "#FDBA74" : "#EA580C",
+    },
+    contacted: {
+      bg: isDark ? "#1E3A5F" : "#EFF6FF",
+      text: isDark ? "#93C5FD" : "#2563EB",
+    },
+    confirmed: {
+      bg: isDark ? "#1E3A5F" : "#EFF6FF",
+      text: isDark ? "#93C5FD" : "#2563EB",
+    },
+    processing: {
+      bg: isDark ? "#2A1F3D" : "#FAF5FF",
+      text: isDark ? "#6750A4" : "#6750A4",
+    },
+    shipped: {
+      bg: isDark ? "#1A3D2A" : "#F0FDF4",
+      text: isDark ? "#86EFAC" : "#16A34A",
+    },
     fulfilled: { bg: "#16A34A", text: "#FFFFFF" },
-    cancelled: { bg: isDark ? "#3D1A1A" : "#FEF2F2", text: isDark ? "#FCA5A5" : "#DC2626" },
-    failed: { bg: isDark ? "#3D1A1A" : "#FEF2F2", text: isDark ? "#FCA5A5" : "#DC2626" },
+    cancelled: {
+      bg: isDark ? "#3D1A1A" : "#FEF2F2",
+      text: isDark ? "#FCA5A5" : "#DC2626",
+    },
+    failed: {
+      bg: isDark ? "#3D1A1A" : "#FEF2F2",
+      text: isDark ? "#FCA5A5" : "#DC2626",
+    },
   };
 
   const getLocalName = (
     defaultName: string | undefined,
     amField?: string | null,
-    nestedObj?: { name_am?: string; name?: string } | null
+    nestedObj?: { name_am?: string; name?: string } | null,
   ): string => {
-    if (!isAmharic) return defaultName || '';
+    if (!isAmharic) return defaultName || "";
     if (amField) return amField;
     if (nestedObj?.name_am) return nestedObj.name_am;
-    return defaultName || '';
+    return defaultName || "";
   };
 
   useFocusEffect(
@@ -129,20 +151,20 @@ export default function DeliveryDetailScreen() {
     if (!delivery) return;
     try {
       setIsDeclining(true);
-      
+
       await updateDeliveryStatus(
-        delivery.id, 
-        'declined', 
-        "Declined by driver", 
-        'declined'
+        delivery.id,
+        "declined",
+        "Declined by driver",
+        "declined",
       );
-      
+
       Toast.show({
         type: "success",
         text1: t("declineSuccessTitle"),
         text2: t("declineSuccessMessage"),
       });
-      
+
       setDeclineModalVisible(false);
       router.back();
     } catch (error: any) {
@@ -159,7 +181,9 @@ export default function DeliveryDetailScreen() {
 
   if (loading)
     return (
-      <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+      <View
+        style={[styles.loaderContainer, { backgroundColor: colors.background }]}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -167,44 +191,55 @@ export default function DeliveryDetailScreen() {
   if (!delivery) return null;
   const action = NEXT_ACTION[delivery.status];
 
-  const isDeclined = delivery?.status === 'declined';
-  const isExpired = delivery?.status === 'expired';
-  const isOrderFailed = delivery?.status === 'failed' ||
-    delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'cancelled' ||
-    delivery?.vendor_order_detail?.status?.toLowerCase?.() === 'rejected';
+  const isDeclined = delivery?.status === "declined";
+  const isExpired = delivery?.status === "expired";
+  const isOrderFailed =
+    delivery?.status === "failed" ||
+    delivery?.vendor_order_detail?.status?.toLowerCase?.() === "cancelled" ||
+    delivery?.vendor_order_detail?.status?.toLowerCase?.() === "rejected";
 
-  const effectiveStatus = (isDeclined || isExpired)
-    ? 'pending'
-    : isOrderFailed
-      ? 'delivered'
-      : delivery.status;
+  const effectiveStatus =
+    isDeclined || isExpired
+      ? "pending"
+      : isOrderFailed
+        ? "delivered"
+        : delivery.status;
 
   const currentIndex = STATUS_ORDER.indexOf(effectiveStatus.toLowerCase());
-  const hasBottomActions = delivery.status !== "delivered" && !isDeclined && !isExpired && !isOrderFailed && Boolean(action);
+  const hasBottomActions =
+    delivery.status !== "delivered" &&
+    !isDeclined &&
+    !isExpired &&
+    !isOrderFailed &&
+    Boolean(action);
   const orderDetail = delivery.vendor_order_detail;
 
-  const canDecline = delivery.status === 'pending';
+  const canDecline = delivery.status === "pending";
 
-  const companyName =
-    isAmharic
-      ? orderDetail?.company?.name_am || delivery?.company_name || t("vendor")
-      : delivery?.company_name || orderDetail?.company?.name || t("vendor");
+  const companyName = isAmharic
+    ? orderDetail?.company?.name_am || delivery?.company_name || t("vendor")
+    : delivery?.company_name || orderDetail?.company?.name || t("vendor");
 
-  const customerDefault = delivery.customer_name || t('customer');
+  const customerDefault = delivery.customer_name || t("customer");
   const customerAmField = (delivery as any).customer_name_am;
   const customerNested = (delivery as any).customer;
-  const customerName = getLocalName(customerDefault, customerAmField, customerNested) || customerDefault;
+  const customerName =
+    getLocalName(customerDefault, customerAmField, customerNested) ||
+    customerDefault;
 
-  const subCategoryDefault = orderDetail?.company?.sub_category_name || '';
+  const subCategoryDefault = orderDetail?.company?.sub_category_name || "";
   const subCategoryAm = (orderDetail?.company as any)?.sub_category_name_am;
-  const subCategoryName = isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
+  const subCategoryName =
+    isAmharic && subCategoryAm ? subCategoryAm : subCategoryDefault;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       {/* --- HERO HEADER --- */}
-      <View style={[styles.heroSection, { height: hasBottomActions ? 250 : 300, }]}>
+      <View
+        style={[styles.heroSection, { height: hasBottomActions ? 250 : 300 }]}
+      >
         <Image
           source={require("@/assets/images/order.jpg")}
           style={styles.heroBg}
@@ -214,56 +249,92 @@ export default function DeliveryDetailScreen() {
           <View style={styles.topNav}>
             <TouchableOpacity
               onPress={() => router.back()}
-              style={[styles.glassCircle, {
-                backgroundColor: isDark ? '#000000' : '#ffffff',
-                borderColor: isDark ? '#333333' : '#6750A4',
-              }]}
+              style={[
+                styles.glassCircle,
+                {
+                  backgroundColor: isDark ? "#000000" : "#ffffff",
+                  borderColor: isDark ? "#6750A4" : "#6750A4",
+                },
+              ]}
             >
               <Ionicons name="arrow-back" size={24} color={brand} />
             </TouchableOpacity>
             <View style={styles.headerInfo}>
               <Text style={styles.heroOrderTitle}>
-                {t('orderNumber', { id: `${delivery?.vendor_order_detail?.master_order_id}-${delivery?.vendor_order}` })}
+                {t("orderNumber", {
+                  id: `${delivery?.vendor_order_detail?.master_order_id}-${delivery?.vendor_order}`,
+                })}
               </Text>
             </View>
             <View></View>
           </View>
         </SafeAreaView>
-        <View style={[styles.headerInfo, {
-          position: "absolute", bottom: 50, left: 20,
-          backgroundColor: isDeclined 
-            ? (isDark ? "#3D1A1A" : "#FEF2F2") 
-            : isExpired 
-              ? (isDark ? "#3D2A1A" : "#FFFBEB") 
-              : vendorStatusColors[orderDetail?.status]?.bg || (isDark ? "#3D1A1A" : "#FEF2F2"),
-          borderRadius: 20,
-          paddingHorizontal: 10, paddingVertical: 4,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 6,
-          zIndex: 1000,
-          borderWidth: 1,
-          borderColor: isDeclined 
-            ? (isDark ? "#5C2626" : "#FECACA") 
-            : isExpired 
-              ? (isDark ? "#5C3D20" : "#FDE68A") 
-              : (isDark ? "#333333" : "transparent")
-        }]}>
-          <Text style={{
-            color: isDeclined 
-              ? (isDark ? "#FCA5A5" : "#DC2626") 
-              : isExpired 
-                ? (isDark ? "#FCD34D" : "#D97706") 
-                : vendorStatusColors[orderDetail?.status]?.text || (isDark ? "#FCA5A5" : "#DC2626"),
-            fontSize: 12,
-            fontWeight: "bold",
-            textTransform: "uppercase"
-          }}>
-            {String(isDeclined
-              ? t('status.declined', 'Declined')
-              : isExpired
-                ? t('status.expired', 'Expired')
-                : t(`orderStatus.${orderDetail?.status}`, orderDetail?.status || ''))}
+        <View
+          style={[
+            styles.headerInfo,
+            {
+              position: "absolute",
+              bottom: 50,
+              left: 20,
+              backgroundColor: isDeclined
+                ? isDark
+                  ? "#3D1A1A"
+                  : "#FEF2F2"
+                : isExpired
+                  ? isDark
+                    ? "#3D2A1A"
+                    : "#FFFBEB"
+                  : vendorStatusColors[orderDetail?.status]?.bg ||
+                    (isDark ? "#3D1A1A" : "#FEF2F2"),
+              borderRadius: 20,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              zIndex: 1000,
+              borderWidth: 1,
+              borderColor: isDeclined
+                ? isDark
+                  ? "#5C2626"
+                  : "#FECACA"
+                : isExpired
+                  ? isDark
+                    ? "#5C3D20"
+                    : "#FDE68A"
+                  : isDark
+                    ? "#333333"
+                    : "transparent",
+            },
+          ]}
+        >
+          <Text
+            style={{
+              color: isDeclined
+                ? isDark
+                  ? "#FCA5A5"
+                  : "#DC2626"
+                : isExpired
+                  ? isDark
+                    ? "#FCD34D"
+                    : "#D97706"
+                  : vendorStatusColors[orderDetail?.status]?.text ||
+                    (isDark ? "#FCA5A5" : "#DC2626"),
+              fontSize: 12,
+              fontWeight: "bold",
+              textTransform: "uppercase",
+            }}
+          >
+            {String(
+              isDeclined
+                ? t("status.declined", "Declined")
+                : isExpired
+                  ? t("status.expired", "Expired")
+                  : t(
+                      `orderStatus.${orderDetail?.status}`,
+                      orderDetail?.status || "",
+                    ),
+            )}
           </Text>
         </View>
       </View>
@@ -279,7 +350,16 @@ export default function DeliveryDetailScreen() {
         }}
       >
         {/* --- STATUS PIPELINE --- */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: isDark ? 1 : 0,
+            },
+          ]}
+        >
           <View style={styles.progressContainer}>
             {STATUS_ORDER.map((status, index) => {
               const isCompleted = index < currentIndex;
@@ -299,7 +379,11 @@ export default function DeliveryDetailScreen() {
                         style={[
                           styles.progressLine,
                           {
-                            backgroundColor: isCompleted ? "#16A34A" : (isDark ? '#333333' : "#E5E7EB"),
+                            backgroundColor: isCompleted
+                              ? "#16A34A"
+                              : isDark
+                                ? "#333333"
+                                : "#E5E7EB",
                             left: "-50%",
                             right: "50%",
                           },
@@ -309,19 +393,25 @@ export default function DeliveryDetailScreen() {
                     <View
                       style={[
                         styles.stepIndicator,
-                        { backgroundColor: isDark ? '#1A1A1A' : '#fff' }, // Neutral bg for future steps in dark
+                        { backgroundColor: isDark ? "#1A1A1A" : "#fff" }, // Neutral bg for future steps in dark
                         isCompleted && styles.indicatorCompleted,
                         isCurrent &&
-                        (isStepDeclined
-                          ? styles.indicatorFailed
-                          : isStepExpired
-                            ? styles.indicatorExpired
-                            : isStepFailed
-                              ? styles.indicatorFailed
-                              : isDeliveredCurrent
-                                ? styles.indicatorCompleted
-                                : styles.indicatorCurrent),
-                        isFuture && [styles.indicatorFuture, { borderColor: isDark ? '#333333' : "#E5E7EB", backgroundColor: isDark ? '#1A1A1A' : "#F9FAFB" }],
+                          (isStepDeclined
+                            ? styles.indicatorFailed
+                            : isStepExpired
+                              ? styles.indicatorExpired
+                              : isStepFailed
+                                ? styles.indicatorFailed
+                                : isDeliveredCurrent
+                                  ? styles.indicatorCompleted
+                                  : styles.indicatorCurrent),
+                        isFuture && [
+                          styles.indicatorFuture,
+                          {
+                            borderColor: isDark ? "#333333" : "#E5E7EB",
+                            backgroundColor: isDark ? "#1A1A1A" : "#F9FAFB",
+                          },
+                        ],
                       ]}
                     >
                       <MaterialCommunityIcons
@@ -334,13 +424,16 @@ export default function DeliveryDetailScreen() {
                                 ? "clock-alert-outline"
                                 : isStepFailed
                                   ? "close-circle"
-                                  : STATUS_CONFIG[status]?.icon || "circle-outline") as any
+                                  : STATUS_CONFIG[status]?.icon ||
+                                    "circle-outline") as any
                         }
                         size={isCurrent ? 16 : 12}
                         color={
                           isFuture
-                            ? (isDark ? '#666666' : "#9CA3AF")
-                            : (isStepDeclined || isStepExpired || isStepFailed)
+                            ? isDark
+                              ? "#666666"
+                              : "#9CA3AF"
+                            : isStepDeclined || isStepExpired || isStepFailed
                               ? "#FFFFFF"
                               : "#fff"
                         }
@@ -369,30 +462,38 @@ export default function DeliveryDetailScreen() {
                       { color: isDark ? colors.textMuted : "#94A3B8" },
                       isCurrent && {
                         color: isStepDeclined
-                          ? (isDark ? "#FCA5A5" : "#DC2626")
+                          ? isDark
+                            ? "#FCA5A5"
+                            : "#DC2626"
                           : isStepExpired
-                            ? (isDark ? "#FCD34D" : "#D97706")
+                            ? isDark
+                              ? "#FCD34D"
+                              : "#D97706"
                             : isStepFailed
-                              ? (isDark ? "#FCA5A5" : "#DC2626")
+                              ? isDark
+                                ? "#FCA5A5"
+                                : "#DC2626"
                               : isDeliveredCurrent
-                                ? (isDark ? "#86EFAC" : "#16A34A")
+                                ? isDark
+                                  ? "#86EFAC"
+                                  : "#16A34A"
                                 : "#F59E0B",
                         fontWeight: "900",
                       },
                     ]}
                   >
                     {isStepDeclined
-                      ? t('status.declined', 'Declined')
+                      ? t("status.declined", "Declined")
                       : isStepExpired
-                        ? t('status.expired', 'Expired')
+                        ? t("status.expired", "Expired")
                         : isStepFailed
-                          ? t('status.failed', 'Failed')
-                          : status === 'out_for_delivery'
-                            ? t('status.inTransit')
-                            : status === 'pending'
-                              ? t('status.assigned')
-                              : status === 'delivered'
-                                ? t('status.completed')
+                          ? t("status.failed", "Failed")
+                          : status === "out_for_delivery"
+                            ? t("status.inTransit")
+                            : status === "pending"
+                              ? t("status.assigned")
+                              : status === "delivered"
+                                ? t("status.completed")
                                 : t(`status.${status}`)}
                   </Text>
                 </View>
@@ -404,15 +505,29 @@ export default function DeliveryDetailScreen() {
         {/* --- NEW: DECLINE BUTTON SECTION --- */}
         {canDecline && (
           <TouchableOpacity
-            style={[styles.declineBtn, {
-              backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
-              borderColor: isDark ? '#5C2626' : '#FECACA',
-            }]}
+            style={[
+              styles.declineBtn,
+              {
+                backgroundColor: isDark ? "#3D1A1A" : "#FEF2F2",
+                borderColor: isDark ? "#5C2626" : "#FECACA",
+              },
+            ]}
             onPress={() => setDeclineModalVisible(true)}
             activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="close-circle-outline" size={20} color={isDark ? '#FCA5A5' : '#DC2626'} />
-            <Text style={[styles.declineBtnText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('declineAssignment')}</Text>
+            <MaterialCommunityIcons
+              name="close-circle-outline"
+              size={20}
+              color={isDark ? "#FCA5A5" : "#DC2626"}
+            />
+            <Text
+              style={[
+                styles.declineBtnText,
+                { color: isDark ? "#FCA5A5" : "#DC2626" },
+              ]}
+            >
+              {t("declineAssignment")}
+            </Text>
           </TouchableOpacity>
         )}
 
@@ -421,24 +536,44 @@ export default function DeliveryDetailScreen() {
           <View
             style={[
               styles.miniCard,
-              { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 },
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: isDark ? 1 : 0,
+              },
               { borderLeftColor: brand, borderLeftWidth: 4 },
             ]}
           >
-            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>{t('pickupFrom')}</Text>
-            <Text style={[styles.miniTitle, { color: colors.text }]} numberOfLines={1}>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>
+              {t("pickupFrom")}
+            </Text>
+            <Text
+              style={[styles.miniTitle, { color: colors.text }]}
+              numberOfLines={1}
+            >
               {companyName}
             </Text>
-            <TouchableOpacity style={[styles.miniAction, { backgroundColor: isDark ? '#1A1A1A' : '#6750A410' }]}>
+            <TouchableOpacity
+              style={[
+                styles.miniAction,
+                { backgroundColor: isDark ? "#1A1A1A" : "#6750A4" },
+              ]}
+            >
               <Text style={[styles.miniActionText, { color: brand }]}>
-                {isAmharic ? t('store') : delivery.vendor_order_detail.company.business_type}
+                {isAmharic
+                  ? t("store")
+                  : delivery.vendor_order_detail.company.business_type}
               </Text>
             </TouchableOpacity>
           </View>
           <View
             style={[
               styles.miniCard,
-              { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 },
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: isDark ? 1 : 0,
+              },
               {
                 borderLeftColor: "#10B981",
                 borderLeftWidth: 4,
@@ -446,7 +581,9 @@ export default function DeliveryDetailScreen() {
               },
             ]}
           >
-            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>{t('deliverTo')}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>
+              {t("deliverTo")}
+            </Text>
             <View
               style={{
                 flexDirection: "row",
@@ -461,11 +598,19 @@ export default function DeliveryDetailScreen() {
                   style={styles.customerImage}
                 />
               ) : (
-                <View style={[styles.customerImage, { backgroundColor: isDark ? '#1A1A1A' : 'transparent' }]}>
+                <View
+                  style={[
+                    styles.customerImage,
+                    { backgroundColor: isDark ? "#1A1A1A" : "transparent" },
+                  ]}
+                >
                   <MaterialIcons name="person" size={24} color="#10B981" />
                 </View>
               )}
-              <Text style={[styles.miniTitle, { color: colors.text }]} numberOfLines={1}>
+              <Text
+                style={[styles.miniTitle, { color: colors.text }]}
+                numberOfLines={1}
+              >
                 {customerName}
               </Text>
             </View>
@@ -480,7 +625,9 @@ export default function DeliveryDetailScreen() {
                     borderRadius: 144,
                   },
                 ]}
-                onPress={() => Linking.openURL(`tel:${delivery.customer_phone}`)}
+                onPress={() =>
+                  Linking.openURL(`tel:${delivery.customer_phone}`)
+                }
               >
                 <Ionicons name="call" size={14} color="#ffffff" />
               </TouchableOpacity>
@@ -489,12 +636,26 @@ export default function DeliveryDetailScreen() {
         </View>
 
         {/* --- ITEM LIST --- */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: isDark ? 1 : 0,
+            },
+          ]}
+        >
           <View style={styles.cardHeaderRow}>
             <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
-              {t('orderItems', { count: orderDetail?.items?.length || 0 })}
+              {t("orderItems", { count: orderDetail?.items?.length || 0 })}
             </Text>
-            <View style={[styles.categoryBadge, { backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9' }]}>
+            <View
+              style={[
+                styles.categoryBadge,
+                { backgroundColor: isDark ? "#1A1A1A" : "#F1F5F9" },
+              ]}
+            >
               <Text style={[styles.categoryText, { color: colors.textMuted }]}>
                 {subCategoryName}
               </Text>
@@ -518,12 +679,19 @@ export default function DeliveryDetailScreen() {
                     item.product_image ||
                     "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=200&auto=format&fit=crop",
                 }}
-                style={[styles.itemImage, { backgroundColor: isDark ? '#1A1A1A' : '#F8FAFC' }]}
+                style={[
+                  styles.itemImage,
+                  { backgroundColor: isDark ? "#1A1A1A" : "#F8FAFC" },
+                ]}
               />
               <View style={styles.itemInfo}>
-                <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
+                <Text style={[styles.itemTitle, { color: colors.text }]}>
+                  {item.title}
+                </Text>
                 <View style={styles.itemPriceRow}>
-                  <Text style={[styles.itemQty, { color: brand }]}>{t('qty')}: {item.qty}</Text>
+                  <Text style={[styles.itemQty, { color: brand }]}>
+                    {t("qty")}: {item.qty}
+                  </Text>
                   <Text style={[styles.itemPrice, { color: colors.text }]}>
                     {item.unit_price} {orderDetail?.tax_invoice?.currency}
                   </Text>
@@ -535,19 +703,26 @@ export default function DeliveryDetailScreen() {
           {/* --- BILLING SUMMARY --- */}
           <View style={[styles.billingSection, { borderTopColor: itemBorder }]}>
             <View style={styles.billingRow}>
-              <Text style={[styles.billingText, { color: colors.textMuted }]}>{t('subtotal')}</Text>
+              <Text style={[styles.billingText, { color: colors.textMuted }]}>
+                {t("subtotal")}
+              </Text>
               <Text style={[styles.billingValue, { color: colors.text }]}>
                 {orderDetail?.subtotal} {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
             <View style={styles.billingRow}>
-              <Text style={[styles.billingText, { color: colors.textMuted }]}>{t('deliveryFee')}</Text>
+              <Text style={[styles.billingText, { color: colors.textMuted }]}>
+                {t("deliveryFee")}
+              </Text>
               <Text style={[styles.billingValue, { color: colors.text }]}>
-                {orderDetail?.delivery_fee ?? delivery?.delivery_fee ?? "0.00"} {orderDetail?.tax_invoice?.currency}
+                {orderDetail?.delivery_fee ?? delivery?.delivery_fee ?? "0.00"}{" "}
+                {orderDetail?.tax_invoice?.currency}
               </Text>
             </View>
             <View style={[styles.billingRow, styles.totalRow]}>
-              <Text style={[styles.totalText, { color: colors.text }]}>{t('totalAmount')}</Text>
+              <Text style={[styles.totalText, { color: colors.text }]}>
+                {t("totalAmount")}
+              </Text>
               <Text style={[styles.totalValue, { color: brand }]}>
                 {orderDetail?.amount} {orderDetail?.tax_invoice?.currency}
               </Text>
@@ -562,34 +737,53 @@ export default function DeliveryDetailScreen() {
       {["out_for_delivery", "pending"].includes(delivery.status) && (
         <TouchableOpacity
           onPress={() => {
-            const isPending = delivery.status === 'pending';
+            const isPending = delivery.status === "pending";
             const url = isPending
               ? `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}&viewOnly=true`
               : `/delivery/tracking?id=${delivery.id}&order_id=${delivery.vendor_order}`;
             router.push(url);
           }}
-          style={[styles.trackingFloatingBtn, { 
-            bottom: 120 + insets.bottom,
-            backgroundColor: brand,
-            shadowColor: isDark ? 'transparent' : '#6750A4',
-          }]}
+          style={[
+            styles.trackingFloatingBtn,
+            {
+              bottom: 120 + insets.bottom,
+              backgroundColor: brand,
+              shadowColor: isDark ? "transparent" : "#6750A4",
+            },
+          ]}
         >
-          <FontAwesome6 name="route" size={18} color={isDark ? '#000000' : "#fff"} />
-          <Text style={[styles.trackingFloatingText, { color: isDark ? '#000000' : '#fff' }]}>
-            {delivery.status === 'pending' ? t('viewDirection') : t('trackOrder')}
+          <FontAwesome6
+            name="route"
+            size={18}
+            color={isDark ? "#000000" : "#fff"}
+          />
+          <Text
+            style={[
+              styles.trackingFloatingText,
+              { color: isDark ? "#000000" : "#fff" },
+            ]}
+          >
+            {delivery.status === "pending"
+              ? t("viewDirection")
+              : t("trackOrder")}
           </Text>
         </TouchableOpacity>
       )}
 
       {/* --- BOTTOM ACTION HUB --- */}
       {hasBottomActions && (
-        <View style={[styles.bottomHub, {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-          borderTopWidth: isDark ? 1 : 0,
-          paddingBottom: 20 + insets.bottom,
-          paddingTop: 20
-        }]}>
+        <View
+          style={[
+            styles.bottomHub,
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              borderTopWidth: isDark ? 1 : 0,
+              paddingBottom: 20 + insets.bottom,
+              paddingTop: 20,
+            },
+          ]}
+        >
           {action && (
             <SlideToConfirm
               label={t(`actions.${delivery.status}`)}
@@ -609,42 +803,74 @@ export default function DeliveryDetailScreen() {
         animationType="fade"
         onRequestClose={() => setDeclineModalVisible(false)}
       >
-        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
-            <View style={[styles.modalIconWrapper, { backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2' }]}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={isDark ? '#FCA5A5' : '#DC2626'} />
+        <View
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+        >
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: isDark ? 1 : 0,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.modalIconWrapper,
+                { backgroundColor: isDark ? "#3D1A1A" : "#FEF2F2" },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={32}
+                color={isDark ? "#FCA5A5" : "#DC2626"}
+              />
             </View>
-            
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('declineModalTitle')}</Text>
+
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t("declineModalTitle")}
+            </Text>
             <Text style={[styles.modalMessage, { color: colors.textMuted }]}>
-              {t('declineModalMessage')}
+              {t("declineModalMessage")}
             </Text>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalCancelBtn, { backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9', borderColor: colors.border }]}
+                style={[
+                  styles.modalCancelBtn,
+                  {
+                    backgroundColor: isDark ? "#1A1A1A" : "#F1F5F9",
+                    borderColor: colors.border,
+                  },
+                ]}
                 onPress={() => setDeclineModalVisible(false)}
                 disabled={isDeclining}
               >
-                <Text style={[styles.modalCancelText, { color: colors.text }]}>{t('cancel')}</Text>
+                <Text style={[styles.modalCancelText, { color: colors.text }]}>
+                  {t("cancel")}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalConfirmBtn, { backgroundColor: isDark ? '#B91C1C' : '#DC2626' }]}
+                style={[
+                  styles.modalConfirmBtn,
+                  { backgroundColor: isDark ? "#B91C1C" : "#DC2626" },
+                ]}
                 onPress={confirmDecline}
                 disabled={isDeclining}
               >
                 {isDeclining ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>{t('yesDecline')}</Text>
+                  <Text style={styles.modalConfirmText}>{t("yesDecline")}</Text>
                 )}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
@@ -652,7 +878,7 @@ export default function DeliveryDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC"
+    backgroundColor: "#F8FAFC",
   },
   loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 
@@ -694,7 +920,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 35,
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 16,
-    position: "relative"
+    position: "relative",
   },
 
   // Card System
@@ -731,21 +957,21 @@ const styles = StyleSheet.create({
 
   // NEW: Decline Button
   declineBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEF2F2',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: "#FECACA",
     borderRadius: 16,
     paddingVertical: 14,
     marginBottom: 12,
     gap: 8,
   },
   declineBtnText: {
-    color: '#DC2626',
+    color: "#DC2626",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 
   // Dual Cards
@@ -831,7 +1057,7 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     marginTop: 4,
     fontWeight: "600",
-    textAlign: "center"
+    textAlign: "center",
   },
 
   // Item List
@@ -935,72 +1161,72 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 24,
     padding: 24,
-    width: '100%',
+    width: "100%",
     maxWidth: 340,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalIconWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FEF2F2',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#FEF2F2",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#1E293B',
+    fontWeight: "800",
+    color: "#1E293B",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalMessage: {
     fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
+    color: "#64748B",
+    textAlign: "center",
     lineHeight: 20,
     marginBottom: 24,
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    width: '100%',
+    width: "100%",
   },
   modalCancelBtn: {
     flex: 1,
     height: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalCancelText: {
-    color: '#64748B',
+    color: "#64748B",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   modalConfirmBtn: {
     flex: 1,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#DC2626',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#DC2626",
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalConfirmText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

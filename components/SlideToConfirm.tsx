@@ -131,7 +131,7 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : color + '20',
+          backgroundColor: isDark ? '6750A4' : color + '20',
           borderColor: isDark ? colors.border : 'transparent',
           borderWidth: isDark ? 1 : 0,
         },

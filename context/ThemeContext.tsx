@@ -40,8 +40,9 @@ export const palettes: Record<"light" | "dark", Palette> = {
     text: "#F5F5F7",
     textMuted: "#9CA3AF",
     border: "#2A2A33",
-    primary: "#B8A6E0", // Lighter purple for dark mode
-    primarySoft: "rgba(184, 166, 224, 0.15)",
+    primary: "#6750A4", // Lighter purple for dark mode
+  
+primarySoft: "rgba(103, 80, 164, 0.12)",
     onPrimary: "#0B0B0F",
     danger: "#F87171",
     success: "#4ADE80",

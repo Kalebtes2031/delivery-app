@@ -36,7 +36,7 @@ export default function OrderEarningDetailModal({
   const isAmharic = i18n.language?.startsWith('am');
 
   // ─── Dark-mode aware design tokens ───────────────────────────────
-  const brand = isDark ? '#FFFFFF' : '#6750A4';
+  const brand = isDark ? '#6750A4' : '#6750A4';
   const brandSoftBg = isDark ? '#222222' : '#F5F3FF';
   const brandBorder = isDark ? '#333333' : '#DDD6FE';
   const sectionBg = isDark ? '#1A1A1A' : '#F8FAFC';
@@ -46,7 +46,7 @@ export default function OrderEarningDetailModal({
   const iconCircleBg = isDark ? '#1A1A1A' : '#FFFFFF';
   const closeBtnBg = isDark ? '#222222' : '#F1F5F9';
   const closeBtnIcon = isDark ? '#FFFFFF' : '#64748B';
-  const heroBg = isDark ? '#000000' : '#6750A4';
+  const heroBg = isDark ? '#0000002a' : '#6750A4';
 
   if (!order) return null;
 

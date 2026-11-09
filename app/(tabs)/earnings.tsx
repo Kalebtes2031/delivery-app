@@ -52,16 +52,16 @@ export default function EarningsScreen() {
   const [payoutModalVisible, setPayoutModalVisible] = useState(false);
 
   // ─── Dark-mode aware design tokens ───────────────────────────────
-  const brand = isDark ? '#A78BFA' : '#6750A4';
+  const brand = isDark ? '#6750A4' : '#6750A4';
   const brandBg = isDark ? '#2A1F3D' : '#F3E8FF';
   const brandSoftBg = isDark ? '#1E1730' : '#F3E8FF';
   const brandBorder = isDark ? '#3D2E5C' : '#E8DFF5';
-  const brandText = isDark ? '#C4B5FD' : '#6750A4';
+  const brandText = isDark ? '#6750A4' : '#6750A4';
   const surfaceAlt = isDark ? '#1A1525' : '#F8FAFC';
   const surfaceMuted = isDark ? '#221A33' : '#F1F5F9';
   const lightBorder = isDark ? colors.border : '#F1F5F9';
   const cardBorder = isDark ? colors.border : '#E2E8F0';
-  const heroBg = isDark ? '#000' : '#6750A4';
+  const heroBg = isDark ? '#0000006b' : '#6750A4';
   const heroShadow = isDark ? '#6750A4' : '#6750A4';
 
   // Fetch earnings & payouts data
@@ -271,8 +271,8 @@ export default function EarningsScreen() {
             backgroundColor: isDark ? '#2A1F3D' : '#F5F3FF',
             borderColor: isDark ? '#3D2E5C' : '#DDD6FE',
           }]}>
-            <MaterialCommunityIcons name="cellphone-check" size={12} color={isDark ? '#C4B5FD' : '#7C3AED'} style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: isDark ? '#C4B5FD' : '#7C3AED' }]}>
+            <MaterialCommunityIcons name="cellphone-check" size={12} color={isDark ? '#6750A4' : '#7C3AED'} style={{ marginRight: 4 }} />
+            <Text style={[styles.paymentBadgeText, { color: isDark ? '#6750A4' : '#7C3AED' }]}>
               {t('paymentTelebirr', 'Telebirr')}
             </Text>
           </View>
@@ -859,7 +859,7 @@ export default function EarningsScreen() {
 
             {/* Primary Hero Financial Card */}
             <View style={[styles.heroCard, { backgroundColor: heroBg, shadowColor: heroShadow ,borderColor: isDark ? colors.border : '#EDE9FE'} ]}>
-              <Text style={[styles.heroLabel, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}>{getPeriodLabel()}</Text>
+              <Text style={[styles.heroLabel, { color: isDark ? '#6750A4' : '#E9D5FF' }]}>{getPeriodLabel()}</Text>
 
               <View style={styles.heroAmountRow}>
                 <Text style={[styles.heroCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
@@ -877,12 +877,12 @@ export default function EarningsScreen() {
               <View style={[styles.heroSettlementRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255, 255, 255, 0.15)' }]}>
                 <View style={styles.heroSettlementCol}>
                   <View style={styles.heroSettlementIconRow}>
-                    <MaterialCommunityIcons name="clock-outline" size={13} color={isDark ? '#C4B5FD' : '#E9D5FF'} />
+                    <MaterialCommunityIcons name="clock-outline" size={13} color={isDark ? '#6750A4' : '#E9D5FF'} />
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.75}
-                      style={[styles.heroSettlementLabel, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
+                      style={[styles.heroSettlementLabel, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
                     >
                       {t('unpaidBalance', 'Unpaid Balance')}
                     </Text>
@@ -891,7 +891,7 @@ export default function EarningsScreen() {
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    style={[styles.heroSettlementValueUnpaid, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
+                    style={[styles.heroSettlementValueUnpaid, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
                   >
                     {formatMoney(summary?.unpaid_balance ?? '0.00')}{' '}
                     <Text style={[styles.heroSettlementCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
@@ -902,12 +902,12 @@ export default function EarningsScreen() {
 
                 <View style={styles.heroSettlementCol}>
                   <View style={styles.heroSettlementIconRow}>
-                    <Ionicons name="checkmark-done-circle-outline" size={13} color={isDark ? '#C4B5FD' : '#E9D5FF'} />
+                    <Ionicons name="checkmark-done-circle-outline" size={13} color={isDark ? '#6750A4' : '#E9D5FF'} />
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.75}
-                      style={[styles.heroSettlementLabel, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
+                      style={[styles.heroSettlementLabel, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
                     >
                       {t('totalPaidOut', 'Settled Payouts')}
                     </Text>
@@ -916,7 +916,7 @@ export default function EarningsScreen() {
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    style={[styles.heroSettlementValuePaid, { color: isDark ? '#C4B5FD' : '#E9D5FF' }]}
+                    style={[styles.heroSettlementValuePaid, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
                   >
                     {formatMoney(summary?.total_paid_out ?? '0.00')}{' '}
                     <Text style={[styles.heroSettlementCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>

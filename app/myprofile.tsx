@@ -1,28 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
+import BackButton from "@/components/BackButton";
+import { useAuth } from "@/context/AuthContext";
+import { useAppTheme } from "@/context/ThemeContext";
 import {
-  View,
-  Text,
-  TouchableOpacity,
+  changePassword as changePasswordApi,
+  updateProfile,
+} from "@/services/api";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
-  ScrollView,
-  Image,
+  Text,
   TextInput,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  Animated,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { updateProfile, changePassword as changePasswordApi } from '@/services/api';
-import BackButton from '@/components/BackButton';
-import { useTranslation } from 'react-i18next';
-import { useAppTheme } from '@/context/ThemeContext';
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // --- Modern Success Modal Component ---
 interface SuccessModalProps {
@@ -33,7 +36,13 @@ interface SuccessModalProps {
   t?: (key: string) => string;
 }
 
-const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalProps) => {
+const SuccessModal = ({
+  visible,
+  message,
+  subtitle,
+  onClose,
+  t,
+}: SuccessModalProps) => {
   const { colors, isDark } = useAppTheme();
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -63,12 +72,12 @@ const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalPr
 
   return (
     <Modal transparent visible={visible} animationType="none">
-      <TouchableOpacity 
-        style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+        activeOpacity={1}
         onPress={onClose}
       >
-        <Animated.View 
+        <Animated.View
           style={[
             styles.modalContainer,
             {
@@ -77,25 +86,43 @@ const SuccessModal = ({ visible, message, subtitle, onClose, t }: SuccessModalPr
               borderWidth: isDark ? 1 : 0,
               opacity: opacityAnim,
               transform: [{ scale: scaleAnim }],
-            }
+            },
           ]}
         >
           {/* Success Icon */}
           <View style={styles.successIconWrapper}>
-            <View style={[styles.successIconGradient, { backgroundColor: '#10B981' }]}>
-  <Ionicons name="checkmark" size={40} color="white" />
-</View>
+            <View
+              style={[
+                styles.successIconGradient,
+                { backgroundColor: "#10B981" },
+              ]}
+            >
+              <Ionicons name="checkmark" size={40} color="white" />
+            </View>
           </View>
 
           {/* Content */}
-          <Text style={[styles.modalTitle, { color: colors.text }]}>{message}</Text>
-          {subtitle && <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
+          <Text style={[styles.modalTitle, { color: colors.text }]}>
+            {message}
+          </Text>
+          {subtitle && (
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+              {subtitle}
+            </Text>
+          )}
 
           {/* Action Button */}
           <TouchableOpacity onPress={onClose} style={styles.modalButton}>
-<View style={[styles.modalButtonGradient, { backgroundColor: colors.primary }]}>
-<Text style={styles.modalButtonText}>{t ? t('gotIt') : 'Got it'}</Text>
-</View>
+            <View
+              style={[
+                styles.modalButtonGradient,
+                { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={styles.modalButtonText}>
+                {t ? t("gotIt") : "Got it"}
+              </Text>
+            </View>
           </TouchableOpacity>
         </Animated.View>
       </TouchableOpacity>
@@ -108,24 +135,24 @@ export default function MyProfileScreen() {
   const { colors, isDark } = useAppTheme();
   const { user, refreshUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
-  const { t } = useTranslation("profile"); 
-    // Success Modal State
+  const { t } = useTranslation("profile");
+  // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [successSubtitle, setSuccessSubtitle] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
+  const [successSubtitle, setSuccessSubtitle] = useState("");
 
   // Profile Form State
   const [profileForm, setProfileForm] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
-    phone_number: user?.phone_number || '',
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    phone_number: user?.phone_number || "",
   });
 
   // Password Form State
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -133,26 +160,26 @@ export default function MyProfileScreen() {
   useEffect(() => {
     if (user) {
       setProfileForm({
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        phone_number: user.phone_number || '',
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        phone_number: user.phone_number || "",
       });
     }
   }, [user]);
 
   const clearError = (field: string) => {
     if (errors[field]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const next = { ...prev };
         delete next[field];
         return next;
       });
     }
   };
-    // Function to show success modal
+  // Function to show success modal
   const showSuccess = (message: string, subtitle?: string) => {
     setSuccessMessage(message);
-    setSuccessSubtitle(subtitle || '');
+    setSuccessSubtitle(subtitle || "");
     setShowSuccessModal(true);
   };
 
@@ -172,40 +199,44 @@ export default function MyProfileScreen() {
 
   const handleImageUpdate = async (uri: string) => {
     setIsUpdating(true);
-    setErrors(prev => ({ ...prev, profile_image: '' }));
+    setErrors((prev) => ({ ...prev, profile_image: "" }));
     try {
       const formData = new FormData();
-      const filename = uri.split('/').pop() || 'profile.jpg';
+      const filename = uri.split("/").pop() || "profile.jpg";
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : `image/jpg`;
 
       // @ts-ignore
-      formData.append('profile_image', { uri, name: filename, type });
+      formData.append("profile_image", { uri, name: filename, type });
 
       await updateProfile(formData);
       await refreshUser();
     } catch (error: any) {
-      setErrors(prev => ({ ...prev, profile_image: t('profile_update_failed') }));
+      setErrors((prev) => ({
+        ...prev,
+        profile_image: t("profile_update_failed"),
+      }));
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const isProfileChanged = 
-    profileForm.first_name !== (user?.first_name || '') ||
-    profileForm.last_name !== (user?.last_name || '') ||
-    profileForm.phone_number !== (user?.phone_number || '');
+  const isProfileChanged =
+    profileForm.first_name !== (user?.first_name || "") ||
+    profileForm.last_name !== (user?.last_name || "") ||
+    profileForm.phone_number !== (user?.phone_number || "");
 
-  const isPasswordFilled = 
+  const isPasswordFilled =
     passwordForm.currentPassword.length > 0 &&
     passwordForm.newPassword.length > 0 &&
     passwordForm.confirmPassword.length > 0;
 
   const handleProfileSave = async () => {
     const newErrors: Record<string, string> = {};
-    if (!profileForm.first_name) newErrors.first_name = t('first_name_required');
-    if (!profileForm.last_name) newErrors.last_name = t('last_name_required');
-    
+    if (!profileForm.first_name)
+      newErrors.first_name = t("first_name_required");
+    if (!profileForm.last_name) newErrors.last_name = t("last_name_required");
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -215,12 +246,9 @@ export default function MyProfileScreen() {
     try {
       await updateProfile(profileForm);
       await refreshUser();
-showSuccess(
-  t('success') + '! 🎉',
-  t('profile_updated')
-);
+      showSuccess(t("success") + "! 🎉", t("profile_updated"));
     } catch (error: any) {
-      setErrors({ profile_general: t('profile_update_failed') });
+      setErrors({ profile_general: t("profile_update_failed") });
     } finally {
       setIsUpdating(false);
     }
@@ -231,11 +259,11 @@ showSuccess(
     const newErrors: Record<string, string> = {};
 
     if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = t('passwords_do_not_match');
+      newErrors.confirmPassword = t("passwords_do_not_match");
     }
 
     if (newPassword.length < 8) {
-      newErrors.newPassword = t('password_min_length'); // note: Amharic says 6, adjust if needed
+      newErrors.newPassword = t("password_min_length"); // note: Amharic says 6, adjust if needed
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -246,15 +274,20 @@ showSuccess(
     setIsUpdating(true);
     try {
       await changePasswordApi(currentPassword, newPassword);
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      showSuccess(
-  t('success') + '! 🔐',
-  t('password_changed')
-);
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      showSuccess(t("success") + "! 🔐", t("password_changed"));
     } catch (error: any) {
-      let detail = error.response?.data?.detail || error.response?.data?.current_password?.[0] || error.response?.data?.non_field_errors?.[0] || t('password_change_failed');
-      if (typeof detail === 'string' && /invalid password/i.test(detail)) {
-        detail = t('invalid_password');
+      let detail =
+        error.response?.data?.detail ||
+        error.response?.data?.current_password?.[0] ||
+        error.response?.data?.non_field_errors?.[0] ||
+        t("password_change_failed");
+      if (typeof detail === "string" && /invalid password/i.test(detail)) {
+        detail = t("invalid_password");
       }
       setErrors({ currentPassword: detail });
     } finally {
@@ -263,134 +296,196 @@ showSuccess(
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-      
-      <BackButton title={t('edit_profile')} color='white' />
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <BackButton title={t("edit_profile")} color="white" />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          
-          <TouchableOpacity style={styles.avatarContainer} onPress={pickImage} disabled={isUpdating}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            onPress={pickImage}
+            disabled={isUpdating}
+          >
             {user?.profile_image ? (
-              <Image source={{ uri: user.profile_image }} style={styles.avatar} />
+              <Image
+                source={{ uri: user.profile_image }}
+                style={styles.avatar}
+              />
             ) : (
               <View style={styles.placeholderAvatar}>
-                <Text style={styles.avatarInitial}>{user?.first_name?.[0] || user?.username?.[0]}</Text>
+                <Text style={styles.avatarInitial}>
+                  {user?.first_name?.[0] || user?.username?.[0]}
+                </Text>
               </View>
             )}
             <View style={styles.cameraBadge}>
               <Feather name="camera" size={16} color="#fff" />
             </View>
-            {isUpdating && <View style={styles.overlay}><ActivityIndicator color="#fff" /></View>}
+            {isUpdating && (
+              <View style={styles.overlay}>
+                <ActivityIndicator color="#fff" />
+              </View>
+            )}
           </TouchableOpacity>
-          {errors.profile_image && <Text  style={styles.errorTextCenter}>{errors.profile_image}</Text>}
+          {errors.profile_image && (
+            <Text style={styles.errorTextCenter}>{errors.profile_image}</Text>
+          )}
 
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: isDark ? colors.text : colors.primary }]}>{t('personal_information')}</Text>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
-              <InputGroup 
-                label={t('first_name')} 
-                value={profileForm.first_name} 
+            <Text
+              style={[
+                styles.sectionLabel,
+                { color: isDark ? colors.text : colors.primary },
+              ]}
+            >
+              {t("personal_information")}
+            </Text>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderWidth: isDark ? 1 : 0,
+                },
+              ]}
+            >
+              <InputGroup
+                label={t("first_name")}
+                value={profileForm.first_name}
                 onChangeText={(t_val: string) => {
-                  setProfileForm({...profileForm, first_name: t_val});
-                  clearError('first_name');
-                }} 
+                  setProfileForm({ ...profileForm, first_name: t_val });
+                  clearError("first_name");
+                }}
                 error={errors.first_name}
               />
-              <InputGroup 
-                label={t('last_name')} 
-                value={profileForm.last_name} 
+              <InputGroup
+                label={t("last_name")}
+                value={profileForm.last_name}
                 onChangeText={(t_val: string) => {
-                  setProfileForm({...profileForm, last_name: t_val});
-                  clearError('last_name');
-                }} 
+                  setProfileForm({ ...profileForm, last_name: t_val });
+                  clearError("last_name");
+                }}
                 error={errors.last_name}
               />
-              <InputGroup 
-                label={t('phone_number')} 
-                value={profileForm.phone_number} 
+              <InputGroup
+                label={t("phone_number")}
+                value={profileForm.phone_number}
                 onChangeText={(t_val: string) => {
-                  setProfileForm({...profileForm, phone_number: t_val});
-                  clearError('phone_number');
-                }} 
+                  setProfileForm({ ...profileForm, phone_number: t_val });
+                  clearError("phone_number");
+                }}
                 keyboardType="phone-pad"
                 error={errors.phone_number}
               />
-              {errors.profile_general && <Text style={styles.errorTextBottom}>{errors.profile_general}</Text>}
-              <TouchableOpacity 
+              {errors.profile_general && (
+                <Text style={styles.errorTextBottom}>
+                  {errors.profile_general}
+                </Text>
+              )}
+              <TouchableOpacity
                 style={[
-                  styles.primaryBtn, 
-                  (!isProfileChanged || isUpdating) && styles.disabledBtn
-                ]} 
-                onPress={handleProfileSave} 
+                  styles.primaryBtn,
+                  (!isProfileChanged || isUpdating) && styles.disabledBtn,
+                ]}
+                onPress={handleProfileSave}
                 disabled={!isProfileChanged || isUpdating}
               >
-                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('update_profile')}</Text>}
+                {isUpdating ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.btnText}>{t("update_profile")}</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: isDark ? colors.text : colors.primary }]}>{t('change_password')}</Text>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
-              <InputGroup 
-                label={t('current_password')} 
-                secureTextEntry 
+            <Text
+              style={[
+                styles.sectionLabel,
+                { color: isDark ? colors.text : colors.primary },
+              ]}
+            >
+              {t("change_password")}
+            </Text>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderWidth: isDark ? 1 : 0,
+                },
+              ]}
+            >
+              <InputGroup
+                label={t("current_password")}
+                secureTextEntry
                 value={passwordForm.currentPassword}
                 onChangeText={(t_val: string) => {
-                  setPasswordForm({...passwordForm, currentPassword: t_val});
-                  clearError('currentPassword');
+                  setPasswordForm({ ...passwordForm, currentPassword: t_val });
+                  clearError("currentPassword");
                 }}
                 error={errors.currentPassword}
               />
               <View style={styles.divider} />
-              <InputGroup 
-                label={t('new_password')} 
-                secureTextEntry 
+              <InputGroup
+                label={t("new_password")}
+                secureTextEntry
                 value={passwordForm.newPassword}
                 onChangeText={(t_val: string) => {
-                  setPasswordForm({...passwordForm, newPassword: t_val});
-                  clearError('newPassword');
+                  setPasswordForm({ ...passwordForm, newPassword: t_val });
+                  clearError("newPassword");
                 }}
                 error={errors.newPassword}
               />
-              <InputGroup 
-                label={t('confirm_password')} 
-                secureTextEntry 
+              <InputGroup
+                label={t("confirm_password")}
+                secureTextEntry
                 value={passwordForm.confirmPassword}
                 onChangeText={(t_val: string) => {
-                  setPasswordForm({...passwordForm, confirmPassword: t_val});
-                  clearError('confirmPassword');
+                  setPasswordForm({ ...passwordForm, confirmPassword: t_val });
+                  clearError("confirmPassword");
                 }}
                 error={errors.confirmPassword}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.primaryBtn, 
-                  (!isPasswordFilled || isUpdating) && styles.disabledBtn
-                ]} 
-                onPress={handlePasswordUpdate} 
+                  styles.primaryBtn,
+                  (!isPasswordFilled || isUpdating) && styles.disabledBtn,
+                ]}
+                onPress={handlePasswordUpdate}
                 disabled={!isPasswordFilled || isUpdating}
               >
-                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('change_password')}</Text>}
+                {isUpdating ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.btnText}>{t("change_password")}</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
-            {/* Success Modal */}
-<SuccessModal
-  visible={showSuccessModal}
-  message={successMessage}
-  subtitle={successSubtitle}
-  onClose={() => setShowSuccessModal(false)}
-  t={t}
-/>
+      {/* Success Modal */}
+      <SuccessModal
+        visible={showSuccessModal}
+        message={successMessage}
+        subtitle={successSubtitle}
+        onClose={() => setShowSuccessModal(false)}
+        t={t}
+      />
     </SafeAreaView>
   );
 }
@@ -403,32 +498,39 @@ const InputGroup = ({ label, secureTextEntry, error, ...props }: any) => {
 
   return (
     <View style={styles.inputBox}>
-      <Text style={[styles.inputLabel, { color: isDark ? colors.text : colors.primary }]}>{label}</Text>
+      <Text
+        style={[
+          styles.inputLabel,
+          { color: isDark ? colors.text : colors.primary },
+        ]}
+      >
+        {label}
+      </Text>
       <View style={styles.inputWrapper}>
-        <TextInput 
+        <TextInput
           style={[
             styles.input,
             {
-              backgroundColor: isDark ? colors.surface : '#fff',
+              backgroundColor: isDark ? colors.surface : "#fff",
               color: colors.text,
               borderColor: isDark ? colors.border : colors.primary,
             },
-            error && styles.inputErrorBorder
-          ]} 
+            error && styles.inputErrorBorder,
+          ]}
           placeholder={label}
-          placeholderTextColor={colors.textMuted} 
+          placeholderTextColor={colors.textMuted}
           secureTextEntry={isPassword && !isPasswordVisible}
-          {...props} 
+          {...props}
         />
         {isPassword && (
-          <TouchableOpacity 
-            style={styles.eyeIcon} 
+          <TouchableOpacity
+            style={styles.eyeIcon}
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
           >
-            <Ionicons 
-              name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
-              size={20} 
-              color={colors.primary} 
+            <Ionicons
+              name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color={colors.primary}
             />
           </TouchableOpacity>
         )}
@@ -439,34 +541,39 @@ const InputGroup = ({ label, secureTextEntry, error, ...props }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
+  container: { flex: 1, backgroundColor: "#fff" },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+  },
+  headerTitle: { fontSize: 18, fontWeight: "800", color: "#1E293B" },
   scrollContent: { paddingHorizontal: 24, paddingTop: 4 },
-  avatarContainer: { alignSelf: 'center', marginBottom: 16 },
-    headerSection: {
-    alignItems: 'center',
+  avatarContainer: { alignSelf: "center", marginBottom: 16 },
+  headerSection: {
+    alignItems: "center",
     marginBottom: 24,
     paddingTop: 8,
   },
   profileName: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#6750A4',
+    fontWeight: "700",
+    color: "#6750A4",
     marginTop: 8,
     letterSpacing: -0.3,
   },
   profileEmail: {
     fontSize: 14,
-    color: '#9B8BB5',
-    fontWeight: '500',
+    color: "#6750A4",
+    fontWeight: "500",
     marginTop: 2,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: "#E8F5E9",
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 20,
@@ -476,82 +583,141 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22C55E',
+    backgroundColor: "#22C55E",
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#16A34A',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    color: "#16A34A",
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  avatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#E2E8F0' },
-  placeholderAvatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#6750A4', justifyContent: 'center', alignItems: 'center' },
-  avatarInitial: { fontSize: 36, color: '#fff', fontWeight: '800' },
-  cameraBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#6750A4', width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderWidth: 2.5, borderColor: '#F8FAFC' },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 60, justifyContent: 'center', alignItems: 'center' },
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "#E2E8F0",
+  },
+  placeholderAvatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "#6750A4",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitial: { fontSize: 36, color: "#fff", fontWeight: "800" },
+  cameraBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#6750A4",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2.5,
+    borderColor: "#F8FAFC",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   section: { marginBottom: 24 },
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: '#6750A4', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, marginLeft: 4 },
-  card: { backgroundColor: '#fff', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#6750A4",
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
   inputBox: { marginBottom: 16 },
-  inputLabel: { fontSize: 12, fontWeight: '700', color: '#6750A4', marginBottom: 6, marginLeft: 4 },
-  inputWrapper: { justifyContent: 'center' },
-  input: { 
-    backgroundColor: '#fff', 
-    borderRadius: 112, 
-    paddingHorizontal: 16, 
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6750A4",
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  inputWrapper: { justifyContent: "center" },
+  input: {
+    backgroundColor: "#fff",
+    borderRadius: 112,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 15, 
-    fontWeight: '600', 
-    color: '#1E293B', 
-    borderWidth: 1, 
-    borderColor: "#6750A4" 
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1E293B",
+    borderWidth: 1,
+    borderColor: "#6750A4",
   },
   inputErrorBorder: {
-    borderColor: '#EF4444',
+    borderColor: "#EF4444",
   },
   errorText: {
-    color: '#EF4444',
+    color: "#EF4444",
     fontSize: 11,
     marginTop: 4,
     marginLeft: 4,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   errorTextBottom: {
-    color: '#EF4444',
+    color: "#EF4444",
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   errorTextCenter: {
-    color: '#EF4444',
+    color: "#EF4444",
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  eyeIcon: { position: 'absolute', right: 16 },
-  primaryBtn: { backgroundColor: '#6750A4', borderRadius: 112, padding: 16, alignItems: 'center', marginTop: 8 },
-  disabledBtn: { backgroundColor: '#E2E8F0', opacity: 0.7 },
-  btnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 12 },
-    // Success Modal Styles
+  eyeIcon: { position: "absolute", right: 16 },
+  primaryBtn: {
+    backgroundColor: "#6750A4",
+    borderRadius: 112,
+    padding: 16,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  disabledBtn: { backgroundColor: "#E2E8F0", opacity: 0.7 },
+  btnText: { color: "#fff", fontSize: 15, fontWeight: "800" },
+  divider: { height: 1, backgroundColor: "#F1F5F9", marginVertical: 12 },
+  // Success Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 28,
     padding: 32,
-    width: '100%',
+    width: "100%",
     maxWidth: 340,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.15,
     shadowRadius: 30,
@@ -564,9 +730,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#10B981',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#10B981",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -574,31 +740,31 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#1E293B',
-    textAlign: 'center',
+    fontWeight: "800",
+    color: "#1E293B",
+    textAlign: "center",
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
+    color: "#64748B",
+    textAlign: "center",
     marginBottom: 28,
     lineHeight: 20,
   },
   modalButton: {
-    width: '100%',
+    width: "100%",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   modalButtonGradient: {
     paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

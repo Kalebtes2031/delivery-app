@@ -1,41 +1,36 @@
+import IncomingOrderModal from "@/components/IncomingOrderModal";
+import ToggleSwitch from "@/components/ToggleButton";
+import { STATUS_CONFIG, STATUS_ORDER } from "@/constants/deliveryConstants";
+import { useAuth } from "@/context/AuthContext";
+import { useDelivery } from "@/context/DeliveryContext";
+import { useAppTheme } from "@/context/ThemeContext";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
+import { updateDeliveryStatus } from "@/services/api";
+import { driverLocationService } from "@/services/driverLocationService";
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React, {
-  useState,
-  useEffect,
-  useRef,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
+  useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
+  Animated,
+  AppState,
   Dimensions,
   Image,
   RefreshControl,
-  Animated,
-  AppState,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import { useRouter, useFocusEffect } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { useDelivery } from "@/context/DeliveryContext";
-import {
-  Ionicons,
-  MaterialCommunityIcons,
-  FontAwesome6,
-  Feather,
-} from "@expo/vector-icons";
-import ToggleSwitch from "@/components/ToggleButton";
-import { STATUS_CONFIG, STATUS_ORDER } from "@/constants/deliveryConstants";
-import { useTranslation } from "react-i18next";
-import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
-import { driverLocationService } from "@/services/driverLocationService";
-import IncomingOrderModal from "@/components/IncomingOrderModal";
-import { updateDeliveryStatus } from "@/services/api";
-import { useAppTheme } from "@/context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -61,7 +56,7 @@ export default function HomeScreen() {
   const brandBg = isDark ? "#222222" : "#FAF5FF";
   const brandSoftBg = isDark ? "#1A1A1A" : "#F5F0FF";
   const brandBorder = isDark ? "#333333" : "#E8DFF5";
-  const brandText = isDark ? "#E5E5E5" : "#4C1D95";
+  const brandText = isDark ? "#E5E5E5" : "#6750A4";
   const surfaceAlt = isDark ? "#1A1A1A" : "#F8FAFC";
   const lightBorder = isDark ? "#2A2A2A" : "#F0F2F5";
   const summaryBorder = isDark ? "#2A2A2A" : "#cbd4e2";
@@ -581,7 +576,7 @@ export default function HomeScreen() {
                     style={{
                       fontSize: 13,
                       fontWeight: "700",
-                      color: isDark ? colors.text : "#4C1D95",
+                      color: isDark ? colors.text : "#6750A4",
                     }}
                   >
                     {t("ordersReadyToBatch", {
@@ -592,7 +587,7 @@ export default function HomeScreen() {
                   <Text
                     style={{
                       fontSize: 11,
-                      color: isDark ? colors.textMuted : "#6D28D9",
+                      color: isDark ? colors.textMuted : "#6750A4",
                     }}
                     numberOfLines={1}
                   >
@@ -993,7 +988,6 @@ export default function HomeScreen() {
                               {
                                 backgroundColor: isDark ? "#1A1A1A" : "#F1F5F9",
                                 borderColor: isDark ? "#333333" : "#E5E7EB",
-                                
                               },
                             ]}
                           >
@@ -1578,9 +1572,9 @@ const styles = StyleSheet.create({
     color: "#6750A4",
     marginBottom: 2,
   },
-  emptySub: {
-    fontSize: 13,
-    color: "#9B8BB5",
+emptySub: {
+  fontSize: 13,
+  color: "#6750A4",
     textAlign: "center",
     marginBottom: 12,
   },

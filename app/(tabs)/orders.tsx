@@ -1,31 +1,29 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  StyleSheet,
-  ScrollView,
-  Animated,
-  Modal,
-} from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAppTheme } from "@/context/ThemeContext";
-import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { STATUS_CONFIG, STATUS_TABS } from "@/constants/deliveryConstants";
 import { useAuth } from "@/context/AuthContext";
 import { useDelivery } from "@/context/DeliveryContext";
+import { useAppTheme } from "@/context/ThemeContext";
 import type { DeliveryAssignment, DeliveryStatus } from "@/types";
 import {
   Ionicons,
-  MaterialCommunityIcons,
-  FontAwesome5,
+  MaterialCommunityIcons
 } from "@expo/vector-icons";
-import ToggleSwitch from "@/components/ToggleButton";
-import { STATUS_TABS, STATUS_CONFIG } from "@/constants/deliveryConstants";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { updateDeliveryStatus } from "@/services/api";
@@ -33,10 +31,10 @@ import { updateDeliveryStatus } from "@/services/api";
 // Helper to get display label for status
 const getStatusLabel = (status: string): string => {
   const statusMap: Record<string, string> = {
-    'out_for_delivery': 'In Transit',
-    'pending': 'Assigned',
-    'failed': 'Failed',
-    'delivered': 'Completed',
+    out_for_delivery: "In Transit",
+    pending: "Assigned",
+    failed: "Failed",
+    delivered: "Completed",
   };
   return statusMap[status] || status;
 };
@@ -60,124 +58,151 @@ export default function OrdersScreen() {
   const isAmharic = i18n.language?.startsWith("am");
 
   // ─── Dark-mode aware design tokens ───────────────────────────────
-  const brand = isDark ? '#A78BFA' : '#6750A4';
-  const brandBg = isDark ? '#2A1F3D' : '#F3E8FF';
-  const brandBorder = isDark ? '#3D2E5C' : '#E8DFF5';
-  const surfaceMuted = isDark ? '#221A33' : '#F1F5F9';
-  const routeLineColor = isDark ? '#3D2E5C' : '#E2E8F0';
-  const addressLabelColor = isDark ? '#C4B5FD' : '#8B7BB5';
-  const addressTextColor = isDark ? '#94A3B8' : '#64748B';
-  const timeTextColor = isDark ? '#64748B' : '#94A3B8';
+  const brand = isDark ? "#A78BFA" : "#6750A4";
+  const brandBg = isDark ? "#2A1F3D" : "#F3E8FF";
+  const brandBorder = isDark ? "#3D2E5C" : "#E8DFF5";
+  const surfaceMuted = isDark ? "#221A33" : "#F1F5F9";
+  const routeLineColor = isDark ? "#3D2E5C" : "#E2E8F0";
+  const addressLabelColor = isDark ? "#6750A4" : "#8B7BB5";
+  const addressTextColor = isDark ? "#94A3B8" : "#64748B";
+  const timeTextColor = isDark ? "#64748B" : "#94A3B8";
 
   // Status badge border (invisible in dark with the old rgba(0,0,0,0.04))
-  const statusBadgeBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
+  const statusBadgeBorder = isDark
+    ? "rgba(255,255,255,0.08)"
+    : "rgba(0,0,0,0.04)";
 
   // Decline button (red-tinted, dark-aware)
-  const declineBtnBg = isDark ? '#3D1A1A' : '#FEF2F2';
-  const declineBtnBorder = isDark ? '#5C2626' : '#FECACA';
-  const declineBtnText = isDark ? '#FCA5A5' : '#DC2626';
+  const declineBtnBg = isDark ? "#3D1A1A" : "#FEF2F2";
+  const declineBtnBorder = isDark ? "#5C2626" : "#FECACA";
+  const declineBtnText = isDark ? "#FCA5A5" : "#DC2626";
 
   // Deliver-to clickable (dashed red-tinted)
-  const deliverToBorder = isDark ? '#4D2020' : '#f9d4d4';
-  const deliverToBg = isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.04)';
-  const locationPillBg = isDark ? '#2A1F3D' : '#FFFFFF';
-  const locationPillBorder = isDark ? '#5C2626' : '#FEE2E2';
-  const locationPillText = isDark ? '#FCA5A5' : '#EF4444';
+  const deliverToBorder = isDark ? "#4D2020" : "#f9d4d4";
+  const deliverToBg = isDark
+    ? "rgba(239, 68, 68, 0.08)"
+    : "rgba(239, 68, 68, 0.04)";
+  const locationPillBg = isDark ? "#2A1F3D" : "#FFFFFF";
+  const locationPillBorder = isDark ? "#5C2626" : "#FEE2E2";
+  const locationPillText = isDark ? "#FCA5A5" : "#EF4444";
 
   // Modal
-  const modalIconBg = isDark ? '#3D1A1A' : '#FEF2F2';
+  const modalIconBg = isDark ? "#3D1A1A" : "#FEF2F2";
 
   // ── State for Decline Modal ──
   const [declineModalVisible, setDeclineModalVisible] = useState(false);
-  const [orderToDecline, setOrderToDecline] = useState<DeliveryAssignment | null>(null);
+  const [orderToDecline, setOrderToDecline] =
+    useState<DeliveryAssignment | null>(null);
   const [isDeclining, setIsDeclining] = useState(false);
 
   // ── Get count for each status tab ──
-  const getStatusCount = useCallback((status: string | "all") => {
-    if (status === "all") {
-      return allDeliveries.length;
-    }
-    if (status === 'failed') {
-      return allDeliveries.filter((d) => isFailedDelivery(d)).length;
-    }
-    if (status === 'delivered') {
-      return allDeliveries.filter((d) => d.status === 'delivered' && !isFailedDelivery(d)).length;
-    }
-    if (status === 'declined') {
-      return allDeliveries.filter((d) => d.status === 'declined').length;
-    }
-    return allDeliveries.filter((d) => d.status === status).length;
-  }, [allDeliveries]);
+  const getStatusCount = useCallback(
+    (status: string | "all") => {
+      if (status === "all") {
+        return allDeliveries.length;
+      }
+      if (status === "failed") {
+        return allDeliveries.filter((d) => isFailedDelivery(d)).length;
+      }
+      if (status === "delivered") {
+        return allDeliveries.filter(
+          (d) => d.status === "delivered" && !isFailedDelivery(d),
+        ).length;
+      }
+      if (status === "declined") {
+        return allDeliveries.filter((d) => d.status === "declined").length;
+      }
+      return allDeliveries.filter((d) => d.status === status).length;
+    },
+    [allDeliveries],
+  );
 
   // State to store location names
-  const [locationNames, setLocationNames] = useState<Record<number, string>>({});
+  const [locationNames, setLocationNames] = useState<Record<number, string>>(
+    {},
+  );
   // State for loading locations
-  const [loadingLocations, setLoadingLocations] = useState<Record<number, boolean>>({});
+  const [loadingLocations, setLoadingLocations] = useState<
+    Record<number, boolean>
+  >({});
 
   // Helper to get location name from coordinates using OpenStreetMap
-  const getLocationName = useCallback(async (lat: string, lon: string, deliveryId: number) => {
-    if (locationNames[deliveryId]) return; // Already fetched
+  const getLocationName = useCallback(
+    async (lat: string, lon: string, deliveryId: number) => {
+      if (locationNames[deliveryId]) return; // Already fetched
 
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=16&addressdetails=1`;
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=16&addressdetails=1`;
 
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'DeliveryApp/1.0 (https://your-app.com)'
+        const response = await fetch(url, {
+          headers: {
+            "User-Agent": "DeliveryApp/1.0 (https://your-app.com)",
+          },
+        });
+
+        if (response.status === 429) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return getLocationName(lat, lon, deliveryId);
         }
-      });
 
-      if (response.status === 429) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return getLocationName(lat, lon, deliveryId);
-      }
+        const data = await response.json();
 
-      const data = await response.json();
+        if (data && data.display_name) {
+          let locationName = data.display_name;
 
-      if (data && data.display_name) {
-        let locationName = data.display_name;
-
-        if (data.address) {
-          const city = data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            data.address.suburb ||
-            data.address.neighbourhood;
-          if (city) {
-            locationName = city;
+          if (data.address) {
+            const city =
+              data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              data.address.suburb ||
+              data.address.neighbourhood;
+            if (city) {
+              locationName = city;
+            }
           }
-        }
 
-        if (locationName.length > 35) {
-          const parts = data.display_name.split(',');
-          locationName = parts.slice(0, 2).join(',').trim();
-        }
-
-        setLocationNames(prev => ({ ...prev, [deliveryId]: locationName }));
-      } else {
-        if (data && data.address) {
-          const addr = data.address;
-          const parts = [];
-          if (addr.road) parts.push(addr.road);
-          if (addr.suburb) parts.push(addr.suburb);
-          if (addr.city) parts.push(addr.city);
-          if (parts.length > 0) {
-            setLocationNames(prev => ({ ...prev, [deliveryId]: parts.join(', ') }));
-            return;
+          if (locationName.length > 35) {
+            const parts = data.display_name.split(",");
+            locationName = parts.slice(0, 2).join(",").trim();
           }
-        }
 
+          setLocationNames((prev) => ({ ...prev, [deliveryId]: locationName }));
+        } else {
+          if (data && data.address) {
+            const addr = data.address;
+            const parts = [];
+            if (addr.road) parts.push(addr.road);
+            if (addr.suburb) parts.push(addr.suburb);
+            if (addr.city) parts.push(addr.city);
+            if (parts.length > 0) {
+              setLocationNames((prev) => ({
+                ...prev,
+                [deliveryId]: parts.join(", "),
+              }));
+              return;
+            }
+          }
+
+          const latNum = parseFloat(lat).toFixed(4);
+          const lonNum = parseFloat(lon).toFixed(4);
+          setLocationNames((prev) => ({
+            ...prev,
+            [deliveryId]: `📍 ${latNum}, ${lonNum}`,
+          }));
+        }
+      } catch (error) {
+        console.log("Error fetching location name:", error);
         const latNum = parseFloat(lat).toFixed(4);
         const lonNum = parseFloat(lon).toFixed(4);
-        setLocationNames(prev => ({ ...prev, [deliveryId]: `📍 ${latNum}, ${lonNum}` }));
+        setLocationNames((prev) => ({
+          ...prev,
+          [deliveryId]: `📍 ${latNum}, ${lonNum}`,
+        }));
       }
-    } catch (error) {
-      console.log('Error fetching location name:', error);
-      const latNum = parseFloat(lat).toFixed(4);
-      const lonNum = parseFloat(lon).toFixed(4);
-      setLocationNames(prev => ({ ...prev, [deliveryId]: `📍 ${latNum}, ${lonNum}` }));
-    }
-  }, [locationNames]);
+    },
+    [locationNames],
+  );
 
   useEffect(() => {
     if (allDeliveries.length > 0) {
@@ -187,7 +212,7 @@ export default function OrdersScreen() {
             getLocationName(
               delivery.customer_lat,
               delivery.customer_lon,
-              delivery.id
+              delivery.id,
             );
           }, index * 300);
         }
@@ -201,8 +226,8 @@ export default function OrdersScreen() {
       params: {
         id: deliveryId.toString(),
         order_id: orderId.toString(),
-        viewOnly: "true"
-      }
+        viewOnly: "true",
+      },
     });
   };
 
@@ -230,7 +255,7 @@ export default function OrdersScreen() {
   useFocusEffect(
     useCallback(() => {
       resetAnimation();
-    }, [resetAnimation])
+    }, [resetAnimation]),
   );
 
   useEffect(() => {
@@ -238,43 +263,47 @@ export default function OrdersScreen() {
   }, [filter, resetAnimation]);
 
   const getEffectiveStatus = (delivery: DeliveryAssignment): DeliveryStatus => {
-    const deliveryStatus = delivery.status?.toLowerCase?.() || 'pending';
-    const orderStatus = (delivery as any)?.vendor_order_detail?.status?.toLowerCase?.() || '';
+    const deliveryStatus = delivery.status?.toLowerCase?.() || "pending";
+    const orderStatus =
+      (delivery as any)?.vendor_order_detail?.status?.toLowerCase?.() || "";
 
-    const isOrderFailed = ['cancelled', 'rejected', 'failed'].includes(orderStatus);
-    const hasFailureReason = !!(delivery as any)?.failure_reason ||
+    const isOrderFailed = ["cancelled", "rejected", "failed"].includes(
+      orderStatus,
+    );
+    const hasFailureReason =
+      !!(delivery as any)?.failure_reason ||
       !!(delivery as any)?.cancellation_reason ||
       !!(delivery as any)?.vendor_order_detail?.failure_reason ||
       !!(delivery as any)?.vendor_order_detail?.cancellation_reason;
 
     if (isOrderFailed || hasFailureReason) {
-      return 'failed';
+      return "failed";
     }
 
     return deliveryStatus as DeliveryStatus;
   };
 
   const isFailedDelivery = (delivery: DeliveryAssignment): boolean => {
-    return getEffectiveStatus(delivery) === 'failed';
+    return getEffectiveStatus(delivery) === "failed";
   };
 
   const deliveries =
     activeTab === "all"
       ? [...allDeliveries].sort((a, b) => b.vendor_order - a.vendor_order)
       : allDeliveries
-        .filter((d) => {
-          if (activeTab === 'failed') {
-            return isFailedDelivery(d);
-          }
-          if (activeTab === 'delivered') {
-            return d.status === 'delivered' && !isFailedDelivery(d);
-          }
-          if (activeTab === 'declined') {
-            return d.status === 'declined';
-          }
-          return d.status === activeTab;
-        })
-        .sort((a, b) => b.vendor_order - a.vendor_order);
+          .filter((d) => {
+            if (activeTab === "failed") {
+              return isFailedDelivery(d);
+            }
+            if (activeTab === "delivered") {
+              return d.status === "delivered" && !isFailedDelivery(d);
+            }
+            if (activeTab === "declined") {
+              return d.status === "declined";
+            }
+            return d.status === activeTab;
+          })
+          .sort((a, b) => b.vendor_order - a.vendor_order);
 
   const loading = isLoading;
   const refreshing = isRefreshing;
@@ -310,9 +339,9 @@ export default function OrdersScreen() {
 
       await updateDeliveryStatus(
         orderToDecline.id,
-        'declined',
+        "declined",
         "Declined by driver",
-        'declined'
+        "declined",
       );
 
       Toast.show({
@@ -358,20 +387,26 @@ export default function OrdersScreen() {
     const getDeliveryAddress = () => {
       const detail = (item as any)?.vendor_order_detail;
 
-      if (locationNames[item.id] && locationNames[item.id] !== t('locationAvailable')) {
+      if (
+        locationNames[item.id] &&
+        locationNames[item.id] !== t("locationAvailable")
+      ) {
         return locationNames[item.id];
       }
 
       if (item.customer_lat && item.customer_lon) {
         if (loadingLocations[item.id]) {
-          return t('loadingLocation');
+          return t("loadingLocation");
         }
         const lat = parseFloat(item.customer_lat).toFixed(4);
         const lon = parseFloat(item.customer_lon).toFixed(4);
         return `📍 ${lat}, ${lon}`;
       }
 
-      if (detail?.shipping_address_text && detail.shipping_address_text !== 'Addis Ababa') {
+      if (
+        detail?.shipping_address_text &&
+        detail.shipping_address_text !== "Addis Ababa"
+      ) {
         return detail.shipping_address_text;
       }
 
@@ -386,27 +421,35 @@ export default function OrdersScreen() {
       return t("customerLocation");
     };
 
-    const canDecline = normalizedStatus === 'pending' || normalizedStatus === 'assigned';
+    const canDecline =
+      normalizedStatus === "pending" || normalizedStatus === "assigned";
 
     return (
       <TouchableOpacity
         onPress={() => router.push(`/delivery/${item.id}`)}
         activeOpacity={0.9}
-        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+        style={[
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
       >
         <View style={styles.cardContent}>
           {/* Card Header */}
           <View style={styles.cardHeader}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.orderIdText, { color: colors.primary }]}>
-                {t("orderNumber", { id: `${item?.vendor_order_detail?.master_order_id}-${item?.vendor_order}` })}
+                {t("orderNumber", {
+                  id: `${item?.vendor_order_detail?.master_order_id}-${item?.vendor_order}`,
+                })}
               </Text>
               <Text style={[styles.timeText, { color: timeTextColor }]}>
                 {t("assignedAt", { time: timeAssigned })}
               </Text>
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               {/* Small Decline Button */}
               {canDecline && (
                 <TouchableOpacity
@@ -423,25 +466,34 @@ export default function OrdersScreen() {
                   ]}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.smallDeclineText, { color: declineBtnText }]}>
-                    {t('decline')}
+                  <Text
+                    style={[styles.smallDeclineText, { color: declineBtnText }]}
+                  >
+                    {t("decline")}
                   </Text>
                 </TouchableOpacity>
               )}
 
-              <View style={[styles.statusBadge, {
-                backgroundColor: config.bg,
-                borderColor: statusBadgeBorder,
-              }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: config.bg,
+                    borderColor: statusBadgeBorder,
+                  },
+                ]}
+              >
                 <MaterialCommunityIcons
                   name={config.icon}
                   size={14}
                   color={config.text}
                 />
                 <Text style={[styles.statusText, { color: config.text }]}>
-                  {item.status === 'out_for_delivery' ? t('status.inTransit') :
-                    item.status === 'pending' ? t('status.assigned') :
-                      t(`status.${item.status}`)}
+                  {item.status === "out_for_delivery"
+                    ? t("status.inTransit")
+                    : item.status === "pending"
+                      ? t("status.assigned")
+                      : t(`status.${item.status}`)}
                 </Text>
               </View>
             </View>
@@ -451,11 +503,13 @@ export default function OrdersScreen() {
           <View style={styles.routeContainer}>
             <View style={styles.routeIcons}>
               <View style={[styles.dot, { backgroundColor: brand }]} />
-              <View style={[styles.line, { backgroundColor: routeLineColor }]} />
+              <View
+                style={[styles.line, { backgroundColor: routeLineColor }]}
+              />
               {(() => {
                 const hasCoords = !!(item.customer_lat && item.customer_lon);
-                const isDelivered = normalizedStatus === 'delivered';
-                const iconColor = isDelivered ? brand : '#EF4444';
+                const isDelivered = normalizedStatus === "delivered";
+                const iconColor = isDelivered ? brand : "#EF4444";
 
                 return (
                   <View style={styles.locationIconWrapper}>
@@ -471,14 +525,31 @@ export default function OrdersScreen() {
 
             <View style={styles.addressContainer}>
               <View style={styles.addressBlock}>
-                <Text style={[styles.addressLabel, { color: addressLabelColor }]}>{t("pickupFrom")}</Text>
-                <Text style={{ flexShrink: 1, color: colors.text, fontWeight: '600' }}>{companyName}</Text>
-                <Text style={[styles.addressText, { color: addressTextColor }]} numberOfLines={1}>
+                <Text
+                  style={[styles.addressLabel, { color: addressLabelColor }]}
+                >
+                  {t("pickupFrom")}
+                </Text>
+                <Text
+                  style={{
+                    flexShrink: 1,
+                    color: colors.text,
+                    fontWeight: "600",
+                  }}
+                >
+                  {companyName}
+                </Text>
+                <Text
+                  style={[styles.addressText, { color: addressTextColor }]}
+                  numberOfLines={1}
+                >
                   {item.company_address}
                 </Text>
               </View>
 
-              {(item.customer_lat && item.customer_lon && item.status === 'pending') ? (
+              {item.customer_lat &&
+              item.customer_lon &&
+              item.status === "pending" ? (
                 <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
@@ -495,34 +566,73 @@ export default function OrdersScreen() {
                 >
                   <View style={styles.addressBlock}>
                     <View style={styles.locationHeaderRow}>
-                      <Text style={[styles.addressLabel, { color: addressLabelColor }]}>{t("deliverTo")}</Text>
-                      <View style={[styles.locationIndicator, {
-                        backgroundColor: locationPillBg,
-                        borderColor: locationPillBorder,
-                      }]}>
-                        <Ionicons name="location-outline" size={10} color={locationPillText} />
-                        <Text style={[styles.locationIndicatorText, { color: locationPillText }]}>{t('tapToTrack')}</Text>
+                      <Text
+                        style={[
+                          styles.addressLabel,
+                          { color: addressLabelColor },
+                        ]}
+                      >
+                        {t("deliverTo")}
+                      </Text>
+                      <View
+                        style={[
+                          styles.locationIndicator,
+                          {
+                            backgroundColor: locationPillBg,
+                            borderColor: locationPillBorder,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="location-outline"
+                          size={10}
+                          color={locationPillText}
+                        />
+                        <Text
+                          style={[
+                            styles.locationIndicatorText,
+                            { color: locationPillText },
+                          ]}
+                        >
+                          {t("tapToTrack")}
+                        </Text>
                       </View>
                     </View>
-                    <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.customerName, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
                       {customerName}
                     </Text>
-                    <Text style={[styles.addressText, { color: addressTextColor }]} numberOfLines={2}>
+                    <Text
+                      style={[styles.addressText, { color: addressTextColor }]}
+                      numberOfLines={2}
+                    >
                       {loadingLocations[item.id]
-                        ? t('loadingLocation')
+                        ? t("loadingLocation")
                         : getDeliveryAddress()}
                     </Text>
                   </View>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.addressBlock}>
-                  <Text style={[styles.addressLabel, { color: addressLabelColor }]}>{t("deliverTo")}</Text>
-                  <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.addressLabel, { color: addressLabelColor }]}
+                  >
+                    {t("deliverTo")}
+                  </Text>
+                  <Text
+                    style={[styles.customerName, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
                     {customerName}
                   </Text>
-                  <Text style={[styles.addressText, { color: addressTextColor }]} numberOfLines={2}>
+                  <Text
+                    style={[styles.addressText, { color: addressTextColor }]}
+                    numberOfLines={2}
+                  >
                     {loadingLocations[item.id]
-                      ? t('loadingLocation')
+                      ? t("loadingLocation")
                       : getDeliveryAddress()}
                   </Text>
                 </View>
@@ -531,8 +641,12 @@ export default function OrdersScreen() {
           </View>
 
           <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
-            <Text style={[styles.tapHintText, { color: colors.primary }]}>{t("viewDetails")}</Text>
-            <View style={[styles.arrowCircle, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.tapHintText, { color: colors.primary }]}>
+              {t("viewDetails")}
+            </Text>
+            <View
+              style={[styles.arrowCircle, { backgroundColor: colors.primary }]}
+            >
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </View>
           </View>
@@ -542,7 +656,10 @@ export default function OrdersScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top", "left", "right"]}
+    >
       <StatusBar style={isDark ? "light" : "dark"} />
       <Animated.View
         style={{
@@ -557,12 +674,19 @@ export default function OrdersScreen() {
             {
               backgroundColor: colors.background,
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
           <View>
-            <Text style={[styles.titleText, { color: isDark ? colors.text : colors.primary }]}>{t("allOrders")}</Text>
+            <Text
+              style={[
+                styles.titleText,
+                { color: isDark ? colors.text : colors.primary },
+              ]}
+            >
+              {t("allOrders")}
+            </Text>
           </View>
         </Animated.View>
 
@@ -571,7 +695,7 @@ export default function OrdersScreen() {
             marginBottom: 15,
             backgroundColor: colors.background,
             opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
+            transform: [{ translateY: slideAnim }],
           }}
         >
           <ScrollView
@@ -588,30 +712,46 @@ export default function OrdersScreen() {
                   onPress={() => setActiveTab(tab.value)}
                   style={[
                     styles.tab,
-                    { backgroundColor: isDark ? colors.card : '#fff', borderColor: colors.border },
-                    isActive && [styles.activeTab, { backgroundColor: colors.primary, borderColor: colors.primary }],
+                    {
+                      backgroundColor: isDark ? colors.card : "#fff",
+                      borderColor: colors.border,
+                    },
+                    isActive && [
+                      styles.activeTab,
+                      {
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primary,
+                      },
+                    ],
                   ]}
                 >
                   <Text
                     style={[
                       styles.tabText,
                       { color: colors.textMuted },
-                      isActive && [styles.activeTabText, { color: colors.onPrimary }],
+                      isActive && [
+                        styles.activeTabText,
+                        { color: colors.onPrimary },
+                      ],
                     ]}
                   >
                     {t(`tabs.${tab.value}`)}
                   </Text>
                   {count > 0 && (
-                    <View style={[
-                      styles.badge,
-                      { backgroundColor: isDark ? '#3D2E5C' : '#F1F5F9' },
-                      isActive && styles.badgeActive,
-                    ]}>
-                      <Text style={[
-                        styles.badgeText,
-                        { color: colors.textMuted },
-                        isActive && styles.badgeTextActive,
-                      ]}>
+                    <View
+                      style={[
+                        styles.badge,
+                        { backgroundColor: isDark ? "#3D2E5C" : "#F1F5F9" },
+                        isActive && styles.badgeActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          { color: colors.textMuted },
+                          isActive && styles.badgeTextActive,
+                        ]}
+                      >
                         {count}
                       </Text>
                     </View>
@@ -647,8 +787,17 @@ export default function OrdersScreen() {
                   size={80}
                   color={brand}
                 />
-                <Text style={[styles.emptyTitle, { color: isDark ? colors.text : '#6750A4' }]}>{t("noAssignments")}</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+                <Text
+                  style={[
+                    styles.emptyTitle,
+                    { color: isDark ? colors.text : "#6750A4" },
+                  ]}
+                >
+                  {t("noAssignments")}
+                </Text>
+                <Text
+                  style={[styles.emptySubtitle, { color: colors.textMuted }]}
+                >
                   {t("newOrdersWillAppear")}
                 </Text>
               </View>
@@ -664,51 +813,76 @@ export default function OrdersScreen() {
         animationType="fade"
         onRequestClose={() => setDeclineModalVisible(false)}
       >
-        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
-          <View style={[styles.modalContent, {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-            borderWidth: isDark ? 1 : 0,
-          }]}>
-            <View style={[styles.modalIconWrapper, { backgroundColor: modalIconBg }]}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={isDark ? '#FCA5A5' : '#DC2626'} />
+        <View
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+        >
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: isDark ? 1 : 0,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.modalIconWrapper,
+                { backgroundColor: modalIconBg },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={32}
+                color={isDark ? "#FCA5A5" : "#DC2626"}
+              />
             </View>
 
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('declineModalTitle')}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t("declineModalTitle")}
+            </Text>
             <Text style={[styles.modalMessage, { color: colors.textMuted }]}>
-              {t('declineModalMessage')}
+              {t("declineModalMessage")}
             </Text>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalCancelBtn, {
-                  backgroundColor: isDark ? colors.surface : '#F1F5F9',
-                  borderColor: colors.border,
-                }]}
+                style={[
+                  styles.modalCancelBtn,
+                  {
+                    backgroundColor: isDark ? colors.surface : "#F1F5F9",
+                    borderColor: colors.border,
+                  },
+                ]}
                 onPress={() => setDeclineModalVisible(false)}
                 disabled={isDeclining}
               >
-                <Text style={[styles.modalCancelText, { color: colors.text }]}>{t('cancel')}</Text>
+                <Text style={[styles.modalCancelText, { color: colors.text }]}>
+                  {t("cancel")}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalConfirmBtn, {
-                  backgroundColor: isDark ? '#B91C1C' : '#DC2626',
-                }]}
+                style={[
+                  styles.modalConfirmBtn,
+                  {
+                    backgroundColor: isDark ? "#B91C1C" : "#DC2626",
+                  },
+                ]}
                 onPress={confirmDecline}
                 disabled={isDeclining}
               >
                 {isDeclining ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>{t('yesDecline')}</Text>
+                  <Text style={styles.modalConfirmText}>{t("yesDecline")}</Text>
                 )}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }
@@ -776,7 +950,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 10
+    paddingBottom: 10,
   },
   verticalLine: {
     width: 3.5,
@@ -792,7 +966,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 12,
   },
-  orderIdText: { fontSize: 16, fontWeight: "700", color: "#6750A4", letterSpacing: -0.2 },
+  orderIdText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#6750A4",
+    letterSpacing: -0.2,
+  },
   timeText: { fontSize: 12, color: "#94A3B8", marginTop: 2 },
   statusBadge: {
     flexDirection: "row",
@@ -804,22 +983,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.04)",
   },
-  statusText: { fontSize: 10, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 },
+  statusText: {
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
 
   // Small Decline Button Styles
   smallDeclineBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: "#FECACA",
   },
   smallDeclineText: {
-    color: '#DC2626',
+    color: "#DC2626",
     fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontWeight: "700",
+    textTransform: "uppercase",
   },
 
   routeContainer: { flexDirection: "row", marginBottom: 15 },
@@ -840,15 +1024,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textTransform: "uppercase",
   },
-  companyName: { fontSize: 14, fontWeight: "600", color: "#1E293B", letterSpacing: -0.2 },
-  customerName: { fontSize: 15, fontWeight: "700", color: "#0F172A", letterSpacing: -0.2 },
+  companyName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1E293B",
+    letterSpacing: -0.2,
+  },
+  customerName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F172A",
+    letterSpacing: -0.2,
+  },
 
   locationIconWrapper: {
-    position: 'relative',
+    position: "relative",
     width: 52,
     height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   deliverToClickable: {
     padding: 10,
@@ -857,35 +1051,40 @@ const styles = StyleSheet.create({
     marginLeft: -44,
     marginRight: -8,
     borderWidth: 1.5,
-    borderColor: '#f9d4d4',
-    borderStyle: 'dashed',
-    backgroundColor: 'rgba(239, 68, 68, 0.04)',
+    borderColor: "#f9d4d4",
+    borderStyle: "dashed",
+    backgroundColor: "rgba(239, 68, 68, 0.04)",
   },
   locationHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   locationIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: "#FEE2E2",
   },
   locationIndicatorText: {
-    color: '#EF4444',
+    color: "#EF4444",
     fontSize: 8,
-    fontWeight: '500',
-    textTransform: 'uppercase',
+    fontWeight: "500",
+    textTransform: "uppercase",
     letterSpacing: 0.3,
   },
 
-  addressText: { fontSize: 12, color: "#64748B", fontWeight: "500", letterSpacing: 0.1 },
+  addressText: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: "500",
+    letterSpacing: 0.1,
+  },
   cardFooter: {
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
@@ -896,7 +1095,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  tapHintText: { color: "#6750A4", fontWeight: "600", fontSize: 12, letterSpacing: 0.2 },
+  tapHintText: {
+    color: "#6750A4",
+    fontWeight: "600",
+    fontSize: 12,
+    letterSpacing: 0.2,
+  },
   arrowCircle: {
     padding: 8,
     borderRadius: 24,
@@ -934,72 +1138,72 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 24,
     padding: 24,
-    width: '100%',
+    width: "100%",
     maxWidth: 340,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalIconWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FEF2F2',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#FEF2F2",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#1E293B',
+    fontWeight: "800",
+    color: "#1E293B",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalMessage: {
     fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
+    color: "#64748B",
+    textAlign: "center",
     lineHeight: 20,
     marginBottom: 24,
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    width: '100%',
+    width: "100%",
   },
   modalCancelBtn: {
     flex: 1,
     height: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalCancelText: {
-    color: '#64748B',
+    color: "#64748B",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   modalConfirmBtn: {
     flex: 1,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#DC2626',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#DC2626",
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalConfirmText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });
