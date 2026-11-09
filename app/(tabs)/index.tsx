@@ -493,13 +493,13 @@ export default function HomeScreen() {
               <View
                 style={[
                   styles.sectionAccentBar,
-                  { backgroundColor: isDark ? "#FFFFFF" : "#6750A4" },
+                  { backgroundColor: isDark ? "#6750A4" : "#6750A4" },
                 ]}
               />
               <Text
                 style={[
                   styles.sectionTitle,
-                  { color: isDark ? colors.text : colors.primary },
+                  { color: isDark ? "#6750A4" : colors.primary },
                 ]}
               >
                 {t("currentShipment")}
@@ -537,7 +537,7 @@ export default function HomeScreen() {
               <Feather
                 name="chevron-right"
                 size={14}
-                color={isDark ? "#FFFFFF" : "#6750A4"}
+                color={isDark ? "#6750A4" : "#6750A4"}
               />
             </TouchableOpacity>
           </View>
@@ -606,7 +606,7 @@ export default function HomeScreen() {
                   })
                 }
                 style={{
-                  backgroundColor: isDark ? "#333333" : "#6750A4",
+                  backgroundColor: isDark ? "#6750A4" : "#6750A4",
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 8,
@@ -614,7 +614,7 @@ export default function HomeScreen() {
               >
                 <Text
                   style={{
-                    color: isDark ? "#FFFFFF" : "#fff",
+                    color: isDark ? "#6750A4" : "#fff",
                     fontSize: 11,
                     fontWeight: "700",
                   }}
@@ -909,13 +909,13 @@ export default function HomeScreen() {
               <View
                 style={[
                   styles.sectionAccentBar,
-                  { backgroundColor: isDark ? "#FFFFFF" : "#6750A4" },
+                  { backgroundColor: isDark ? "#6750A4" : "#6750A4" },
                 ]}
               />
               <Text
                 style={[
                   styles.sectionTitle,
-                  { color: isDark ? colors.text : colors.primary },
+                  { color: isDark ? "#6750A4" : colors.primary },
                 ]}
               >
                 {t("deliverySummary")}
@@ -948,7 +948,7 @@ export default function HomeScreen() {
               <Feather
                 name="chevron-right"
                 size={14}
-                color={isDark ? "#FFFFFF" : "#6750A4"}
+                color={isDark ? "#6750A4" : "#6750A4"}
               />
             </TouchableOpacity>
           </View>
@@ -1005,7 +1005,7 @@ export default function HomeScreen() {
                           style={[
                             styles.summaryAccentBar,
                             {
-                              backgroundColor: isDark ? "#FFFFFF" : "#6750A4",
+                              backgroundColor: isDark ? "#6750A4" : "#6750A4",
                               opacity: isDark ? 0.7 : 0.5,
                             },
                           ]}
@@ -1014,7 +1014,7 @@ export default function HomeScreen() {
                           <Text
                             style={[
                               styles.summaryCustomerName,
-                              { color: colors.text },
+                              { color: isDark ? "#6750A4" : "#6750A4" },
                             ]}
                             numberOfLines={1}
                           >
