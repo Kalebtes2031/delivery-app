@@ -96,8 +96,8 @@ export default function CashOnHandScreen() {
   const getTabTheme = () => {
     if (activeTab === "pending") {
       return {
-        bg: "#6750A4",
-        cardBg: "#6750A4",
+bg: isDark ? "#211A30" : "#6750A4",
+cardBg: isDark ? "#211A30" : "#6750A4",
         label: t("totalCashOnHand", "TOTAL CASH ON HAND"),
         subtitle: t("pendingSummarySubtitle", {
           count: pendingCount,
@@ -108,8 +108,8 @@ export default function CashOnHandScreen() {
     }
     if (activeTab === "settled") {
       return {
-        bg: "#6750A4",
-        cardBg: "#6750A4",
+        bg: isDark ? "#211A30" : "#6750A4",
+cardBg: isDark ? "#211A30" : "#6750A4",
         label: t("totalSettledCash", "TOTAL SETTLED CASH"),
         subtitle: t("settledSummarySubtitle", {
           count: settledCount,
@@ -119,8 +119,8 @@ export default function CashOnHandScreen() {
       };
     }
     return {
-      bg: "#6750A4",
-      cardBg: "#6750A4",
+   bg: isDark ? "#211A30" : "#6750A4",
+cardBg: isDark ? "#211A30" : "#6750A4",
       label: t("totalCodVolume", "TOTAL COD VOLUME"),
       subtitle: t("allSummarySubtitle", {
         pendingCount,
@@ -268,10 +268,10 @@ export default function CashOnHandScreen() {
       </View>
 
       {/* Segmented Tabs (Order: All -> Cash on Hand -> Completed) */}
-      <View style={[styles.tabsContainer, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+      <View style={[styles.tabsContainer, { backgroundColor: colors.background, borderBottomColor: colors.border  }]}>
         {/* Tab 1: All */}
         <TouchableOpacity
-          style={[styles.tabButton, { backgroundColor: isDark ? colors.card : '#F1F5F9' }, activeTab === "all" && styles.tabButtonActiveAll]}
+          style={[styles.tabButton, { backgroundColor: isDark ? colors.card : '#F1F5F9' },  activeTab === "all" && styles.tabButtonActiveAll]}
           onPress={() => setActiveTab("all")}
           activeOpacity={0.8}
         >
@@ -409,20 +409,18 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "800", color: "#6750A4" },
 
   // Tabs Bar
-  tabsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 4,
-    paddingHorizontal: 16,
-    gap: 10,
-  },
+tabsContainer: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  borderRadius: 16,
+  marginHorizontal: 16,
+
+  marginBottom: 12,
+  padding: 4,
+  paddingHorizontal: 16,
+  gap: 10,
+},
   tabButton: {
     // flex: 1,
     flexDirection: "row",
@@ -430,6 +428,7 @@ const styles = StyleSheet.create({
     // paddingHorizontal: 6,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 10,
     borderRadius: 140,
     gap: 5,
   },
