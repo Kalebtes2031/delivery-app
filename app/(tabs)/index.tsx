@@ -529,7 +529,7 @@ export default function HomeScreen() {
               <Text
                 style={[
                   styles.seeAllText,
-                  { color: isDark ? "#FFFFFF" : "#6750A4" },
+                  { color: isDark ? "#6750A4" : "#6750A4" },
                 ]}
               >
                 {t("viewAll")}
@@ -940,7 +940,7 @@ export default function HomeScreen() {
               <Text
                 style={[
                   styles.seeAllText,
-                  { color: isDark ? "#FFFFFF" : "#6750A4" },
+                  { color: isDark ? "#6750A4" : "#6750A4" },
                 ]}
               >
                 {t("seeAll")}
