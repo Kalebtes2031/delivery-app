@@ -98,7 +98,7 @@ const handleLogin = async () => {
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
             <View>
               <Image
-                source={require('@/assets/images/elilita-delivery.jpg')}
+                source={require('@/assets/images/elilita-delivery2.png')}
                 style={{ width: 400, height: 300, }}
                 resizeMode="cover"
               />
@@ -279,7 +279,7 @@ const handleLogin = async () => {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: '800' }}>
                 {t('login.signIn')}
               </Text>
             )}

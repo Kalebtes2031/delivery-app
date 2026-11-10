@@ -347,8 +347,8 @@ export default function OrderEarningDetailModal({
                 router.push(`/delivery/${order.id}`);
               }}
             >
-              <Text style={[styles.detailsBtnText, { color: isDark ? '#000000' : '#FFFFFF' }]}>{t('viewFullOrder', 'View Full Order Details')}</Text>
-              <Ionicons name="arrow-forward" size={16} color={isDark ? '#000000' : '#ffffff'} />
+              <Text style={[styles.detailsBtnText, { color: isDark ? '#ffffff' : '#FFFFFF' }]}>{t('viewFullOrder', 'View Full Order Details')}</Text>
+              <Ionicons name="arrow-forward" size={16} color={isDark ? '#ffffff' : '#ffffff'} />
             </TouchableOpacity>
           </View>
         </View>
