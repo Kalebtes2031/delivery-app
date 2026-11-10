@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,59 +10,71 @@ import {
   StyleSheet,
   Dimensions,
   Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { useAppTheme } from '@/context/ThemeContext';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons, FontAwesome6 } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { useAppTheme } from "@/context/ThemeContext";
+import { useRouter, useFocusEffect } from "expo-router";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  FontAwesome6,
+} from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import {
   getDriverEarnings,
   getDriverEarningsSummary,
   getDriverPayouts,
-} from '@/services/api';
-import type { DriverEarningItem, DriverEarningsSummary, DriverPayout } from '@/types';
-import OrderEarningDetailModal from '@/components/OrderEarningDetailModal';
-import PayoutDetailModal from '@/components/PayoutDetailModal';
+} from "@/services/api";
+import type {
+  DriverEarningItem,
+  DriverEarningsSummary,
+  DriverPayout,
+} from "@/types";
+import OrderEarningDetailModal from "@/components/OrderEarningDetailModal";
+import PayoutDetailModal from "@/components/PayoutDetailModal";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-type PeriodType = 'today' | 'this_week' | 'this_month' | 'all';
-type PaymentFilterType = 'all' | 'bank_transfer' | 'cod' | 'chapa' | 'telebirr';
-type MainTabType = 'orders' | 'payouts';
+type PeriodType = "today" | "this_week" | "this_month" | "all";
+type PaymentFilterType = "all" | "bank_transfer" | "cod" | "chapa" | "telebirr";
+type MainTabType = "orders" | "payouts";
 
 export default function EarningsScreen() {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
-  const { t, i18n } = useTranslation('deliveryHome');
-  const isAmharic = i18n.language?.startsWith('am');
+  const { t, i18n } = useTranslation("deliveryHome");
+  const isAmharic = i18n.language?.startsWith("am");
 
-  const [mainTab, setMainTab] = useState<MainTabType>('orders');
-  const [period, setPeriod] = useState<PeriodType>('today');
-  const [paymentFilter, setPaymentFilter] = useState<PaymentFilterType>('all');
+  const [mainTab, setMainTab] = useState<MainTabType>("orders");
+  const [period, setPeriod] = useState<PeriodType>("today");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilterType>("all");
   const [allEarnings, setAllEarnings] = useState<DriverEarningItem[]>([]);
   const [summary, setSummary] = useState<DriverEarningsSummary | null>(null);
   const [payouts, setPayouts] = useState<DriverPayout[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<DriverEarningItem | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<DriverEarningItem | null>(
+    null,
+  );
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedPayout, setSelectedPayout] = useState<DriverPayout | null>(null);
+  const [selectedPayout, setSelectedPayout] = useState<DriverPayout | null>(
+    null,
+  );
   const [payoutModalVisible, setPayoutModalVisible] = useState(false);
 
   // ─── Dark-mode aware design tokens ───────────────────────────────
-  const brand = isDark ? '#6750A4' : '#6750A4';
-  const brandBg = isDark ? '#2A1F3D' : '#F3E8FF';
-  const brandSoftBg = isDark ? '#1E1730' : '#F3E8FF';
-  const brandBorder = isDark ? '#3D2E5C' : '#E8DFF5';
-  const brandText = isDark ? '#6750A4' : '#6750A4';
-  const surfaceAlt = isDark ? '#1A1525' : '#F8FAFC';
-  const surfaceMuted = isDark ? '#221A33' : '#F1F5F9';
-  const lightBorder = isDark ? colors.border : '#F1F5F9';
-  const cardBorder = isDark ? colors.border : '#E2E8F0';
-  const heroBg = isDark ? '#0000006b' : '#6750A4';
-  const heroShadow = isDark ? '#6750A4' : '#6750A4';
+  const brand = isDark ? "#6750A4" : "#6750A4";
+  const brandBg = isDark ? "#2A1F3D" : "#F3E8FF";
+  const brandSoftBg = isDark ? "#1E1730" : "#F3E8FF";
+  const brandBorder = isDark ? "#3D2E5C" : "#E8DFF5";
+  const brandText = isDark ? "#6750A4" : "#6750A4";
+  const surfaceAlt = isDark ? "#1A1525" : "#F8FAFC";
+  const surfaceMuted = isDark ? "#221A33" : "#F1F5F9";
+  const lightBorder = isDark ? colors.border : "#F1F5F9";
+  const cardBorder = isDark ? colors.border : "#E2E8F0";
+  const heroBg = isDark ? "#6750A4" : "#6750A4";
+  const heroShadow = isDark ? "#6750A4" : "#6750A4";
 
   // Fetch earnings & payouts data
   const fetchData = useCallback(async () => {
@@ -71,7 +83,7 @@ export default function EarningsScreen() {
         getDriverEarnings({ period }),
         getDriverEarningsSummary(),
         getDriverPayouts().catch((err) => {
-          console.warn('[EarningsScreen] Error fetching payouts:', err);
+          console.warn("[EarningsScreen] Error fetching payouts:", err);
           return { data: [] };
         }),
       ]);
@@ -88,7 +100,7 @@ export default function EarningsScreen() {
       setSummary(summaryRes.data);
       setPayouts(payoutList);
     } catch (err) {
-      console.error('[EarningsScreen] Error fetching earnings:', err);
+      console.error("[EarningsScreen] Error fetching earnings:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -98,7 +110,7 @@ export default function EarningsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData])
+    }, [fetchData]),
   );
 
   const onRefresh = () => {
@@ -117,44 +129,56 @@ export default function EarningsScreen() {
     };
     for (const item of allEarnings) {
       const pm = item.payment_method?.toLowerCase();
-      if (pm === 'bank_transfer') res.bank_transfer++;
-      else if (pm === 'cod') res.cod++;
-      else if (pm === 'chapa') res.chapa++;
-      else if (pm === 'telebirr') res.telebirr++;
+      if (pm === "bank_transfer") res.bank_transfer++;
+      else if (pm === "cod") res.cod++;
+      else if (pm === "chapa") res.chapa++;
+      else if (pm === "telebirr") res.telebirr++;
     }
     return res;
   }, [allEarnings]);
 
   // Filtered dataset according to active tab
   const filteredEarnings = useMemo(() => {
-    if (paymentFilter === 'all') return allEarnings;
+    if (paymentFilter === "all") return allEarnings;
     return allEarnings.filter(
-      (item) => item.payment_method?.toLowerCase() === paymentFilter
+      (item) => item.payment_method?.toLowerCase() === paymentFilter,
     );
   }, [allEarnings, paymentFilter]);
 
   // Payment filter tabs list with counts
-  const filterTabs: Array<{ key: PaymentFilterType; label: string; count: number }> = [
-    { key: 'all', label: t('allPayments', 'All'), count: counts.all },
-    { key: 'bank_transfer', label: t('paymentBankTransfer', 'Bank Transfer'), count: counts.bank_transfer },
-    { key: 'cod', label: t('paymentCOD', 'COD'), count: counts.cod },
-    { key: 'chapa', label: t('paymentChapa', 'Chapa'), count: counts.chapa },
-    { key: 'telebirr', label: t('paymentTelebirr', 'Telebirr'), count: counts.telebirr },
+  const filterTabs: Array<{
+    key: PaymentFilterType;
+    label: string;
+    count: number;
+  }> = [
+    { key: "all", label: t("allPayments", "All"), count: counts.all },
+    {
+      key: "bank_transfer",
+      label: t("paymentBankTransfer", "Bank Transfer"),
+      count: counts.bank_transfer,
+    },
+    { key: "cod", label: t("paymentCOD", "COD"), count: counts.cod },
+    { key: "chapa", label: t("paymentChapa", "Chapa"), count: counts.chapa },
+    {
+      key: "telebirr",
+      label: t("paymentTelebirr", "Telebirr"),
+      count: counts.telebirr,
+    },
   ];
 
   // Determine hero card display amount based on selected period
   const getHeroAmount = () => {
-    if (!summary) return '0.00';
+    if (!summary) return "0.00";
     switch (period) {
-      case 'today':
-        return summary.today_earnings || '0.00';
-      case 'this_week':
-        return summary.week_earnings || '0.00';
-      case 'this_month':
-        return summary.month_earnings || '0.00';
-      case 'all':
+      case "today":
+        return summary.today_earnings || "0.00";
+      case "this_week":
+        return summary.week_earnings || "0.00";
+      case "this_month":
+        return summary.month_earnings || "0.00";
+      case "all":
       default:
-        return summary.total_lifetime_earnings || '0.00';
+        return summary.total_lifetime_earnings || "0.00";
     }
   };
 
@@ -162,13 +186,13 @@ export default function EarningsScreen() {
   const getPeriodCompletedTrips = () => {
     if (!summary) return allEarnings.length;
     switch (period) {
-      case 'today':
+      case "today":
         return summary.today_completed_trips ?? allEarnings.length;
-      case 'this_week':
+      case "this_week":
         return summary.week_completed_trips ?? allEarnings.length;
-      case 'this_month':
+      case "this_month":
         return summary.month_completed_trips ?? allEarnings.length;
-      case 'all':
+      case "all":
       default:
         return summary.total_completed_trips ?? allEarnings.length;
     }
@@ -178,35 +202,42 @@ export default function EarningsScreen() {
   const getPeriodAvgPerDelivery = () => {
     if (!summary) {
       const trips = allEarnings.length;
-      if (trips === 0) return '0.00';
-      const sum = allEarnings.reduce((acc, it) => acc + parseFloat(it.driver_earning || it.delivery_fee || '0'), 0);
+      if (trips === 0) return "0.00";
+      const sum = allEarnings.reduce(
+        (acc, it) =>
+          acc + parseFloat(it.driver_earning || it.delivery_fee || "0"),
+        0,
+      );
       return (sum / trips).toFixed(2);
     }
     switch (period) {
-      case 'today':
-        if (summary.today_average_per_order !== undefined) return summary.today_average_per_order;
+      case "today":
+        if (summary.today_average_per_order !== undefined)
+          return summary.today_average_per_order;
         break;
-      case 'this_week':
-        if (summary.week_average_per_order !== undefined) return summary.week_average_per_order;
+      case "this_week":
+        if (summary.week_average_per_order !== undefined)
+          return summary.week_average_per_order;
         break;
-      case 'this_month':
-        if (summary.month_average_per_order !== undefined) return summary.month_average_per_order;
+      case "this_month":
+        if (summary.month_average_per_order !== undefined)
+          return summary.month_average_per_order;
         break;
-      case 'all':
+      case "all":
       default:
-        return summary.average_per_order || '0.00';
+        return summary.average_per_order || "0.00";
     }
     const trips = getPeriodCompletedTrips();
-    if (trips === 0) return '0.00';
+    if (trips === 0) return "0.00";
     const amount = parseFloat(getHeroAmount());
     return (amount / trips).toFixed(2);
   };
 
   const formatMoney = (val: string | number | undefined | null) => {
-    if (val === undefined || val === null || val === '') return '0.00';
-    const num = typeof val === 'number' ? val : parseFloat(val);
-    if (isNaN(num)) return '0.00';
-    return num.toLocaleString('en-US', {
+    if (val === undefined || val === null || val === "") return "0.00";
+    const num = typeof val === "number" ? val : parseFloat(val);
+    if (isNaN(num)) return "0.00";
+    return num.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -214,79 +245,154 @@ export default function EarningsScreen() {
 
   const getPeriodLabel = () => {
     switch (period) {
-      case 'today':
-        return t('todayEarnings', "TODAY'S EARNINGS");
-      case 'this_week':
-        return t('weekEarnings', "THIS WEEK'S EARNINGS");
-      case 'this_month':
-        return t('monthEarnings', "THIS MONTH'S EARNINGS");
-      case 'all':
+      case "today":
+        return t("todayEarnings", "TODAY'S EARNINGS");
+      case "this_week":
+        return t("weekEarnings", "THIS WEEK'S EARNINGS");
+      case "this_month":
+        return t("monthEarnings", "THIS MONTH'S EARNINGS");
+      case "all":
       default:
-        return t('lifetimeEarnings', 'TOTAL LIFETIME EARNINGS');
+        return t("lifetimeEarnings", "TOTAL LIFETIME EARNINGS");
     }
   };
 
   // Payment badge helper (theme-aware)
   const renderPaymentBadge = (method: string, displayLabel?: string) => {
     switch (method?.toLowerCase()) {
-      case 'bank_transfer':
+      case "bank_transfer":
         return (
-          <View style={[styles.paymentBadge, {
-            backgroundColor: isDark ? '#1E3A5F' : '#EFF6FF',
-            borderColor: isDark ? '#2E4A70' : '#BFDBFE',
-          }]}>
-            <MaterialCommunityIcons name="bank" size={12} color={isDark ? '#93C5FD' : '#2563EB'} style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: isDark ? '#93C5FD' : '#2563EB' }]}>
-              {t('paymentBankTransfer', 'Bank Transfer')}
+          <View
+            style={[
+              styles.paymentBadge,
+              {
+                backgroundColor: isDark ? "#1E3A5F" : "#EFF6FF",
+                borderColor: isDark ? "#2E4A70" : "#BFDBFE",
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="bank"
+              size={12}
+              color={isDark ? "#93C5FD" : "#2563EB"}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.paymentBadgeText,
+                { color: isDark ? "#93C5FD" : "#2563EB" },
+              ]}
+            >
+              {t("paymentBankTransfer", "Bank Transfer")}
             </Text>
           </View>
         );
-      case 'cod':
+      case "cod":
         return (
-          <View style={[styles.paymentBadge, {
-            backgroundColor: isDark ? '#3D2A1A' : '#FFF7ED',
-            borderColor: isDark ? '#5C3D20' : '#FED7AA',
-          }]}>
-            <MaterialCommunityIcons name="cash-multiple" size={12} color={isDark ? '#FDBA74' : '#EA580C'} style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: isDark ? '#FDBA74' : '#EA580C' }]}>
-              {t('paymentCOD', 'COD')}
+          <View
+            style={[
+              styles.paymentBadge,
+              {
+                backgroundColor: isDark ? "#3D2A1A" : "#FFF7ED",
+                borderColor: isDark ? "#5C3D20" : "#FED7AA",
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="cash-multiple"
+              size={12}
+              color={isDark ? "#FDBA74" : "#EA580C"}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.paymentBadgeText,
+                { color: isDark ? "#FDBA74" : "#EA580C" },
+              ]}
+            >
+              {t("paymentCOD", "COD")}
             </Text>
           </View>
         );
-      case 'chapa':
+      case "chapa":
         return (
-          <View style={[styles.paymentBadge, {
-            backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
-            borderColor: isDark ? '#245C3A' : '#BBF7D0',
-          }]}>
-            <MaterialCommunityIcons name="credit-card-check-outline" size={12} color={isDark ? '#86EFAC' : '#16A34A'} style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
-              {t('paymentChapa', 'Chapa')}
+          <View
+            style={[
+              styles.paymentBadge,
+              {
+                backgroundColor: isDark ? "#1A3D2A" : "#F0FDF4",
+                borderColor: isDark ? "#245C3A" : "#BBF7D0",
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="credit-card-check-outline"
+              size={12}
+              color={isDark ? "#86EFAC" : "#16A34A"}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.paymentBadgeText,
+                { color: isDark ? "#86EFAC" : "#16A34A" },
+              ]}
+            >
+              {t("paymentChapa", "Chapa")}
             </Text>
           </View>
         );
-      case 'telebirr':
+      case "telebirr":
         return (
-          <View style={[styles.paymentBadge, {
-            backgroundColor: isDark ? '#2A1F3D' : '#F5F3FF',
-            borderColor: isDark ? '#3D2E5C' : '#DDD6FE',
-          }]}>
-            <MaterialCommunityIcons name="cellphone-check" size={12} color={isDark ? '#6750A4' : '#7C3AED'} style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: isDark ? '#6750A4' : '#7C3AED' }]}>
-              {t('paymentTelebirr', 'Telebirr')}
+          <View
+            style={[
+              styles.paymentBadge,
+              {
+                backgroundColor: isDark ? "#2A1F3D" : "#F5F3FF",
+                borderColor: isDark ? "#3D2E5C" : "#DDD6FE",
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="cellphone-check"
+              size={12}
+              color={isDark ? "#6750A4" : "#7C3AED"}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.paymentBadgeText,
+                { color: isDark ? "#6750A4" : "#7C3AED" },
+              ]}
+            >
+              {t("paymentTelebirr", "Telebirr")}
             </Text>
           </View>
         );
-      case 'online':
+      case "online":
       default:
         return (
-          <View style={[styles.paymentBadge, {
-            backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
-            borderColor: isDark ? '#245C3A' : '#BBF7D0',
-          }]}>
-            <MaterialCommunityIcons name="credit-card-check-outline" size={12} color={isDark ? '#86EFAC' : '#16A34A'} style={{ marginRight: 4 }} />
-            <Text style={[styles.paymentBadgeText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
-              {displayLabel || t('paymentOnline', 'Online')}
+          <View
+            style={[
+              styles.paymentBadge,
+              {
+                backgroundColor: isDark ? "#1A3D2A" : "#F0FDF4",
+                borderColor: isDark ? "#245C3A" : "#BBF7D0",
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="credit-card-check-outline"
+              size={12}
+              color={isDark ? "#86EFAC" : "#16A34A"}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.paymentBadgeText,
+                { color: isDark ? "#86EFAC" : "#16A34A" },
+              ]}
+            >
+              {displayLabel || t("paymentOnline", "Online")}
             </Text>
           </View>
         );
@@ -295,91 +401,164 @@ export default function EarningsScreen() {
 
   // Payout settlement status badge on delivered orders (theme-aware)
   const renderPayoutStatusBadge = (status?: string) => {
-    if (status === 'confirmed') {
+    if (status === "confirmed") {
       return (
-        <View style={[styles.payoutStatusPill, {
-          backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4',
-          borderColor: isDark ? '#245C3A' : '#BBF7D0',
-        }]}>
-          <Ionicons name="checkmark-done" size={10} color={isDark ? '#86EFAC' : '#16A34A'} style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('paid', 'Paid')}</Text>
+        <View
+          style={[
+            styles.payoutStatusPill,
+            {
+              backgroundColor: isDark ? "#1A3D2A" : "#F0FDF4",
+              borderColor: isDark ? "#245C3A" : "#BBF7D0",
+            },
+          ]}
+        >
+          <Ionicons
+            name="checkmark-done"
+            size={10}
+            color={isDark ? "#86EFAC" : "#16A34A"}
+            style={{ marginRight: 2 }}
+          />
+          <Text
+            style={[
+              styles.payoutStatusPillText,
+              { color: isDark ? "#86EFAC" : "#16A34A" },
+            ]}
+          >
+            {t("paid", "Paid")}
+          </Text>
         </View>
       );
     }
-    if (status === 'disbursed') {
+    if (status === "disbursed") {
       return (
-        <View style={[styles.payoutStatusPill, {
-          backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
-          borderColor: isDark ? '#5C3D20' : '#FDE68A',
-        }]}>
-          <Ionicons name="time" size={10} color={isDark ? '#FCD34D' : '#D97706'} style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: isDark ? '#FCD34D' : '#D97706' }]}>{t('disbursed', 'Disbursed')}</Text>
+        <View
+          style={[
+            styles.payoutStatusPill,
+            {
+              backgroundColor: isDark ? "#3D2A1A" : "#FFFBEB",
+              borderColor: isDark ? "#5C3D20" : "#FDE68A",
+            },
+          ]}
+        >
+          <Ionicons
+            name="time"
+            size={10}
+            color={isDark ? "#FCD34D" : "#D97706"}
+            style={{ marginRight: 2 }}
+          />
+          <Text
+            style={[
+              styles.payoutStatusPillText,
+              { color: isDark ? "#FCD34D" : "#D97706" },
+            ]}
+          >
+            {t("disbursed", "Disbursed")}
+          </Text>
         </View>
       );
     }
-    if (status === 'disputed') {
+    if (status === "disputed") {
       return (
-        <View style={[styles.payoutStatusPill, {
-          backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
-          borderColor: isDark ? '#5C2626' : '#FECACA',
-        }]}>
-          <Ionicons name="alert-circle" size={10} color={isDark ? '#FCA5A5' : '#DC2626'} style={{ marginRight: 2 }} />
-          <Text style={[styles.payoutStatusPillText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('disputed', 'Disputed')}</Text>
+        <View
+          style={[
+            styles.payoutStatusPill,
+            {
+              backgroundColor: isDark ? "#3D1A1A" : "#FEF2F2",
+              borderColor: isDark ? "#5C2626" : "#FECACA",
+            },
+          ]}
+        >
+          <Ionicons
+            name="alert-circle"
+            size={10}
+            color={isDark ? "#FCA5A5" : "#DC2626"}
+            style={{ marginRight: 2 }}
+          />
+          <Text
+            style={[
+              styles.payoutStatusPillText,
+              { color: isDark ? "#FCA5A5" : "#DC2626" },
+            ]}
+          >
+            {t("disputed", "Disputed")}
+          </Text>
         </View>
       );
     }
     return (
-      <View style={[styles.payoutStatusPill, {
-        backgroundColor: isDark ? surfaceAlt : '#F8FAFC',
-        borderColor: isDark ? colors.border : '#E2E8F0',
-      }]}>
-        <Ionicons name="hourglass-outline" size={10} color={colors.textMuted} style={{ marginRight: 2 }} />
-        <Text style={[styles.payoutStatusPillText, { color: colors.textMuted }]}>{t('unpaid', 'Unpaid')}</Text>
+      <View
+        style={[
+          styles.payoutStatusPill,
+          {
+            backgroundColor: isDark ? surfaceAlt : "#F8FAFC",
+            borderColor: isDark ? colors.border : "#E2E8F0",
+          },
+        ]}
+      >
+        <Ionicons
+          name="hourglass-outline"
+          size={10}
+          color={colors.textMuted}
+          style={{ marginRight: 2 }}
+        />
+        <Text
+          style={[styles.payoutStatusPillText, { color: colors.textMuted }]}
+        >
+          {t("unpaid", "Unpaid")}
+        </Text>
       </View>
     );
   };
 
   // Payouts awaiting driver confirmation
   const pendingPayouts = useMemo(() => {
-    return payouts.filter((p) => p.status === 'disbursed');
+    return payouts.filter((p) => p.status === "disbursed");
   }, [payouts]);
   const pendingPayout = pendingPayouts.length > 0 ? pendingPayouts[0] : null;
 
   // Disputed payouts under review
   const disputedPayouts = useMemo(() => {
-    return payouts.filter((p) => p.status === 'disputed');
+    return payouts.filter((p) => p.status === "disputed");
   }, [payouts]);
 
   const renderOrderItem = ({ item }: { item: DriverEarningItem }) => {
-    const fee = parseFloat(item.driver_earning || item.delivery_fee || '0').toFixed(2);
+    const fee = parseFloat(
+      item.driver_earning || item.delivery_fee || "0",
+    ).toFixed(2);
     const dateStr = item.completed_at
       ? new Date(item.completed_at).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         })
       : item.assigned_at
-      ? new Date(item.assigned_at).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-        })
-      : '';
+        ? new Date(item.assigned_at).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          })
+        : "";
 
     const companyName =
       isAmharic && item.company_name_am
         ? item.company_name_am
-        : item.company_name || t('vendor', 'Store');
+        : item.company_name || t("vendor", "Store");
 
     const orderId =
       item.master_order_id && item.vendor_order_id
         ? `${item.master_order_id}-${item.vendor_order_id}`
-        : (item.order_number || '').replace(/^MO-/, '').replace(/-VO-/, '-');
-    const displayOrderNumber = t('orderNumber', { id: orderId, defaultValue: `Order #${orderId}` });
+        : (item.order_number || "").replace(/^MO-/, "").replace(/-VO-/, "-");
+    const displayOrderNumber = t("orderNumber", {
+      id: orderId,
+      defaultValue: `Order #${orderId}`,
+    });
 
     return (
       <TouchableOpacity
-        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: cardBorder }]}
+        style={[
+          styles.orderCard,
+          { backgroundColor: colors.card, borderColor: cardBorder },
+        ]}
         activeOpacity={0.85}
         onPress={() => {
           setSelectedOrder(item);
@@ -393,31 +572,63 @@ export default function EarningsScreen() {
               <MaterialCommunityIcons name="moped" size={18} color={brand} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.orderNumberText, { color: colors.text }]}>#{orderId}</Text>
-              <Text style={[styles.storeNameText, { color: colors.textMuted }]} numberOfLines={1}>
+              <Text style={[styles.orderNumberText, { color: colors.text }]}>
+                #{orderId}
+              </Text>
+              <Text
+                style={[styles.storeNameText, { color: colors.textMuted }]}
+                numberOfLines={1}
+              >
                 {companyName}
               </Text>
             </View>
           </View>
 
           <View style={styles.earningAmountBox}>
-            <Text style={[styles.earningPlusText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>+{fee}</Text>
-            <Text style={[styles.earningCurrencyText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('etb', 'ETB')}</Text>
+            <Text
+              style={[
+                styles.earningPlusText,
+                { color: isDark ? "#86EFAC" : "#16A34A" },
+              ]}
+            >
+              +{fee}
+            </Text>
+            <Text
+              style={[
+                styles.earningCurrencyText,
+                { color: isDark ? "#86EFAC" : "#16A34A" },
+              ]}
+            >
+              {t("etb", "ETB")}
+            </Text>
           </View>
         </View>
 
         {/* Row 2: Customer Name & Completion Time */}
         <View style={styles.cardMiddleRow}>
           <View style={styles.customerRow}>
-            <Ionicons name="person-outline" size={13} color={colors.textMuted} />
-            <Text style={[styles.customerText, { color: colors.textMuted }]} numberOfLines={1}>
-              {item.customer_name || t('customer', 'Customer')}
+            <Ionicons
+              name="person-outline"
+              size={13}
+              color={colors.textMuted}
+            />
+            <Text
+              style={[styles.customerText, { color: colors.textMuted }]}
+              numberOfLines={1}
+            >
+              {item.customer_name || t("customer", "Customer")}
             </Text>
           </View>
           {!!dateStr && (
             <View style={styles.dateRow}>
-              <Ionicons name="time-outline" size={12} color={colors.textMuted} />
-              <Text style={[styles.dateText, { color: colors.textMuted }]}>{dateStr}</Text>
+              <Ionicons
+                name="time-outline"
+                size={12}
+                color={colors.textMuted}
+              />
+              <Text style={[styles.dateText, { color: colors.textMuted }]}>
+                {dateStr}
+              </Text>
             </View>
           )}
         </View>
@@ -426,26 +637,44 @@ export default function EarningsScreen() {
         <View style={[styles.cardBadgesRow, { borderTopColor: lightBorder }]}>
           {renderPaymentBadge(item.payment_method, item.payment_method_display)}
           {renderPayoutStatusBadge(item.payout_status)}
-          {item.payment_method?.toLowerCase() === 'cod' && (
+          {item.payment_method?.toLowerCase() === "cod" && (
             <View
               style={[
                 styles.payoutStatusPill,
                 {
                   backgroundColor: item.cod_payment_confirmed
-                    ? (isDark ? '#1A3D2A' : '#F0FDF4')
-                    : (isDark ? '#3D2A1A' : '#FFFBEB'),
+                    ? isDark
+                      ? "#1A3D2A"
+                      : "#F0FDF4"
+                    : isDark
+                      ? "#3D2A1A"
+                      : "#FFFBEB",
                   borderColor: item.cod_payment_confirmed
-                    ? (isDark ? '#245C3A' : '#BBF7D0')
-                    : (isDark ? '#5C3D20' : '#FDE68A'),
+                    ? isDark
+                      ? "#245C3A"
+                      : "#BBF7D0"
+                    : isDark
+                      ? "#5C3D20"
+                      : "#FDE68A",
                 },
               ]}
             >
               <Ionicons
-                name={item.cod_payment_confirmed ? 'checkmark-circle' : 'cash-outline'}
+                name={
+                  item.cod_payment_confirmed
+                    ? "checkmark-circle"
+                    : "cash-outline"
+                }
                 size={10}
-                color={item.cod_payment_confirmed
-                  ? (isDark ? '#86EFAC' : '#16A34A')
-                  : (isDark ? '#FCD34D' : '#D97706')}
+                color={
+                  item.cod_payment_confirmed
+                    ? isDark
+                      ? "#86EFAC"
+                      : "#16A34A"
+                    : isDark
+                      ? "#FCD34D"
+                      : "#D97706"
+                }
                 style={{ marginRight: 2 }}
               />
               <Text
@@ -453,14 +682,18 @@ export default function EarningsScreen() {
                   styles.payoutStatusPillText,
                   {
                     color: item.cod_payment_confirmed
-                      ? (isDark ? '#86EFAC' : '#16A34A')
-                      : (isDark ? '#FCD34D' : '#D97706'),
+                      ? isDark
+                        ? "#86EFAC"
+                        : "#16A34A"
+                      : isDark
+                        ? "#FCD34D"
+                        : "#D97706",
                   },
                 ]}
               >
                 {item.cod_payment_confirmed
-                  ? t('codHandedIn', 'COD Handed In')
-                  : t('codPendingTurnIn', 'COD Pending Turn-in')}
+                  ? t("codHandedIn", "COD Handed In")
+                  : t("codPendingTurnIn", "COD Pending Turn-in")}
               </Text>
             </View>
           )}
@@ -471,21 +704,24 @@ export default function EarningsScreen() {
 
   // Render payout batch item
   const renderPayoutItem = ({ item }: { item: DriverPayout }) => {
-    const compName = isAmharic && item.company_name_am ? item.company_name_am : item.company_name;
-    const isAwaiting = item.status === 'disbursed';
-    const isConfirmed = item.status === 'confirmed';
-    const isDisputed = item.status === 'disputed';
+    const compName =
+      isAmharic && item.company_name_am
+        ? item.company_name_am
+        : item.company_name;
+    const isAwaiting = item.status === "disbursed";
+    const isConfirmed = item.status === "confirmed";
+    const isDisputed = item.status === "disputed";
 
     const dateStr = item.disbursed_at
       ? new Date(item.disbursed_at).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         })
       : new Date(item.created_at).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
+          month: "short",
+          day: "numeric",
         });
 
     return (
@@ -493,10 +729,13 @@ export default function EarningsScreen() {
         style={[
           styles.payoutCard,
           { backgroundColor: colors.card, borderColor: cardBorder },
-          isAwaiting && [styles.payoutCardAwaiting, {
-            borderColor: isDark ? '#5C3D20' : '#FDE68A',
-            backgroundColor: isDark ? '#221A33' : '#FFFDF7',
-          }],
+          isAwaiting && [
+            styles.payoutCardAwaiting,
+            {
+              borderColor: isDark ? "#5C3D20" : "#FDE68A",
+              backgroundColor: isDark ? "#221A33" : "#FFFDF7",
+            },
+          ],
         ]}
         activeOpacity={0.85}
         onPress={() => {
@@ -511,104 +750,189 @@ export default function EarningsScreen() {
               style={[
                 styles.payoutIconCircle,
                 isAwaiting
-                  ? { backgroundColor: isDark ? '#3D2A1A' : '#FEF3C7' }
+                  ? { backgroundColor: isDark ? "#3D2A1A" : "#FEF3C7" }
                   : isConfirmed
-                  ? { backgroundColor: isDark ? '#1A3D2A' : '#DCFCE7' }
-                  : isDisputed
-                  ? { backgroundColor: isDark ? '#3D1A1A' : '#FEE2E2' }
-                  : { backgroundColor: isDark ? surfaceMuted : '#F1F5F9' },
+                    ? { backgroundColor: isDark ? "#1A3D2A" : "#DCFCE7" }
+                    : isDisputed
+                      ? { backgroundColor: isDark ? "#3D1A1A" : "#FEE2E2" }
+                      : { backgroundColor: isDark ? surfaceMuted : "#F1F5F9" },
               ]}
             >
               <MaterialCommunityIcons
-                name={isAwaiting ? 'alert-circle' : isConfirmed ? 'check-decagram' : isDisputed ? 'alert-octagon' : 'cash-multiple'}
+                name={
+                  isAwaiting
+                    ? "alert-circle"
+                    : isConfirmed
+                      ? "check-decagram"
+                      : isDisputed
+                        ? "alert-octagon"
+                        : "cash-multiple"
+                }
                 size={18}
-                color={isAwaiting
-                  ? (isDark ? '#FCD34D' : '#D97706')
-                  : isConfirmed
-                  ? (isDark ? '#86EFAC' : '#16A34A')
-                  : isDisputed
-                  ? (isDark ? '#FCA5A5' : '#DC2626')
-                  : colors.textMuted}
+                color={
+                  isAwaiting
+                    ? isDark
+                      ? "#FCD34D"
+                      : "#D97706"
+                    : isConfirmed
+                      ? isDark
+                        ? "#86EFAC"
+                        : "#16A34A"
+                      : isDisputed
+                        ? isDark
+                          ? "#FCA5A5"
+                          : "#DC2626"
+                        : colors.textMuted
+                }
               />
             </View>
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[styles.payoutNumberText, { color: colors.text }]}>#{item.payout_number}</Text>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
+                <Text style={[styles.payoutNumberText, { color: colors.text }]}>
+                  #{item.payout_number}
+                </Text>
               </View>
-              <Text style={[styles.payoutStoreText, { color: colors.textMuted }]} numberOfLines={1}>{compName}</Text>
+              <Text
+                style={[styles.payoutStoreText, { color: colors.textMuted }]}
+                numberOfLines={1}
+              >
+                {compName}
+              </Text>
             </View>
           </View>
 
           <View style={styles.payoutAmountBox}>
-            <Text style={[styles.payoutAmountText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>
+            <Text
+              style={[
+                styles.payoutAmountText,
+                { color: isDark ? "#86EFAC" : "#16A34A" },
+              ]}
+            >
               {parseFloat(item.net_payout_amount).toFixed(2)}
             </Text>
-            <Text style={[styles.payoutCurrencyText, { color: isDark ? '#86EFAC' : '#16A34A' }]}>{t('etb', 'ETB')}</Text>
+            <Text
+              style={[
+                styles.payoutCurrencyText,
+                { color: isDark ? "#86EFAC" : "#16A34A" },
+              ]}
+            >
+              {t("etb", "ETB")}
+            </Text>
           </View>
         </View>
 
         {/* Row 2: Metadata (Items count, date, payment channel) */}
         <View style={styles.payoutCardMiddleRow}>
-          {item.status === 'cancelled' ? (
+          {item.status === "cancelled" ? (
             <View style={styles.payoutMetaItem}>
-              <Ionicons name="arrow-undo-outline" size={12} color={colors.textMuted} />
-              <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>
-                {t('ordersReleased', 'Orders Released')}
+              <Ionicons
+                name="arrow-undo-outline"
+                size={12}
+                color={colors.textMuted}
+              />
+              <Text
+                style={[styles.payoutMetaText, { color: colors.textMuted }]}
+              >
+                {t("ordersReleased", "Orders Released")}
               </Text>
             </View>
           ) : (
             <View style={styles.payoutMetaItem}>
-              <Ionicons name="receipt-outline" size={12} color={colors.textMuted} />
-              <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>
+              <Ionicons
+                name="receipt-outline"
+                size={12}
+                color={colors.textMuted}
+              />
+              <Text
+                style={[styles.payoutMetaText, { color: colors.textMuted }]}
+              >
                 {item.items_count === 1
-                  ? t('orderSettled_one', { count: 1, defaultValue: '1 Order Settled' })
-                  : t('ordersSettled_other', { count: item.items_count, defaultValue: `${item.items_count} Orders Settled` })}
+                  ? t("orderSettled_one", {
+                      count: 1,
+                      defaultValue: "1 Order Settled",
+                    })
+                  : t("ordersSettled_other", {
+                      count: item.items_count,
+                      defaultValue: `${item.items_count} Orders Settled`,
+                    })}
               </Text>
             </View>
           )}
-          <Text style={[styles.payoutMetaDot, { color: colors.textMuted }]}>•</Text>
-          <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>{dateStr}</Text>
+          <Text style={[styles.payoutMetaDot, { color: colors.textMuted }]}>
+            •
+          </Text>
+          <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>
+            {dateStr}
+          </Text>
           {!!item.payment_method && (
             <>
-              <Text style={[styles.payoutMetaDot, { color: colors.textMuted }]}>•</Text>
-              <Text style={[styles.payoutMetaText, { color: colors.textMuted }]}>{item.payment_method.toUpperCase()}</Text>
+              <Text style={[styles.payoutMetaDot, { color: colors.textMuted }]}>
+                •
+              </Text>
+              <Text
+                style={[styles.payoutMetaText, { color: colors.textMuted }]}
+              >
+                {item.payment_method.toUpperCase()}
+              </Text>
             </>
           )}
         </View>
 
         {/* Row 3: Status Badge & Tap Action Hint */}
-        <View style={[styles.payoutCardBottomRow, { borderTopColor: lightBorder }]}>
+        <View
+          style={[styles.payoutCardBottomRow, { borderTopColor: lightBorder }]}
+        >
           <View
             style={[
               styles.payoutBadge,
               isAwaiting
-                ? { backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB', borderColor: isDark ? '#5C3D20' : '#FDE68A' }
+                ? {
+                    backgroundColor: isDark ? "#3D2A1A" : "#FFFBEB",
+                    borderColor: isDark ? "#5C3D20" : "#FDE68A",
+                  }
                 : isConfirmed
-                ? { backgroundColor: isDark ? '#1A3D2A' : '#F0FDF4', borderColor: isDark ? '#245C3A' : '#BBF7D0' }
-                : isDisputed
-                ? { backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2', borderColor: isDark ? '#5C2626' : '#FECACA' }
-                : { backgroundColor: isDark ? surfaceAlt : '#F8FAFC', borderColor: isDark ? colors.border : '#E2E8F0' },
+                  ? {
+                      backgroundColor: isDark ? "#1A3D2A" : "#F0FDF4",
+                      borderColor: isDark ? "#245C3A" : "#BBF7D0",
+                    }
+                  : isDisputed
+                    ? {
+                        backgroundColor: isDark ? "#3D1A1A" : "#FEF2F2",
+                        borderColor: isDark ? "#5C2626" : "#FECACA",
+                      }
+                    : {
+                        backgroundColor: isDark ? surfaceAlt : "#F8FAFC",
+                        borderColor: isDark ? colors.border : "#E2E8F0",
+                      },
             ]}
           >
             <Ionicons
               name={
                 isAwaiting
-                  ? 'time'
+                  ? "time"
                   : isConfirmed
-                  ? 'checkmark-circle'
-                  : isDisputed
-                  ? 'alert-circle'
-                  : 'close-circle'
+                    ? "checkmark-circle"
+                    : isDisputed
+                      ? "alert-circle"
+                      : "close-circle"
               }
               size={12}
               color={
                 isAwaiting
-                  ? (isDark ? '#FCD34D' : '#D97706')
+                  ? isDark
+                    ? "#FCD34D"
+                    : "#D97706"
                   : isConfirmed
-                  ? (isDark ? '#86EFAC' : '#16A34A')
-                  : isDisputed
-                  ? (isDark ? '#FCA5A5' : '#DC2626')
-                  : colors.textMuted
+                    ? isDark
+                      ? "#86EFAC"
+                      : "#16A34A"
+                    : isDisputed
+                      ? isDark
+                        ? "#FCA5A5"
+                        : "#DC2626"
+                      : colors.textMuted
               }
               style={{ marginRight: 4 }}
             />
@@ -617,24 +941,30 @@ export default function EarningsScreen() {
                 styles.payoutBadgeText,
                 {
                   color: isAwaiting
-                    ? (isDark ? '#FCD34D' : '#D97706')
+                    ? isDark
+                      ? "#FCD34D"
+                      : "#D97706"
                     : isConfirmed
-                    ? (isDark ? '#86EFAC' : '#16A34A')
-                    : isDisputed
-                    ? (isDark ? '#FCA5A5' : '#DC2626')
-                    : colors.textMuted,
+                      ? isDark
+                        ? "#86EFAC"
+                        : "#16A34A"
+                      : isDisputed
+                        ? isDark
+                          ? "#FCA5A5"
+                          : "#DC2626"
+                        : colors.textMuted,
                 },
               ]}
             >
               {isAwaiting
-                ? t('awaitingYourConfirmation', 'Awaiting Your Confirmation')
+                ? t("awaitingYourConfirmation", "Awaiting Your Confirmation")
                 : isConfirmed
-                ? t('confirmedAndPaid', 'Confirmed & Paid')
-                : isDisputed
-                ? t('disputedUnderReview', 'Disputed / Under Review')
-                : item.status === 'cancelled'
-                ? t('cancelled', 'Cancelled')
-                : item.status}
+                  ? t("confirmedAndPaid", "Confirmed & Paid")
+                  : isDisputed
+                    ? t("disputedUnderReview", "Disputed / Under Review")
+                    : item.status === "cancelled"
+                      ? t("cancelled", "Cancelled")
+                      : item.status}
             </Text>
           </View>
 
@@ -645,20 +975,28 @@ export default function EarningsScreen() {
                 isAwaiting
                   ? { color: brand }
                   : isDisputed
-                  ? { color: isDark ? '#FCA5A5' : '#DC2626' }
-                  : { color: colors.textMuted },
+                    ? { color: isDark ? "#FCA5A5" : "#DC2626" }
+                    : { color: colors.textMuted },
               ]}
             >
               {isAwaiting
-                ? t('reviewAndConfirm', 'Review & Confirm')
+                ? t("reviewAndConfirm", "Review & Confirm")
                 : isDisputed
-                ? t('viewDispute', 'View Dispute')
-                : t('receiptDetails', 'Receipt Details')}
+                  ? t("viewDispute", "View Dispute")
+                  : t("receiptDetails", "Receipt Details")}
             </Text>
             <Ionicons
               name="chevron-forward"
               size={13}
-              color={isAwaiting ? brand : isDisputed ? (isDark ? '#FCA5A5' : '#DC2626') : colors.textMuted}
+              color={
+                isAwaiting
+                  ? brand
+                  : isDisputed
+                    ? isDark
+                      ? "#FCA5A5"
+                      : "#DC2626"
+                    : colors.textMuted
+              }
             />
           </View>
         </View>
@@ -666,17 +1004,40 @@ export default function EarningsScreen() {
     );
   };
 
-  const currentListData = mainTab === 'orders' ? filteredEarnings : (payouts as any[]);
+  const currentListData =
+    mainTab === "orders" ? filteredEarnings : (payouts as any[]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top", "left", "right"]}
+    >
       <StatusBar style={isDark ? "light" : "dark"} />
       {/* Top App Header */}
-      <View style={[styles.screenHeader, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.screenHeader,
+          {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
         <View>
-          <Text style={[styles.screenTitle, { color: isDark ? colors.text : colors.primary }]}>{t('driverEarningsTitle', 'Earning History')}</Text>
+          <Text
+            style={[
+              styles.screenTitle,
+              { color: isDark ? colors.text : colors.primary },
+            ]}
+          >
+            {t("driverEarningsTitle", "Earning History")}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.headerActionBtn} onPress={onRefresh} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerActionBtn}
+          onPress={onRefresh}
+          activeOpacity={0.7}
+        >
           <Ionicons name="refresh" size={26} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -685,55 +1046,112 @@ export default function EarningsScreen() {
       <FlatList
         data={currentListData}
         keyExtractor={(item: any) =>
-          mainTab === 'orders'
+          mainTab === "orders"
             ? item.id.toString()
-            : item.id ? `payout-${item.id}` : item.payout_number
+            : item.id
+              ? `payout-${item.id}`
+              : item.payout_number
         }
         renderItem={({ item }: any) =>
-          mainTab === 'orders'
+          mainTab === "orders"
             ? renderOrderItem({ item })
             : renderPayoutItem({ item })
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
         }
         ListHeaderComponent={
           <View style={styles.headerComponent}>
             {/* Urgent Payout Confirmation Banner (Single Payout) */}
             {pendingPayouts.length === 1 && pendingPayout && (
               <TouchableOpacity
-                style={[styles.pendingActionBanner, {
-                  backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
-                  borderColor: isDark ? '#5C3D20' : '#FDE68A',
-                  shadowColor: isDark ? '#000' : '#D97706',
-                }]}
+                style={[
+                  styles.pendingActionBanner,
+                  {
+                    backgroundColor: isDark ? "#3D2A1A" : "#FFFBEB",
+                    borderColor: isDark ? "#5C3D20" : "#FDE68A",
+                    shadowColor: isDark ? "#000" : "#D97706",
+                  },
+                ]}
                 activeOpacity={0.9}
                 onPress={() => {
                   setSelectedPayout(pendingPayout);
                   setPayoutModalVisible(true);
                 }}
               >
-                <View style={[styles.pendingBannerIcon, { backgroundColor: isDark ? '#4D3520' : '#FEF3C7' }]}>
-                  <MaterialCommunityIcons name="hand-coin" size={24} color={isDark ? '#FCD34D' : '#D97706'} />
+                <View
+                  style={[
+                    styles.pendingBannerIcon,
+                    { backgroundColor: isDark ? "#4D3520" : "#FEF3C7" },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="hand-coin"
+                    size={24}
+                    color={isDark ? "#FCD34D" : "#D97706"}
+                  />
                 </View>
                 <View style={styles.pendingBannerContent}>
                   <View style={styles.pendingBannerTitleRow}>
-                    <Text style={[styles.pendingBannerTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>
-                      {t('payoutActionTitle', 'Payout Received?')}
+                    <Text
+                      style={[
+                        styles.pendingBannerTitle,
+                        { color: isDark ? "#FCD34D" : "#92400E" },
+                      ]}
+                    >
+                      {t("payoutActionTitle", "Payout Received?")}
                     </Text>
-                    <View style={[styles.pendingBannerBadge, { backgroundColor: isDark ? '#5C3D20' : '#FDE68A' }]}>
-                      <Text style={[styles.pendingBannerBadgeText, { color: isDark ? '#FCD34D' : '#92400E' }]}>{t('actionNeeded', 'Action Needed')}</Text>
+                    <View
+                      style={[
+                        styles.pendingBannerBadge,
+                        { backgroundColor: isDark ? "#5C3D20" : "#FDE68A" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.pendingBannerBadgeText,
+                          { color: isDark ? "#FCD34D" : "#92400E" },
+                        ]}
+                      >
+                        {t("actionNeeded", "Action Needed")}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={[styles.pendingBannerSub, { color: isDark ? '#FBBF24' : '#B45309' }]}>
-                    {isAmharic && pendingPayout.company_name_am ? pendingPayout.company_name_am : pendingPayout.company_name} · ETB {parseFloat(pendingPayout.net_payout_amount).toFixed(2)}
+                  <Text
+                    style={[
+                      styles.pendingBannerSub,
+                      { color: isDark ? "#FBBF24" : "#B45309" },
+                    ]}
+                  >
+                    {isAmharic && pendingPayout.company_name_am
+                      ? pendingPayout.company_name_am
+                      : pendingPayout.company_name}{" "}
+                    · ETB{" "}
+                    {parseFloat(pendingPayout.net_payout_amount).toFixed(2)}
                   </Text>
                   <View style={styles.pendingBannerBtnRow}>
-                    <View style={[styles.confirmInlineBtn, { backgroundColor: isDark ? '#7C5FC9' : '#6750A4' }]}>
-                      <Text style={styles.confirmInlineBtnText}>{t('confirmReceived', 'Confirm Received')}</Text>
-                      <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                    <View
+                      style={[
+                        styles.confirmInlineBtn,
+                        { backgroundColor: isDark ? "#7C5FC9" : "#6750A4" },
+                      ]}
+                    >
+                      <Text style={styles.confirmInlineBtnText}>
+                        {t("confirmReceived", "Confirm Received")}
+                      </Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={13}
+                        color="#FFFFFF"
+                        style={{ marginLeft: 4 }}
+                      />
                     </View>
                   </View>
                 </View>
@@ -743,46 +1161,100 @@ export default function EarningsScreen() {
             {/* Multi-Payout Action Banner (When multiple stores disbursed) */}
             {pendingPayouts.length > 1 && (
               <TouchableOpacity
-                style={[styles.pendingActionBanner, {
-                  backgroundColor: isDark ? '#3D2A1A' : '#FFFBEB',
-                  borderColor: isDark ? '#5C3D20' : '#FDE68A',
-                  shadowColor: isDark ? '#000' : '#D97706',
-                }]}
+                style={[
+                  styles.pendingActionBanner,
+                  {
+                    backgroundColor: isDark ? "#3D2A1A" : "#FFFBEB",
+                    borderColor: isDark ? "#5C3D20" : "#FDE68A",
+                    shadowColor: isDark ? "#000" : "#D97706",
+                  },
+                ]}
                 activeOpacity={0.9}
                 onPress={() => {
-                  setMainTab('payouts');
+                  setMainTab("payouts");
                 }}
               >
-                <View style={[styles.pendingBannerIcon, { backgroundColor: isDark ? '#4D3520' : '#FEF3C7' }]}>
-                  <MaterialCommunityIcons name="wallet-giftcard" size={24} color={isDark ? '#FCD34D' : '#D97706'} />
+                <View
+                  style={[
+                    styles.pendingBannerIcon,
+                    { backgroundColor: isDark ? "#4D3520" : "#FEF3C7" },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="wallet-giftcard"
+                    size={24}
+                    color={isDark ? "#FCD34D" : "#D97706"}
+                  />
                 </View>
                 <View style={styles.pendingBannerContent}>
                   <View style={styles.pendingBannerTitleRow}>
-                    <Text style={[styles.pendingBannerTitle, { color: isDark ? '#FCD34D' : '#92400E' }]}>
-                      {t('multiPayoutsAwaitingTitle', {
+                    <Text
+                      style={[
+                        styles.pendingBannerTitle,
+                        { color: isDark ? "#FCD34D" : "#92400E" },
+                      ]}
+                    >
+                      {t("multiPayoutsAwaitingTitle", {
                         count: pendingPayouts.length,
                         defaultValue: `${pendingPayouts.length} Payouts Awaiting Confirmation`,
                       })}
                     </Text>
-                    <View style={[styles.pendingBannerBadge, { backgroundColor: isDark ? '#5C3D20' : '#FDE68A' }]}>
-                      <Text style={[styles.pendingBannerBadgeText, { color: isDark ? '#FCD34D' : '#92400E' }]}>{t('actionNeeded', 'Action Needed')}</Text>
+                    <View
+                      style={[
+                        styles.pendingBannerBadge,
+                        { backgroundColor: isDark ? "#5C3D20" : "#FDE68A" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.pendingBannerBadgeText,
+                          { color: isDark ? "#FCD34D" : "#92400E" },
+                        ]}
+                      >
+                        {t("actionNeeded", "Action Needed")}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={[styles.pendingBannerSub, { color: isDark ? '#FBBF24' : '#B45309' }]}>
-                    {t('multiPayoutsAwaitingSub', {
+                  <Text
+                    style={[
+                      styles.pendingBannerSub,
+                      { color: isDark ? "#FBBF24" : "#B45309" },
+                    ]}
+                  >
+                    {t("multiPayoutsAwaitingSub", {
                       count: pendingPayouts.length,
                       total: pendingPayouts
-                        .reduce((sum, p) => sum + parseFloat(p.net_payout_amount || '0'), 0)
+                        .reduce(
+                          (sum, p) =>
+                            sum + parseFloat(p.net_payout_amount || "0"),
+                          0,
+                        )
                         .toFixed(2),
                       defaultValue: `Total: ETB ${pendingPayouts
-                        .reduce((sum, p) => sum + parseFloat(p.net_payout_amount || '0'), 0)
+                        .reduce(
+                          (sum, p) =>
+                            sum + parseFloat(p.net_payout_amount || "0"),
+                          0,
+                        )
                         .toFixed(2)} across ${pendingPayouts.length} stores`,
                     })}
                   </Text>
                   <View style={styles.pendingBannerBtnRow}>
-                    <View style={[styles.confirmInlineBtn, { backgroundColor: isDark ? '#7C5FC9' : '#6750A4' }]}>
-                      <Text style={styles.confirmInlineBtnText}>{t('reviewPayouts', 'Review Payouts')}</Text>
-                      <Ionicons name="arrow-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                    <View
+                      style={[
+                        styles.confirmInlineBtn,
+                        { backgroundColor: isDark ? "#7C5FC9" : "#6750A4" },
+                      ]}
+                    >
+                      <Text style={styles.confirmInlineBtnText}>
+                        {t("reviewPayouts", "Review Payouts")}
+                      </Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={13}
+                        color="#FFFFFF"
+                        style={{ marginLeft: 4 }}
+                      />
                     </View>
                   </View>
                 </View>
@@ -792,56 +1264,111 @@ export default function EarningsScreen() {
             {/* Disputed Payouts Notice Banner */}
             {disputedPayouts.length > 0 && (
               <TouchableOpacity
-                style={[styles.pendingActionBanner, {
-                  borderColor: isDark ? '#5C2626' : '#FECACA',
-                  backgroundColor: isDark ? '#3D1A1A' : '#FEF2F2',
-                }]}
+                style={[
+                  styles.pendingActionBanner,
+                  {
+                    borderColor: isDark ? "#5C2626" : "#FECACA",
+                    backgroundColor: isDark ? "#3D1A1A" : "#FEF2F2",
+                  },
+                ]}
                 activeOpacity={0.9}
                 onPress={() => {
-                  setMainTab('payouts');
+                  setMainTab("payouts");
                 }}
               >
-                <View style={[styles.pendingBannerIcon, { backgroundColor: isDark ? '#4D2020' : '#FEE2E2' }]}>
-                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color={isDark ? '#FCA5A5' : '#DC2626'} />
+                <View
+                  style={[
+                    styles.pendingBannerIcon,
+                    { backgroundColor: isDark ? "#4D2020" : "#FEE2E2" },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="alert-circle-outline"
+                    size={24}
+                    color={isDark ? "#FCA5A5" : "#DC2626"}
+                  />
                 </View>
                 <View style={styles.pendingBannerContent}>
                   <View style={styles.pendingBannerTitleRow}>
-                    <Text style={[styles.pendingBannerTitle, { color: isDark ? '#FCA5A5' : '#991B1B' }]} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.pendingBannerTitle,
+                        { color: isDark ? "#FCA5A5" : "#991B1B" },
+                      ]}
+                      numberOfLines={1}
+                    >
                       {disputedPayouts.length === 1
-                        ? t('disputeTitleSingle', 'Payout Dispute')
-                        : t('disputeTitleMulti', {
+                        ? t("disputeTitleSingle", "Payout Dispute")
+                        : t("disputeTitleMulti", {
                             count: disputedPayouts.length,
                             defaultValue: `${disputedPayouts.length} Payout Disputes`,
                           })}
                     </Text>
-                    <View style={[styles.pendingBannerBadge, {
-                      backgroundColor: isDark ? '#4D2020' : '#FEE2E2',
-                      borderColor: isDark ? '#5C2626' : '#FECACA',
-                      borderWidth: 1,
-                    }]}>
-                      <Text style={[styles.pendingBannerBadgeText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>{t('underReview', 'Under Review')}</Text>
+                    <View
+                      style={[
+                        styles.pendingBannerBadge,
+                        {
+                          backgroundColor: isDark ? "#4D2020" : "#FEE2E2",
+                          borderColor: isDark ? "#5C2626" : "#FECACA",
+                          borderWidth: 1,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.pendingBannerBadgeText,
+                          { color: isDark ? "#FCA5A5" : "#DC2626" },
+                        ]}
+                      >
+                        {t("underReview", "Under Review")}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={[styles.pendingBannerSub, { color: isDark ? '#F87171' : '#B91C1C' }]}>
-                    {t('disputeBannerSub', 'Store admin is reviewing your reported issue. Tap to view resolution details.')}
+                  <Text
+                    style={[
+                      styles.pendingBannerSub,
+                      { color: isDark ? "#F87171" : "#B91C1C" },
+                    ]}
+                  >
+                    {t(
+                      "disputeBannerSub",
+                      "Store admin is reviewing your reported issue. Tap to view resolution details.",
+                    )}
                   </Text>
                 </View>
               </TouchableOpacity>
             )}
 
             {/* Period Segment Selector */}
-            <View style={[styles.periodSelector, { backgroundColor: isDark ? surfaceMuted : '#E2E8F0' }]}>
+            {/* Period Segment Selector */}
+            <View
+              style={[
+                styles.periodSelector,
+                { backgroundColor: isDark ? surfaceMuted : "#E2E8F0" },
+              ]}
+            >
               {[
-                { key: 'today', label: t('periodToday', 'Today') },
-                { key: 'this_week', label: t('periodWeek', 'Week') },
-                { key: 'this_month', label: t('periodMonth', 'Month') },
-                { key: 'all', label: t('periodAll', 'All Time') },
+                { key: "today", label: t("periodToday", "Today") },
+                { key: "this_week", label: t("periodWeek", "Week") },
+                { key: "this_month", label: t("periodMonth", "Month") },
+                { key: "all", label: t("periodAll", "All Time") },
               ].map((p) => {
                 const active = period === p.key;
                 return (
                   <TouchableOpacity
                     key={p.key}
-                    style={[styles.periodTab, active && [styles.periodTabActive, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]]}
+                    style={[
+                      styles.periodTab,
+                      active && [
+                        styles.periodTabActive,
+                        {
+                          // Dark mode: Purple BG. Light mode: White BG (colors.card)
+                          backgroundColor: isDark ? "#6750A4" : colors.card,
+                          shadowColor: isDark ? "transparent" : "#000",
+                          shadowOpacity: isDark ? 0 : 0.08,
+                        },
+                      ],
+                    ]}
                     onPress={() => setPeriod(p.key as PeriodType)}
                     activeOpacity={0.7}
                   >
@@ -849,20 +1376,53 @@ export default function EarningsScreen() {
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.8}
-                      style={[styles.periodTabText, { color: colors.textMuted }, active && [styles.periodTabTextActive, { color: brand }]]}>
+                      style={[
+                        styles.periodTabText,
+                        { color: colors.textMuted },
+                        active && [
+                          styles.periodTabTextActive,
+                          {
+                            // Dark mode: White Text. Light mode: Purple Text (brand)
+                            color: isDark ? "#FFFFFF" : brand,
+                          },
+                        ],
+                      ]}
+                    >
                       {p.label}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
-
             {/* Primary Hero Financial Card */}
-            <View style={[styles.heroCard, { backgroundColor: heroBg, shadowColor: heroShadow ,borderColor: isDark ? colors.border : '#EDE9FE'} ]}>
-              <Text style={[styles.heroLabel, { color: isDark ? '#6750A4' : '#E9D5FF' }]}>{getPeriodLabel()}</Text>
+            <View
+              style={[
+                styles.heroCard,
+                {
+                  backgroundColor: heroBg,
+                  shadowColor: heroShadow,
+                  borderColor: isDark ? colors.border : "#EDE9FE",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.heroLabel,
+                  { color: isDark ? "#E9D5FF" : "#E9D5FF" },
+                ]}
+              >
+                {getPeriodLabel()}
+              </Text>
 
               <View style={styles.heroAmountRow}>
-                <Text style={[styles.heroCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
+                <Text
+                  style={[
+                    styles.heroCurrency,
+                    { color: isDark ? "#DDD6FE" : "#F3E8FF" },
+                  ]}
+                >
+                  {t("etb", "ETB")}
+                </Text>
                 <Text
                   numberOfLines={1}
                   adjustsFontSizeToFit
@@ -874,100 +1434,224 @@ export default function EarningsScreen() {
               </View>
 
               {/* Compact Settlement Row inside Hero: Unpaid Balance vs Settled Payouts */}
-              <View style={[styles.heroSettlementRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255, 255, 255, 0.15)' }]}>
+              <View
+                style={[
+                  styles.heroSettlementRow,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.08)"
+                      : "rgba(255, 255, 255, 0.15)",
+                  },
+                ]}
+              >
                 <View style={styles.heroSettlementCol}>
                   <View style={styles.heroSettlementIconRow}>
-                    <MaterialCommunityIcons name="clock-outline" size={13} color={isDark ? '#6750A4' : '#E9D5FF'} />
+                    <MaterialCommunityIcons
+                      name="clock-outline"
+                      size={13}
+                      color={isDark ? "#E9D5FF" : "#E9D5FF"}
+                    />
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.75}
-                      style={[styles.heroSettlementLabel, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
+                      style={[
+                        styles.heroSettlementLabel,
+                        { color: isDark ? "#E9D5FF" : "#E9D5FF" },
+                      ]}
                     >
-                      {t('unpaidBalance', 'Unpaid Balance')}
+                      {t("unpaidBalance", "Unpaid Balance")}
                     </Text>
                   </View>
                   <Text
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    style={[styles.heroSettlementValueUnpaid, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
+                    style={[
+                      styles.heroSettlementValueUnpaid,
+                      { color: isDark ? "#E9D5FF" : "#E9D5FF" },
+                    ]}
                   >
-                    {formatMoney(summary?.unpaid_balance ?? '0.00')}{' '}
-                    <Text style={[styles.heroSettlementCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
+                    {formatMoney(summary?.unpaid_balance ?? "0.00")}{" "}
+                    <Text
+                      style={[
+                        styles.heroSettlementCurrency,
+                        { color: isDark ? "#E9D5FF" : "#F3E8FF" },
+                      ]}
+                    >
+                      {t("etb", "ETB")}
+                    </Text>
                   </Text>
                 </View>
 
-                <View style={[styles.heroSettlementDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255, 255, 255, 0.25)' }]} />
+                <View
+                  style={[
+                    styles.heroSettlementDivider,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.15)"
+                        : "rgba(255, 255, 255, 0.25)",
+                    },
+                  ]}
+                />
 
                 <View style={styles.heroSettlementCol}>
                   <View style={styles.heroSettlementIconRow}>
-                    <Ionicons name="checkmark-done-circle-outline" size={13} color={isDark ? '#6750A4' : '#E9D5FF'} />
+                    <Ionicons
+                      name="checkmark-done-circle-outline"
+                      size={13}
+                      color={isDark ? "#E9D5FF" : "#E9D5FF"}
+                    />
                     <Text
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.75}
-                      style={[styles.heroSettlementLabel, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
+                      style={[
+                        styles.heroSettlementLabel,
+                        { color: isDark ? "#E9D5FF" : "#E9D5FF" },
+                      ]}
                     >
-                      {t('totalPaidOut', 'Settled Payouts')}
+                      {t("totalPaidOut", "Settled Payouts")}
                     </Text>
                   </View>
                   <Text
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.68}
-                    style={[styles.heroSettlementValuePaid, { color: isDark ? '#6750A4' : '#E9D5FF' }]}
+                    style={[
+                      styles.heroSettlementValuePaid,
+                      { color: isDark ? "#E9D5FF" : "#E9D5FF" },
+                    ]}
                   >
-                    {formatMoney(summary?.total_paid_out ?? '0.00')}{' '}
-                    <Text style={[styles.heroSettlementCurrency, { color: isDark ? '#DDD6FE' : '#F3E8FF' }]}>{t('etb', 'ETB')}</Text>
+                    {formatMoney(summary?.total_paid_out ?? "0.00")}{" "}
+                    <Text
+                      style={[
+                        styles.heroSettlementCurrency,
+                        { color: isDark ? "#DDD6FE" : "#F3E8FF" },
+                      ]}
+                    >
+                      {t("etb", "ETB")}
+                    </Text>
                   </Text>
                 </View>
               </View>
             </View>
 
             {/* Main Tabs Switcher: Orders vs Payouts */}
-            <View style={[styles.mainTabSwitch, { backgroundColor: isDark ? surfaceMuted : '#F1F5F9' }]}>
+            {/* Main Tabs Switcher: Orders vs Payouts */}
+            <View
+              style={[
+                styles.mainTabSwitch,
+                { backgroundColor: isDark ? surfaceMuted : "#F1F5F9" },
+              ]}
+            >
               <TouchableOpacity
-                style={[styles.mainTabBtn, mainTab === 'orders' && [styles.mainTabBtnActive, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]]}
-                onPress={() => setMainTab('orders')}
+                style={[
+                  styles.mainTabBtn,
+                  mainTab === "orders" && [
+                    styles.mainTabBtnActive,
+                    {
+                      // Dark mode: Purple BG. Light mode: White BG
+                      backgroundColor: isDark ? "#6750A4" : colors.card,
+                      shadowColor: isDark ? "transparent" : "#000",
+                      shadowOpacity: isDark ? 0 : 0.08,
+                    },
+                  ],
+                ]}
+                onPress={() => setMainTab("orders")}
                 activeOpacity={0.8}
               >
                 <MaterialCommunityIcons
                   name="moped-outline"
                   size={16}
-                  color={mainTab === 'orders' ? brand : colors.textMuted}
+                  color={
+                    mainTab === "orders"
+                      ? isDark
+                        ? "#FFFFFF"
+                        : brand
+                      : colors.textMuted
+                  }
                   style={{ marginRight: 6 }}
                 />
-                <Text style={[styles.mainTabText, { color: colors.textMuted }, mainTab === 'orders' && [styles.mainTabTextActive, { color: brand }]]}>
-                  {t('ordersTab', 'Orders')} ({filteredEarnings.length})
+                <Text
+                  style={[
+                    styles.mainTabText,
+                    { color: colors.textMuted },
+                    mainTab === "orders" && [
+                      styles.mainTabTextActive,
+                      { color: isDark ? "#FFFFFF" : brand }, // Dark mode: White Text
+                    ],
+                  ]}
+                >
+                  {t("ordersTab", "Orders")} ({filteredEarnings.length})
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.mainTabBtn, mainTab === 'payouts' && [styles.mainTabBtnActive, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]]}
-                onPress={() => setMainTab('payouts')}
+                style={[
+                  styles.mainTabBtn,
+                  mainTab === "payouts" && [
+                    styles.mainTabBtnActive,
+                    {
+                      // Dark mode: Purple BG. Light mode: White BG
+                      backgroundColor: isDark ? "#6750A4" : colors.card,
+                      shadowColor: isDark ? "transparent" : "#000",
+                      shadowOpacity: isDark ? 0 : 0.08,
+                    },
+                  ],
+                ]}
+                onPress={() => setMainTab("payouts")}
                 activeOpacity={0.8}
               >
                 <MaterialCommunityIcons
                   name="wallet-outline"
                   size={16}
-                  color={mainTab === 'payouts' ? brand : colors.textMuted}
+                  color={
+                    mainTab === "payouts"
+                      ? isDark
+                        ? "#FFFFFF"
+                        : brand
+                      : colors.textMuted
+                  }
                   style={{ marginRight: 6 }}
                 />
-                <Text style={[styles.mainTabText, { color: colors.textMuted }, mainTab === 'payouts' && [styles.mainTabTextActive, { color: brand }]]}>
-                  {t('payoutsTab', 'Payouts')} ({payouts.length})
+                <Text
+                  style={[
+                    styles.mainTabText,
+                    { color: colors.textMuted },
+                    mainTab === "payouts" && [
+                      styles.mainTabTextActive,
+                      { color: isDark ? "#FFFFFF" : brand }, // Dark mode: White Text
+                    ],
+                  ]}
+                >
+                  {t("payoutsTab", "Payouts")} ({payouts.length})
                 </Text>
-                {payouts.some((p) => p.status === 'disbursed') && (
+
+                {/* The red dot is still visible on the purple background */}
+                {payouts.some((p) => p.status === "disbursed") && (
                   <View style={styles.pendingDot} />
                 )}
               </TouchableOpacity>
             </View>
 
             {/* Payment Method Filter Tabs (Only shown when orders tab is active) */}
-            {mainTab === 'orders' && (
+            {mainTab === "orders" && (
               <View style={styles.filterSection}>
-                <Text style={[styles.filterHeaderTitle, { color: colors.textMuted }]}>{t('filterByPaymentMethod', 'FILTER BY PAYMENT')}</Text>
-                <View style={[styles.tabsContainer, { backgroundColor: colors.card, borderColor: cardBorder }]}>
+                <Text
+                  style={[
+                    styles.filterHeaderTitle,
+                    { color: colors.textMuted },
+                  ]}
+                >
+                  {t("filterByPaymentMethod", "FILTER BY PAYMENT")}
+                </Text>
+                <View
+                  style={[
+                    styles.tabsContainer,
+                    { backgroundColor: colors.card, borderColor: cardBorder },
+                  ]}
+                >
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -978,11 +1662,23 @@ export default function EarningsScreen() {
                       return (
                         <TouchableOpacity
                           key={tab.key}
-                          style={[styles.tabButton, active && [styles.tabButtonActive, { backgroundColor: brand }]]}
+                          style={[
+                            styles.tabButton,
+                            active && [
+                              styles.tabButtonActive,
+                              { backgroundColor: brand },
+                            ],
+                          ]}
                           onPress={() => setPaymentFilter(tab.key)}
                           activeOpacity={0.8}
                         >
-                          <Text style={[styles.tabText, { color: colors.text }, active && styles.tabTextActive]}>
+                          <Text
+                            style={[
+                              styles.tabText,
+                              { color: colors.text },
+                              active && styles.tabTextActive,
+                            ]}
+                          >
                             {tab.label}
                           </Text>
                           <View
@@ -990,7 +1686,14 @@ export default function EarningsScreen() {
                               styles.tabCountBadge,
                               active
                                 ? styles.tabCountBadgeActive
-                                : [styles.tabCountBadgeInactive, { backgroundColor: isDark ? '#3D2E5C' : '#CBD5E1' }],
+                                : [
+                                    styles.tabCountBadgeInactive,
+                                    {
+                                      backgroundColor: isDark
+                                        ? "#3D2E5C"
+                                        : "#CBD5E1",
+                                    },
+                                  ],
                             ]}
                           >
                             <Text
@@ -1014,18 +1717,30 @@ export default function EarningsScreen() {
             {/* Feed Section Title */}
             <View style={styles.feedHeader}>
               <Text style={[styles.feedTitle, { color: colors.text }]}>
-                {mainTab === 'orders'
-                  ? t('orderEarningsFeed', 'Delivered Orders & Compensation')
-                  : t('payoutHistory', 'Payout History')}
+                {mainTab === "orders"
+                  ? t("orderEarningsFeed", "Delivered Orders & Compensation")
+                  : t("payoutHistory", "Payout History")}
               </Text>
               <Text style={[styles.feedCount, { color: colors.textMuted }]}>
-                {mainTab === 'orders'
+                {mainTab === "orders"
                   ? filteredEarnings.length === 1
-                    ? t('ordersCount_one', { count: 1, defaultValue: '1 Order' })
-                    : t('ordersCount_other', { count: filteredEarnings.length, defaultValue: `${filteredEarnings.length} Orders` })
+                    ? t("ordersCount_one", {
+                        count: 1,
+                        defaultValue: "1 Order",
+                      })
+                    : t("ordersCount_other", {
+                        count: filteredEarnings.length,
+                        defaultValue: `${filteredEarnings.length} Orders`,
+                      })
                   : payouts.length === 1
-                    ? t('payoutCount_one', { count: 1, defaultValue: '1 Payout' })
-                    : t('payoutCount_other', { count: payouts.length, defaultValue: `${payouts.length} Payouts` })}
+                    ? t("payoutCount_one", {
+                        count: 1,
+                        defaultValue: "1 Payout",
+                      })
+                    : t("payoutCount_other", {
+                        count: payouts.length,
+                        defaultValue: `${payouts.length} Payouts`,
+                      })}
               </Text>
             </View>
           </View>
@@ -1034,26 +1749,39 @@ export default function EarningsScreen() {
           loading ? (
             <View style={styles.centerBox}>
               <ActivityIndicator size="large" color={brand} />
-              <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('loadingEarnings', 'Loading earning records...')}</Text>
+              <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+                {t("loadingEarnings", "Loading earning records...")}
+              </Text>
             </View>
           ) : (
             <View style={styles.emptyBox}>
-              <View style={[styles.emptyIconCircle, { backgroundColor: isDark ? surfaceMuted : '#F1F5F9' }]}>
+              <View
+                style={[
+                  styles.emptyIconCircle,
+                  { backgroundColor: isDark ? surfaceMuted : "#F1F5F9" },
+                ]}
+              >
                 <MaterialCommunityIcons
-                  name={mainTab === 'orders' ? 'wallet-outline' : 'cash-remove'}
+                  name={mainTab === "orders" ? "wallet-outline" : "cash-remove"}
                   size={36}
                   color={colors.textMuted}
                 />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {mainTab === 'orders'
-                  ? t('noEarningsFound', 'No Earning History Yet')
-                  : t('noPayoutsFound', 'No Payouts Yet')}
+                {mainTab === "orders"
+                  ? t("noEarningsFound", "No Earning History Yet")
+                  : t("noPayoutsFound", "No Payouts Yet")}
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                {mainTab === 'orders'
-                  ? t('noEarningsSub', 'Completed delivered orders will appear here with transparent delivery fees.')
-                  : t('noPayoutsSub', 'When companies issue your payouts, they will appear here.')}
+                {mainTab === "orders"
+                  ? t(
+                      "noEarningsSub",
+                      "Completed delivered orders will appear here with transparent delivery fees.",
+                    )
+                  : t(
+                      "noPayoutsSub",
+                      "When companies issue your payouts, they will appear here.",
+                    )}
               </Text>
             </View>
           )
@@ -1075,7 +1803,7 @@ export default function EarningsScreen() {
             setSelectedPayout(found);
             setPayoutModalVisible(true);
           } else {
-            setMainTab('payouts');
+            setMainTab("payouts");
           }
         }}
       />
@@ -1100,36 +1828,36 @@ export default function EarningsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   screenHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 2,
     paddingBottom: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: "#F1F5F9",
   },
   screenTitle: {
     fontSize: 22,
-    fontWeight: '900',
-    color: '#6750A4',
+    fontWeight: "900",
+    color: "#6750A4",
   },
   screenSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: "#64748B",
     marginTop: 2,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   headerActionBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     paddingBottom: 40,
@@ -1139,8 +1867,8 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
+    flexDirection: "row",
+    backgroundColor: "#E2E8F0",
     borderRadius: 14,
     padding: 4,
     marginBottom: 16,
@@ -1148,12 +1876,12 @@ const styles = StyleSheet.create({
   periodTab: {
     flex: 1,
     paddingVertical: 8,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 10,
   },
   periodTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -1161,147 +1889,147 @@ const styles = StyleSheet.create({
   },
   periodTabText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
+    fontWeight: "600",
+    color: "#64748B",
   },
   periodTabTextActive: {
-    color: '#6750A4',
-    fontWeight: '800',
+    color: "#6750A4",
+    fontWeight: "800",
   },
   heroCard: {
-    backgroundColor: '#6750A4',
+    backgroundColor: "#6750A4",
     borderRadius: 24,
     paddingVertical: 22,
     paddingHorizontal: 20,
-    alignItems: 'center',
-    shadowColor: '#6750A4',
+    alignItems: "center",
+    shadowColor: "#6750A4",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
-    position: 'relative',
-    overflow: 'hidden',
+    position: "relative",
+    overflow: "hidden",
     marginBottom: 16,
   },
   heroGlow: {
-    position: 'absolute',
+    position: "absolute",
     top: -40,
     right: -40,
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
   },
   heroLabel: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#E9D5FF',
+    fontWeight: "800",
+    color: "#E9D5FF",
     letterSpacing: 1,
     marginBottom: 6,
   },
   heroAmountRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "center",
     gap: 8,
     marginBottom: 16,
-    maxWidth: '100%',
+    maxWidth: "100%",
     paddingHorizontal: 8,
   },
   heroCurrency: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#F3E8FF',
+    fontWeight: "700",
+    color: "#F3E8FF",
   },
   heroAmount: {
     fontSize: 40,
-    fontWeight: '900',
-    color: '#FFFFFF',
+    fontWeight: "900",
+    color: "#FFFFFF",
     flexShrink: 1,
   },
   heroMetricsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    width: '100%',
+    width: "100%",
   },
   heroMetricItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   heroMetricVal: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
   heroMetricLbl: {
     fontSize: 10,
-    color: '#E9D5FF',
-    fontWeight: '600',
+    color: "#E9D5FF",
+    fontWeight: "600",
     marginTop: 2,
   },
   heroMetricDivider: {
     width: 1,
     height: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
   },
   heroSettlementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    width: '100%',
+    width: "100%",
   },
   heroSettlementCol: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 4,
   },
   heroSettlementIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     marginBottom: 3,
   },
   heroSettlementLabel: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#E9D5FF',
-    textTransform: 'uppercase',
+    fontWeight: "700",
+    color: "#E9D5FF",
+    textTransform: "uppercase",
     letterSpacing: 0.4,
   },
   heroSettlementValueUnpaid: {
     fontSize: 15,
-    fontWeight: '900',
-    color: '#E9D5FF',
+    fontWeight: "900",
+    color: "#E9D5FF",
   },
   heroSettlementValuePaid: {
     fontSize: 15,
-    fontWeight: '900',
-    color: '#E9D5FF',
+    fontWeight: "900",
+    color: "#E9D5FF",
   },
   heroSettlementCurrency: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#F3E8FF',
+    fontWeight: "700",
+    color: "#F3E8FF",
   },
   heroSettlementDivider: {
     width: 1,
     height: 26,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
   },
   channelsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1310,149 +2038,149 @@ const styles = StyleSheet.create({
   },
   channelsHeaderTitle: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
+    fontWeight: "800",
+    color: "#64748B",
     letterSpacing: 0.6,
     marginBottom: 12,
   },
   channelsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   channelCol: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   channelIconBox: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 6,
   },
   channelLabel: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#64748B',
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#64748B",
+    textAlign: "center",
     marginBottom: 2,
   },
   channelValue: {
     fontSize: 12,
-    fontWeight: '800',
-    textAlign: 'center',
+    fontWeight: "800",
+    textAlign: "center",
   },
   channelDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
   },
   filterSection: {
     marginBottom: 16,
   },
   filterHeaderTitle: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
+    fontWeight: "800",
+    color: "#64748B",
     letterSpacing: 0.6,
     marginBottom: 8,
   },
   tabsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: "#E2E8F0",
     borderRadius: 16,
     padding: 4,
     paddingHorizontal: 4,
   },
   tabsScrollContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   tabButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 9,
     paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 140,
     gap: 6,
   },
   tabButtonActive: {
-    backgroundColor: '#6750A4',
+    backgroundColor: "#6750A4",
     paddingHorizontal: 12,
   },
   tabText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#475569',
+    fontWeight: "700",
+    color: "#475569",
   },
   tabTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   tabCountBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 10,
     minWidth: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   tabCountBadgeInactive: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: "#CBD5E1",
   },
   tabCountBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
   },
   tabCountBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#334155',
+    fontWeight: "800",
+    color: "#334155",
   },
   tabCountBadgeTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   feedHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   feedTitle: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#1E293B',
+    fontWeight: "800",
+    color: "#1E293B",
   },
   feedCount: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
+    fontWeight: "600",
+    color: "#64748B",
   },
   orderCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 16,
     marginHorizontal: 20,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
     elevation: 2,
   },
   cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   orderNumberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     flex: 1,
   },
@@ -1460,72 +2188,72 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F3E8FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F3E8FF",
+    justifyContent: "center",
+    alignItems: "center",
   },
   orderNumberText: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: "800",
+    color: "#0F172A",
   },
   storeNameText: {
     fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
+    color: "#64748B",
+    fontWeight: "500",
   },
   earningAmountBox: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   earningPlusText: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#16A34A',
+    fontWeight: "900",
+    color: "#16A34A",
   },
   earningCurrencyText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#16A34A',
+    fontWeight: "700",
+    color: "#16A34A",
   },
   cardMiddleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   customerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     flex: 1,
     marginRight: 8,
   },
   customerText: {
     fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
+    color: "#64748B",
+    fontWeight: "500",
   },
   dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   dateText: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: "#94A3B8",
   },
   cardBadgesRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
     gap: 6,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: "#F8FAFC",
   },
   paymentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 8,
@@ -1533,53 +2261,53 @@ const styles = StyleSheet.create({
   },
   paymentBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   centerBox: {
     paddingVertical: 50,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loadingText: {
     fontSize: 13,
-    color: '#64748B',
+    color: "#64748B",
     marginTop: 10,
   },
   emptyBox: {
     paddingVertical: 60,
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 30,
   },
   emptyIconCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#334155',
+    fontWeight: "800",
+    color: "#334155",
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
-    textAlign: 'center',
+    color: "#94A3B8",
+    textAlign: "center",
     marginTop: 6,
     lineHeight: 18,
   },
   pendingActionBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFBEB",
     borderWidth: 1.5,
-    borderColor: '#FDE68A',
+    borderColor: "#FDE68A",
     borderRadius: 18,
     padding: 14,
     marginBottom: 16,
-    shadowColor: '#D97706',
+    shadowColor: "#D97706",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1589,30 +2317,30 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   pendingBannerContent: {
     flex: 1,
   },
   pendingBannerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 4,
     gap: 8,
   },
   pendingBannerTitle: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#92400E',
+    fontWeight: "800",
+    color: "#92400E",
     flex: 1,
     flexShrink: 1,
   },
   pendingBannerBadge: {
-    backgroundColor: '#FDE68A',
+    backgroundColor: "#FDE68A",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -1620,99 +2348,99 @@ const styles = StyleSheet.create({
   },
   pendingBannerBadgeText: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#92400E',
+    fontWeight: "800",
+    color: "#92400E",
   },
   pendingBannerSub: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#B45309',
+    fontWeight: "600",
+    color: "#B45309",
     marginBottom: 8,
   },
   pendingBannerBtnRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   confirmInlineBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#6750A4',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6750A4",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 10,
   },
   confirmInlineBtnText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
   settlementOverviewCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   settlementCol: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   settlementIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     marginBottom: 4,
   },
   settlementLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B',
+    fontWeight: "700",
+    color: "#64748B",
   },
   settlementValueUnpaid: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#D97706',
+    fontWeight: "900",
+    color: "#D97706",
   },
   settlementValuePaid: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#16A34A',
+    fontWeight: "900",
+    color: "#16A34A",
   },
   settlementCurrency: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   settlementDivider: {
     width: 1,
     height: 36,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
   },
   mainTabSwitch: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    flexDirection: "row",
+    backgroundColor: "#F1F5F9",
     borderRadius: 14,
     padding: 4,
     marginBottom: 16,
   },
   mainTabBtn: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 10,
     borderRadius: 10,
-    position: 'relative',
+    position: "relative",
   },
   mainTabBtnActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -1720,25 +2448,25 @@ const styles = StyleSheet.create({
   },
   mainTabText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#64748B',
+    fontWeight: "700",
+    color: "#64748B",
   },
   mainTabTextActive: {
-    color: '#6750A4',
-    fontWeight: '800',
+    color: "#6750A4",
+    fontWeight: "800",
   },
   pendingDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
-    position: 'absolute',
+    backgroundColor: "#EF4444",
+    position: "absolute",
     top: 8,
     right: 12,
   },
   payoutStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 3,
     paddingHorizontal: 7,
     borderRadius: 8,
@@ -1746,35 +2474,35 @@ const styles = StyleSheet.create({
   },
   payoutStatusPillText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   payoutCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 16,
     marginHorizontal: 20,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
     elevation: 2,
   },
   payoutCardAwaiting: {
-    borderColor: '#FDE68A',
-    backgroundColor: '#FFFDF7',
+    borderColor: "#FDE68A",
+    backgroundColor: "#FFFDF7",
   },
   payoutCardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   payoutNumberGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     flex: 1,
     marginRight: 10,
@@ -1783,76 +2511,76 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   payoutNumberText: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: "800",
+    color: "#0F172A",
   },
   payoutTypeTag: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 6,
   },
   payoutTypeTagText: {
     fontSize: 9,
-    fontWeight: '800',
-    color: '#475569',
+    fontWeight: "800",
+    color: "#475569",
   },
   payoutStoreText: {
     fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
+    color: "#64748B",
+    fontWeight: "600",
     marginTop: 2,
   },
   payoutAmountBox: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   payoutAmountText: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#16A34A',
+    fontWeight: "900",
+    color: "#16A34A",
   },
   payoutCurrencyText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#16A34A',
+    fontWeight: "700",
+    color: "#16A34A",
   },
   payoutCardMiddleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
     gap: 6,
     marginBottom: 10,
   },
   payoutCardBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: "#F8FAFC",
   },
   payoutMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   payoutMetaText: {
     fontSize: 11,
-    color: '#64748B',
-    fontWeight: '500',
+    color: "#64748B",
+    fontWeight: "500",
   },
   payoutMetaDot: {
     fontSize: 10,
-    color: '#CBD5E1',
+    color: "#CBD5E1",
   },
   payoutBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 8,
@@ -1860,15 +2588,15 @@ const styles = StyleSheet.create({
   },
   payoutBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   payoutActionHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 2,
   },
   payoutActionHintText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

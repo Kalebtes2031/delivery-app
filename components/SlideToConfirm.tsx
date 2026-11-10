@@ -131,7 +131,7 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '6750A4' : color + '20',
+          backgroundColor: isDark ? '#6750A4' : color + '20',
           borderColor: isDark ? colors.border : 'transparent',
           borderWidth: isDark ? 1 : 0,
         },
@@ -151,7 +151,7 @@ export default function SlideToConfirm({ onConfirm, label, color, icon, isLoadin
                 <MaterialCommunityIcons name="chevron-double-right" size={20} color={isDark ? colors.primary : color} />
               </Animated.View>
             </>
-          )}<Text style={[styles.label, { color: isDark ? colors.textMuted : color + '60' }]}>{label}</Text>
+          )}<Text style={[styles.label, { color: "#ffff" }]}>{label}</Text>
         </View>
       </Animated.View>
 

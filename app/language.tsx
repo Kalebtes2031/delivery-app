@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "@/context/ThemeContext";
+import BackButton from "@/components/BackButton";
 
 const BRAND_COLOR = "#6750A4";
 
@@ -23,13 +24,7 @@ export default function LanguageScreen() {
         <View style={[styles.header, { backgroundColor: isDark ? colors.card : BRAND_COLOR }, isDark && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
           <View style={styles.headerContent}>
             {/* Back Button - LEFT SIDE */}
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={[styles.backButton, isDark && { backgroundColor: colors.surface }]}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-back" size={22} color={isDark ? colors.text : "white"} />
-            </TouchableOpacity>
+          <BackButton />
 
             {/* Title and Image Container - PUSHED TO RIGHT */}
             <View style={{ flexDirection: "row", gap: 10, alignItems:"center" }}>

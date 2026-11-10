@@ -1,78 +1,61 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useAppTheme } from '@/context/ThemeContext';
+import React from "react";
+import { StyleSheet, TouchableOpacity, ViewStyle, StyleProp } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useAppTheme } from "@/context/ThemeContext";
 
-interface BackButtonProps {
-  title: string;
-  color?: string;
-}
+type BackButtonProps = {
+  /** Optional custom onPress. Defaults to router.back() */
+  onPress?: () => void;
+  /** Layout-only style (position, margin). Colors & size are locked. */
+  style?: StyleProp<ViewStyle>;
+};
 
-const BackButton = ({ title, color }: BackButtonProps) => {
+const BRAND = "#6750A4";
+
+export default function BackButton({ onPress, style }: BackButtonProps) {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
 
+  const handlePress = () => {
+    if (onPress) onPress();
+    else router.back();
+  };
+
   return (
-    <View
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={0.7}
       style={[
-        styles.container,
+        styles.button,
         {
-          backgroundColor: colors.background,
-          borderBottomColor: colors.border,
+          // Light: white | Dark: card surface
+          backgroundColor: isDark ? colors.card : "#FFFFFF",
+          // Light: purple | Dark: softer purple border
+          borderColor: isDark ? colors.border : BRAND,
         },
+        style,
       ]}
+      accessibilityRole="button"
+      accessibilityLabel="Go back"
     >
-      <TouchableOpacity
-        style={[
-          styles.backButton,
-          {
-            borderColor: isDark ? colors.border : colors.primary,
-            backgroundColor: isDark ? colors.card : 'transparent',
-          },
-        ]}
-        onPress={() => router.back()}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-      >
-        <Ionicons name="arrow-back" size={18} color={colors.primary} />
-      </TouchableOpacity>
-      <Text
-        style={[
-          styles.headerTitle,
-          { color: isDark ? colors.text : colors.primary },
-        ]}
-        numberOfLines={1}
-      >
-        {title}
-      </Text>
-      <View style={{ width: 32 }} />
-    </View>
+      <Ionicons
+        name="arrow-back"
+        size={22}
+        // Light: purple | Dark: brand purple (readable on dark card)
+        color={BRAND}
+      />
+    </TouchableOpacity>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  backButton: {
+  button: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderRadius: 999,
-    padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
   },
 });
-
-export default BackButton;

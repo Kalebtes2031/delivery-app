@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { getCashOnHandOrders } from "@/services/api";
 import type { DeliveryAssignment } from "@/types";
 import { useAppTheme } from "@/context/ThemeContext";
+import BackButton from "@/components/BackButton";
 
 type TabType = "all" | "pending" | "settled";
 
@@ -260,15 +261,13 @@ cardBg: isDark ? "#211A30" : "#6750A4",
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       {/* Top Header */}
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={[styles.backButton, { borderColor: isDark ? colors.border : colors.primary }]} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color={colors.primary} />
-        </TouchableOpacity>
+       <BackButton />
         <Text style={[styles.headerTitle, { color: isDark ? colors.text : colors.primary }]}>{t("cashTitle", "Cash on Hand")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Segmented Tabs (Order: All -> Cash on Hand -> Completed) */}
-      <View style={[styles.tabsContainer, { backgroundColor: colors.background, borderBottomColor: colors.border  }]}>
+      <View style={[styles.tabsContainer, { backgroundColor: colors.background, borderColor: "#6750A4" }]}>
         {/* Tab 1: All */}
         <TouchableOpacity
           style={[styles.tabButton, { backgroundColor: isDark ? colors.card : '#F1F5F9' },  activeTab === "all" && styles.tabButtonActiveAll]}
@@ -353,7 +352,7 @@ cardBg: isDark ? "#211A30" : "#6750A4",
             />
           }
           ListHeaderComponent={
-            <View style={[styles.summaryCard, { backgroundColor: currentTheme.bg }]}>
+            <View style={[styles.summaryCard, { backgroundColor: "#6750A4"}]}>
               <View style={styles.summaryTopRow}>
                 <View style={styles.summaryIconCircle}>
                   <MaterialCommunityIcons name={currentTheme.icon as any} size={26} color="#fff" />
@@ -415,6 +414,7 @@ tabsContainer: {
   alignItems: "center",
   borderRadius: 16,
   marginHorizontal: 16,
+ borderWidth: 1,
 
   marginBottom: 12,
   padding: 4,
@@ -429,6 +429,7 @@ tabsContainer: {
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 10,
+    
     borderRadius: 140,
     gap: 5,
   },

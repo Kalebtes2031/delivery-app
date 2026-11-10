@@ -62,7 +62,7 @@ export default function HomeScreen() {
   const summaryBorder = isDark ? "#2A2A2A" : "#cbd4e2";
 
   // Dark mode uses pure black to match header, light mode uses brand purple
-  const heroBg = isDark ? "#000000" : "#6750A4";
+  const heroBg = isDark ? "#6750A4" : "#6750A4";
   const heroShadow = isDark ? "#000000" : "#6750A4";
   const heroBorder = isDark ? "#222222" : "#EDE9FE";
 
@@ -644,7 +644,7 @@ export default function HomeScreen() {
                   styles.heroCardHeader,
                   {
                     borderBottomColor: isDark
-                      ? "#222222"
+                      ? "rgba(255,255,255,0.08)"
                       : "rgba(255,255,255,0.08)",
                   },
                 ]}
@@ -735,7 +735,7 @@ export default function HomeScreen() {
                   styles.heroProgressContainer,
                   {
                     borderTopColor: isDark
-                      ? "#222222"
+                      ? "rgba(255,255,255,0.08)"
                       : "rgba(255,255,255,0.08)",
                   },
                 ]}

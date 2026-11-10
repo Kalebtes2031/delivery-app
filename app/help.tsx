@@ -12,7 +12,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { useAppTheme } from "@/context/ThemeContext";
 // import SuccessModal from "@/components/SuccessModal";
-
+import { Image } from "react-native";
+import BackButton from "@/components/BackButton";
 const BRAND_COLOR = "#6750A4";
 const BRAND_LIGHT = "#8B6FBC";
 const BG_COLOR = "#F7F8FC";
@@ -347,31 +348,31 @@ export default function HelpScreen() {
           <Text style={{ marginTop: 4, fontSize: 12, lineHeight: 20, color: textSecondary }}>
             {t(video.descriptionKey)}
           </Text>
-          <TouchableOpacity
-            onPress={() => openOnYouTube(video)}
-            activeOpacity={0.7}
-            disabled={isPreparing}
-            style={{
-              marginTop: 16,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 8,
-              paddingVertical: 10,
-              backgroundColor: colors.primarySoft,
-            }}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: isPreparing, busy: isPreparing }}
-          >
-            {isPreparing ? (
-              <ActivityIndicator size="small" color={brandColor} />
-            ) : (
-              <Ionicons name="logo-youtube" size={18} color={brandColor} />
-            )}
-            <Text style={{ marginLeft: 8, fontSize: 12, fontWeight: "600", color: brandColor }}>
-              {t("videoTutorials.watchOnYouTube")}
-            </Text>
-          </TouchableOpacity>
+       <TouchableOpacity
+  onPress={() => openOnYouTube(video)}
+  activeOpacity={0.7}
+  disabled={isPreparing}
+  style={{
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    paddingVertical: 10,
+    backgroundColor: "#6750A4",
+  }}
+  accessibilityRole="button"
+  accessibilityState={{ disabled: isPreparing, busy: isPreparing }}
+>
+  {isPreparing ? (
+    <ActivityIndicator size="small" color="#FFFFFF" />
+  ) : (
+    <Ionicons name="logo-youtube" size={18} color="#FFFFFF" />
+  )}
+  <Text style={{ marginLeft: 8, fontSize: 12, fontWeight: "600", color: "#FFFFFF" }}>
+    {t("videoTutorials.watchOnYouTube")}
+  </Text>
+</TouchableOpacity>
         </View>
       </View>
     );
@@ -394,13 +395,7 @@ export default function HelpScreen() {
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isDark ? colors.surface : "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
-          >
-            <Ionicons name="arrow-back" size={22} color={isDark ? colors.text : "white"} />
-          </TouchableOpacity>
+        <BackButton />
           <Text style={{ fontSize: 18, fontWeight: "700", color: isDark ? colors.text : "white" }}>{t("title")}</Text>
           <TouchableOpacity
             onPress={() => setShowVideosModal(true)}
@@ -615,7 +610,7 @@ export default function HelpScreen() {
  * Small helper to render the thumbnail image without importing Image directly
  * at the top (kept local so the main import list stays clean).
  */
-import { Image } from "react-native";
+
 function ThumbnailImage({ uri, onError }: { uri: string; onError: () => void }) {
   return (
     <Image

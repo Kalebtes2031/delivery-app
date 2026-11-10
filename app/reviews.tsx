@@ -17,6 +17,7 @@ import StarRating from "@/components/StarRating";
 import { getMyDeliveryReviews } from "@/services/api";
 import type { DeliveryReview, DeliveryReviewsResponse } from "@/types";
 import { useAppTheme } from "@/context/ThemeContext";
+import BackButton from "@/components/BackButton";
 
 export default function ReviewsScreen() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function ReviewsScreen() {
       <View
         style={[
           styles.summaryCard,
-          isDark && { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+          isDark && { backgroundColor: "#6750A4", borderColor: colors.border, borderWidth: 1 },
         ]}
       >
         <Text style={styles.summaryAverage}>{avg.toFixed(1)}</Text>
@@ -114,12 +115,7 @@ export default function ReviewsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header bar */}
       <View style={[styles.topBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          style={[styles.backButton, { borderColor: isDark ? colors.border : colors.primary }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={22} color={colors.primary} />
-        </TouchableOpacity>
+       <BackButton />
         <Text style={[styles.topBarTitle, { color: isDark ? colors.text : colors.primary }]}>{t("ratingsAndReviews")}</Text>
         <View style={{ width: 40 }} />
       </View>

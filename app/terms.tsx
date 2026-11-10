@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "@/context/ThemeContext";
+import BackButton from "@/components/BackButton";
 
 const BRAND_COLOR = "#6750A4";
 
@@ -65,20 +66,7 @@ export default function TermsScreen() {
         }}
       >
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: isDark ? colors.surface : "rgba(255,255,255,0.2)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={22} color={isDark ? colors.text : "white"} />
-          </TouchableOpacity>
+         <BackButton />
           <Text style={{ color: isDark ? colors.text : "white", fontSize: 18, fontWeight: "700" }}>
             {t("title")}
           </Text>

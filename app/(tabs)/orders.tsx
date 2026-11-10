@@ -728,11 +728,8 @@ export default function OrdersScreen() {
                   <Text
                     style={[
                       styles.tabText,
-                      { color: colors.textMuted },
-                      isActive && [
-                        styles.activeTabText,
-                        { color: colors.onPrimary },
-                      ],
+                     { color: isActive ? "#FFFFFF" : colors.textMuted }, 
+                    isActive && styles.activeTabText,
                     ]}
                   >
                     {t(`tabs.${tab.value}`)}

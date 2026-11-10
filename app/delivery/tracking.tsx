@@ -29,6 +29,7 @@ import { STATUS_CONFIG } from "@/constants/deliveryConstants";
 import { useTranslation } from "react-i18next";
 import SlideToConfirm from "@/components/SlideToConfirm";
 import { useAppTheme } from "@/context/ThemeContext";
+import BackButton from "@/components/BackButton";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 async function checkConnectivity(): Promise<boolean> {
@@ -503,14 +504,9 @@ export default function DriverTrackingScreen() {
             <Text style={styles.mapLoadingText}>{t("loadingMap")}</Text>
           </View>
         )}
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
-
+<View style={{ position: "absolute", top: 50, left: 20, zIndex: 5, elevation: 5 }}>
+  <BackButton />
+</View>
         <TouchableOpacity
           style={styles.navigateButton}
           onPress={navigateToDestination}

@@ -1,3 +1,4 @@
+import BackButton from "@/components/BackButton";
 import SlideToConfirm from "@/components/SlideToConfirm";
 import {
     NEXT_ACTION,
@@ -247,18 +248,7 @@ export default function DeliveryDetailScreen() {
         <View style={styles.heroOverlay} />
         <SafeAreaView>
           <View style={styles.topNav}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={[
-                styles.glassCircle,
-                {
-                  backgroundColor: isDark ? "#000000" : "#ffffff",
-                  borderColor: isDark ? "#6750A4" : "#6750A4",
-                },
-              ]}
-            >
-              <Ionicons name="arrow-back" size={24} color={brand} />
-            </TouchableOpacity>
+          <BackButton />
             <View style={styles.headerInfo}>
               <Text style={styles.heroOrderTitle}>
                 {t("orderNumber", {
@@ -755,12 +745,12 @@ export default function DeliveryDetailScreen() {
           <FontAwesome6
             name="route"
             size={18}
-            color={isDark ? "#000000" : "#fff"}
+            color={isDark ? "#ffff" : "#fff"}
           />
           <Text
             style={[
               styles.trackingFloatingText,
-              { color: isDark ? "#000000" : "#fff" },
+              { color: isDark ? "#ffff" : "#fff" },
             ]}
           >
             {delivery.status === "pending"

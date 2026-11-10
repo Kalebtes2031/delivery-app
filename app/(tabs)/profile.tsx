@@ -301,7 +301,7 @@ export default function ProfileScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.avatarInitial, { color: colors.onPrimary }]}>
+                  <Text style={[styles.avatarInitial, { color: "#fff" }]}>
                     {(user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase()}
                   </Text>
                 </View>
@@ -330,7 +330,7 @@ export default function ProfileScreen() {
             onPress={() => router.push('/reviews')}
           >
             <View style={[styles.ratingScoreBox, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.ratingScore, { color: colors.onPrimary }]}>{avgRating.toFixed(1)}</Text>
+              <Text style={[styles.ratingScore, { color: "#ffff" }]}>{avgRating.toFixed(1)}</Text>
               <Ionicons name="star" size={14} color="#FBBF24" />
             </View>
 
@@ -451,6 +451,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
+    marginTop: 8,
     paddingTop: 4,
     paddingBottom: 2,
   },
