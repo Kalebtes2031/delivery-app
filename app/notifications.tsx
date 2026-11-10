@@ -286,8 +286,8 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, isDark && { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={isDark ? colors.text : '#fff'} />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={[styles.backBtn, {borderColor: isDark? "#6750A4": "#fff", borderRadius: 222}]}>
+          <Ionicons name="arrow-back" size={24} color={isDark ? "#6750A4" : '#fff'} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 8 }}>
           <Text style={[styles.headerTitle, isDark && { color: colors.text }]}>{t('notifications')}</Text>
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  backBtn: { padding: 4, marginLeft: -4 },
+  backBtn: { padding: 4, marginLeft: -4, borderWidth:1, },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
   headerSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12 },
   markAll: {

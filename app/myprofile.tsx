@@ -300,8 +300,11 @@ export default function MyProfileScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-
-      <BackButton title={t("edit_profile")} color="white" />
+      <View style={{ paddingHorizontal: 20, flexDirection:"row", justifyContent:"space-between", alignContent: "center" }}>
+        <BackButton />
+        {/* <Text style={{color: isDark? "#fff": ""}}>{t('edit_profile')}</Text> */}
+        {/* <View></View> */}
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}

@@ -32,7 +32,7 @@ export default function BackButton({ onPress, style }: BackButtonProps) {
           // Light: white | Dark: card surface
           backgroundColor: isDark ? colors.card : "#FFFFFF",
           // Light: purple | Dark: softer purple border
-          borderColor: isDark ? colors.border : BRAND,
+          borderColor: isDark ? "#6750A4" : BRAND,
         },
         style,
       ]}
