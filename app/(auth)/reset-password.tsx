@@ -182,7 +182,7 @@ export default function ResetPassword() {
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 32, marginTop: 60 }}>
             <Image
-              source={require('@/assets/images/elilita-delivery.jpg')}
+             source={require('@/assets/images/elilita-delivery2.png')}
               style={{ width: 150, height: 100 }}
               resizeMode="contain"
             />

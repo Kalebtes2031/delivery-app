@@ -106,7 +106,7 @@ export default function VerifyOtp() {
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 32, marginTop: 60 }}>
             <Image
-              source={require('@/assets/images/elilita-delivery.jpg')}
+            source={require('@/assets/images/elilita-delivery2.png')}
               style={{ width: 200, height: 150 }}
               resizeMode="contain"
             />

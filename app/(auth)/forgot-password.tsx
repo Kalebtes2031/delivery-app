@@ -113,7 +113,7 @@ export default function ForgotPassword() {
           <View style={{ alignItems: 'center', marginBottom: 40, marginTop: 40 }}>
             <View>
               <Image
-                source={require('@/assets/images/elilita-delivery.jpg')}
+               source={require('@/assets/images/elilita-delivery2.png')}
                 style={{ width: 200, height: 150 }}
                 resizeMode="contain"
               />
