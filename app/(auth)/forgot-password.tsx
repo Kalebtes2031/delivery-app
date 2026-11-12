@@ -226,7 +226,7 @@ export default function ForgotPassword() {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: "white", fontSize: 16, fontWeight: '800' }}>
                 {t("forgotPassword.sendCode")}
               </Text>
             )}
@@ -241,7 +241,7 @@ export default function ForgotPassword() {
               onPress={() => router.replace("/(auth)/login")}
               activeOpacity={0.7}
             >
-              <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 14 }}>
+              <Text style={{ color: "white", fontWeight: '800', fontSize: 14 }}>
                 {t("forgotPassword.signIn")}
               </Text>
             </TouchableOpacity>

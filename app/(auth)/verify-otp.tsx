@@ -220,7 +220,7 @@ export default function VerifyOtp() {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: "white", fontSize: 16, fontWeight: '800' }}>
                 {t("verifyOtp.continue")}
               </Text>
             )}

@@ -87,7 +87,7 @@ export default function ResetPassword() {
 
    if (showSuccess) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <View style={{ flex: 1,  borderColor:"#6750A4" , backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <View style={{ alignItems: 'center', width: '100%' }}>
           <View style={{
             width: 80,
@@ -103,7 +103,7 @@ export default function ResetPassword() {
             shadowRadius: 8,
             elevation: 6,
           }}>
-            <Ionicons name="checkmark" size={48} color={colors.onPrimary} />
+            <Ionicons name="checkmark" size={48} color="white" />
           </View>
           <Text style={{
             fontSize: 24,
@@ -134,7 +134,7 @@ export default function ResetPassword() {
               alignSelf: 'center',
             }}
           >
-            <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
+            <Text style={{ color: "white", fontSize: 16, fontWeight: '800' }}>
               {t("resetPassword.signIn")}
             </Text>
           </TouchableOpacity>
@@ -374,7 +374,7 @@ export default function ResetPassword() {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
+              <Text style={{ color: "white", fontSize: 16, fontWeight: '800' }}>
                 {t("resetPassword.button")}
               </Text>
             )}
